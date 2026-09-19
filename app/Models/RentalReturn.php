@@ -11,7 +11,8 @@ class RentalReturn extends Model
 
     protected $fillable = [
         'rental_id', 'actual_return_time', 'late_hours',
-        'late_fee', 'damage_fee', 'condition_notes', 'checked_by',
+        'late_fee', 'damage_fee', 'fuel_fee',
+        'condition_notes', 'checked_by',
     ];
 
     protected function casts(): array
@@ -20,6 +21,7 @@ class RentalReturn extends Model
             'actual_return_time' => 'datetime',
             'late_fee' => 'decimal:2',
             'damage_fee' => 'decimal:2',
+            'fuel_fee' => 'decimal:2',
         ];
     }
 

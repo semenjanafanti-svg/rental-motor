@@ -1,0 +1,11 @@
+/* Hari yang memiliki jadwal terisi di kalender ketersediaan (Flatpickr) */
+.flatpickr-day.has-booking {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.flatpickr-day.has-booking:hover {
+    background: #fecaca;
+    border-color: #fca5a5;
+}

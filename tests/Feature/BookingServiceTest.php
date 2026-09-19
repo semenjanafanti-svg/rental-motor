@@ -58,12 +58,13 @@ class BookingServiceTest extends TestCase
         ]);
     }
 
-    private function data(Bike $bike, string $start, string $end): array
+    private function data(Bike $bike, string $startDate, string $startTime, string $endDate): array
     {
         return [
             'bike_id' => $bike->id,
-            'start_time' => $start,
-            'end_time' => $end,
+            'start_date' => $startDate,
+            'start_time' => $startTime,
+            'end_date' => $endDate,
             'ktp_photo' => 'ktp/contoh.jpg',
             'sim_photo' => 'sim/contoh.jpg',
         ];
@@ -97,16 +98,18 @@ class BookingServiceTest extends TestCase
         ]);
     }
 
-    public function test_creates_rental_verification_and_dp_payment(): void
+    public function test_one_day_rental_creates_rental_verification_and_dp_payment(): void
     {
-        $user = User::factory()->create();
-        $bike = $this->bike();
-
-        $rental = $this->service()->create($user, $this->data($bike, '2026-09-20 08:00', '2026-09-21 08:00'));
+        $rental = $this->service()->create(
+            User::factory()->create(),
+            $this->data($this->bike(), '2026-09-20', '08:00', '2026-09-21')
+        );
 
         $this->assertSame('BK-20260919-0001', $rental->booking_code);
         $this->assertSame('pending_payment', $rental->status);
         $this->assertSame('unpaid', $rental->payment_status);
+        $this->assertSame('2026-09-20 08:00', $rental->start_time->format('Y-m-d H:i'));
+        $this->assertSame('2026-09-21 08:00', $rental->end_time->format('Y-m-d H:i'));
         $this->assertSame(24, $rental->total_hours);
         $this->assertEquals(100000, $rental->total_price);
         $this->assertEquals(30000, $rental->dp_amount);
@@ -122,10 +125,38 @@ class BookingServiceTest extends TestCase
         ]);
     }
 
+    public function test_multi_day_rental_is_priced_per_24_hours(): void
+    {
+        $rental = $this->service()->create(
+            User::factory()->create(),
+            $this->data($this->bike(), '2026-09-20', '08:00', '2026-09-27')
+        );
+
+        $this->assertSame('2026-09-27 08:00', $rental->end_time->format('Y-m-d H:i'));
+        $this->assertSame(168, $rental->total_hours);
+        $this->assertEquals(700000, $rental->total_price);
+        $this->assertEquals(210000, $rental->dp_amount);
+        $this->assertEquals(490000, $rental->balance_amount);
+    }
+
+    public function test_return_time_is_automatically_the_same_clock_time_as_start(): void
+    {
+        $rental = $this->service()->create(
+            User::factory()->create(),
+            $this->data($this->bike(), '2026-09-20', '14:30', '2026-09-22')
+        );
+
+        $this->assertSame('2026-09-22 14:30', $rental->end_time->format('Y-m-d H:i'));
+        $this->assertSame(48, $rental->total_hours);
+    }
+
     public function test_rate_is_snapshotted_at_booking_time(): void
     {
         $bike = $this->bike();
-        $rental = $this->service()->create(User::factory()->create(), $this->data($bike, '2026-09-20 08:00', '2026-09-21 08:00'));
+        $rental = $this->service()->create(
+            User::factory()->create(),
+            $this->data($bike, '2026-09-20', '08:00', '2026-09-21')
+        );
 
         $bike->update(['daily_rate' => 999999, 'hourly_rate' => 99999]);
 
@@ -133,43 +164,64 @@ class BookingServiceTest extends TestCase
         $this->assertEquals(12000, $rental->fresh()->hourly_rate_applied);
     }
 
-    public function test_rejects_duration_below_minimum(): void
+    public function test_rejects_same_day_return(): void
     {
         $this->expectException(InvalidBookingPeriodException::class);
 
         $this->service()->create(
             User::factory()->create(),
-            $this->data($this->bike(), '2026-09-20 08:00', '2026-09-20 19:59')
+            $this->data($this->bike(), '2026-09-20', '08:00', '2026-09-20')
         );
     }
 
-    public function test_accepts_exactly_minimum_duration(): void
+    public function test_rejects_return_date_before_start_date(): void
     {
-        $rental = $this->service()->create(
-            User::factory()->create(),
-            $this->data($this->bike(), '2026-09-20 08:00', '2026-09-20 20:00')
-        );
+        $this->expectException(InvalidBookingPeriodException::class);
 
-        $this->assertSame(12, $rental->total_hours);
+        $this->service()->create(
+            User::factory()->create(),
+            $this->data($this->bike(), '2026-09-21', '08:00', '2026-09-20')
+        );
+    }
+
+    public function test_rejects_duration_above_maximum(): void
+    {
+        $this->expectException(InvalidBookingPeriodException::class);
+
+        $this->service()->create(
+            User::factory()->create(),
+            $this->data($this->bike(), '2026-09-20', '08:00', '2026-11-01') // 42 hari
+        );
     }
 
     public function test_rejects_start_time_in_the_past(): void
     {
         $this->expectException(InvalidBookingPeriodException::class);
 
+        // Sekarang 19 Sep 08:00, jadi 07:00 hari ini sudah lewat
         $this->service()->create(
             User::factory()->create(),
-            $this->data($this->bike(), '2026-09-18 08:00', '2026-09-19 08:00')
+            $this->data($this->bike(), '2026-09-19', '07:00', '2026-09-20')
         );
     }
 
-    public function test_rejects_end_before_start(): void
+    public function test_accepts_start_time_exactly_now(): void
+    {
+        $rental = $this->service()->create(
+            User::factory()->create(),
+            $this->data($this->bike(), '2026-09-19', '08:00', '2026-09-20')
+        );
+
+        $this->assertSame('2026-09-20 08:00', $rental->end_time->format('Y-m-d H:i'));
+    }
+
+    public function test_rejects_invalid_date_format(): void
     {
         $this->expectException(InvalidBookingPeriodException::class);
 
         $this->service()->create(
             User::factory()->create(),
-            $this->data($this->bike(), '2026-09-21 08:00', '2026-09-20 08:00')
+            $this->data($this->bike(), '2026-13-45', '08:00', '2026-09-21')
         );
     }
 
@@ -181,16 +233,41 @@ class BookingServiceTest extends TestCase
 
         $this->expectException(SlotNotAvailableException::class);
 
-        $this->service()->create($user, $this->data($bike, '2026-09-22 20:00', '2026-09-23 20:00'));
+        // 22 Sep 20:00 -> 23 Sep 20:00 memotong sewa yang ada
+        $this->service()->create($user, $this->data($bike, '2026-09-22', '20:00', '2026-09-23'));
     }
 
-    public function test_allows_back_to_back_booking(): void
+    public function test_rejects_booking_that_runs_into_next_rental(): void
+    {
+        $user = User::factory()->create();
+        $bike = $this->bike();
+        $this->existingRental($bike, $user, '2026-09-22 08:00', '2026-09-23 08:00', 'approved');
+
+        $this->expectException(SlotNotAvailableException::class);
+
+        // 21 Sep 08:00 -> 23 Sep 08:00 melewati awal sewa berikutnya (22 Sep 08:00)
+        $this->service()->create($user, $this->data($bike, '2026-09-21', '08:00', '2026-09-23'));
+    }
+
+    public function test_allows_back_to_back_booking_after_existing_rental(): void
     {
         $user = User::factory()->create();
         $bike = $this->bike();
         $this->existingRental($bike, $user, '2026-09-22 08:00', '2026-09-23 08:00', 'active');
 
-        $rental = $this->service()->create($user, $this->data($bike, '2026-09-23 08:00', '2026-09-24 08:00'));
+        $rental = $this->service()->create($user, $this->data($bike, '2026-09-23', '08:00', '2026-09-24'));
+
+        $this->assertSame('pending_payment', $rental->status);
+    }
+
+    public function test_allows_back_to_back_booking_before_existing_rental(): void
+    {
+        $user = User::factory()->create();
+        $bike = $this->bike();
+        $this->existingRental($bike, $user, '2026-09-22 08:00', '2026-09-23 08:00', 'active');
+
+        // 21 Sep 08:00 -> 22 Sep 08:00 selesai tepat saat sewa berikutnya mulai
+        $rental = $this->service()->create($user, $this->data($bike, '2026-09-21', '08:00', '2026-09-22'));
 
         $this->assertSame('pending_payment', $rental->status);
     }
@@ -203,12 +280,12 @@ class BookingServiceTest extends TestCase
         // Kedaluwarsa 1 menit lalu: tidak menghalangi
         $this->existingRental($bike, $user, '2026-09-22 08:00', '2026-09-23 08:00', 'pending_payment', now()->subMinute());
 
-        $rental = $this->service()->create($user, $this->data($bike, '2026-09-22 08:00', '2026-09-23 08:00'));
+        $rental = $this->service()->create($user, $this->data($bike, '2026-09-22', '08:00', '2026-09-23'));
         $this->assertSame('pending_payment', $rental->status);
 
         // Booking baru tadi masih berlaku: percobaan berikutnya harus ditolak
         $this->expectException(SlotNotAvailableException::class);
-        $this->service()->create($user, $this->data($bike, '2026-09-22 08:00', '2026-09-23 08:00'));
+        $this->service()->create($user, $this->data($bike, '2026-09-22', '08:00', '2026-09-23'));
     }
 
     public function test_cancelled_rental_does_not_block(): void
@@ -217,7 +294,7 @@ class BookingServiceTest extends TestCase
         $bike = $this->bike();
         $this->existingRental($bike, $user, '2026-09-22 08:00', '2026-09-23 08:00', 'cancelled');
 
-        $rental = $this->service()->create($user, $this->data($bike, '2026-09-22 08:00', '2026-09-23 08:00'));
+        $rental = $this->service()->create($user, $this->data($bike, '2026-09-22', '08:00', '2026-09-23'));
 
         $this->assertSame('pending_payment', $rental->status);
     }
@@ -228,7 +305,7 @@ class BookingServiceTest extends TestCase
 
         $this->service()->create(
             User::factory()->create(),
-            $this->data($this->bike(['status' => 'maintenance']), '2026-09-20 08:00', '2026-09-21 08:00')
+            $this->data($this->bike(['status' => 'maintenance']), '2026-09-20', '08:00', '2026-09-21')
         );
     }
 
@@ -237,7 +314,7 @@ class BookingServiceTest extends TestCase
         try {
             $this->service()->create(
                 User::factory()->create(),
-                $this->data($this->bike(['status' => 'inactive']), '2026-09-20 08:00', '2026-09-21 08:00')
+                $this->data($this->bike(['status' => 'inactive']), '2026-09-20', '08:00', '2026-09-21')
             );
         } catch (BikeNotAvailableException) {
         }

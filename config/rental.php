@@ -1,8 +1,10 @@
 <?php
 
 return [
-    // Durasi sewa minimal (jam). Divalidasi di frontend dan server.
-    'min_hours' => 12,
+    // Sewa dihitung per 24 jam. Penyewa memilih tanggal mulai, jam mulai, dan tanggal
+    // pengembalian; jam pengembalian otomatis sama dengan jam mulai (kelipatan 24 jam).
+    'min_days' => 1,   // minimal 1 hari = 24 jam
+    'max_days' => 30,  // batas atas durasi sewa (asumsi, ubah sesuai kebijakan)
 
     // Masa kunci slot sementara setelah checkout (menit).
     // Masa berlaku Snap Midtrans harus disamakan dengan nilai ini.
@@ -16,6 +18,7 @@ return [
     'no_show_tolerance_minutes' => 120,
 
     // Toleransi keterlambatan sebelum denda dihitung (menit).
+    // Denda = jam keterlambatan (dibulatkan ke atas) x tarif per jam yang di-snapshot.
     'late_tolerance_minutes' => 30,
 
     // Aturan refund saat customer membatalkan.
