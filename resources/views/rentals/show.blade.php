@@ -17,11 +17,41 @@
     </div>
 
     @if ($rental->status === 'pending_payment' && $rental->expires_at)
-        <div class="mt-4 rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-            Selesaikan pembayaran DP {{ \App\Support\Format::rupiah($rental->dp_amount) }} sebelum
-            <strong>{{ $rental->expires_at->locale('id')->translatedFormat('d M Y H:i') }} WIB</strong>,
-            atau pesanan akan kedaluwarsa.
-            <span class="mt-1 block text-xs">Tombol pembayaran online akan tersedia pada tahap integrasi Midtrans.</span>
+        @if ($payable)
+            <div class="mt-4 rounded-md border border-yellow-200 bg-yellow-50 px-4 py-4 text-sm text-yellow-900">
+                <p>
+                    Selesaikan pembayaran DP {{ \App\Support\Format::rupiah($rental->dp_amount) }} sebelum
+                    <strong>{{ $rental->expires_at->locale('id')->translatedFormat('d M Y H:i') }} WIB</strong>,
+                    atau pesanan akan kedaluwarsa.
+                </p>
+
+                <button type="button" id="pay-button" data-pay-url="{{ route('rentals.pay', $rental, false) }}"
+                        class="mt-3 rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300">
+                    Bayar DP {{ \App\Support\Format::rupiah($rental->dp_amount) }}
+                </button>
+                <p id="pay-error" class="mt-2 hidden text-red-700"></p>
+                <p class="mt-2 text-xs text-yellow-800">
+                    Halaman ini otomatis diperbarui setelah pembayaran diterima. Jika popup tertutup, klik tombol lagi
+                    untuk melihat instruksi pembayaran yang sama.
+                </p>
+            </div>
+
+            <script src="{{ $snapJsUrl }}" data-client-key="{{ $clientKey }}"></script>
+        @else
+            <div class="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                Batas waktu pembayaran DP sudah lewat. Pesanan akan kedaluwarsa otomatis dan jadwal dilepas.
+            </div>
+        @endif
+
+        {{-- Polling status: halaman dimuat ulang saat status berubah --}}
+        <div id="status-poll" class="hidden"
+             data-url="{{ route('rentals.status', $rental, false) }}"
+             data-status="{{ $rental->status }}"></div>
+    @endif
+
+    @if ($rental->status === 'pending_verification')
+        <div class="mt-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            DP sudah kami terima. Dokumen Anda sedang diverifikasi oleh petugas.
         </div>
     @endif
 
@@ -36,10 +66,10 @@
                 <dt class="text-gray-500">Batas kembali</dt>
                 <dd>{{ $rental->end_time->locale('id')->translatedFormat('d M Y H:i') }} WIB</dd>
                 <dt class="text-gray-500">Durasi</dt>
-                <dd>{{ $rental->total_hours }} jam</dd>
+                <dd>{{ intdiv($rental->total_hours, 24) }} hari ({{ $rental->total_hours }} jam)</dd>
                 <dt class="text-gray-500">Tarif per 24 jam</dt>
                 <dd>{{ \App\Support\Format::rupiah($rental->daily_rate_applied) }}</dd>
-                <dt class="text-gray-500">Tarif per jam</dt>
+                <dt class="text-gray-500">Denda terlambat / jam</dt>
                 <dd>{{ \App\Support\Format::rupiah($rental->hourly_rate_applied) }}</dd>
             </dl>
         </div>

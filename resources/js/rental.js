@@ -234,9 +234,101 @@ function initCheckout() {
     loadDates();
 }
 
+/* ---------------------------------------------------------------
+ * Halaman pesanan: tombol Bayar DP (Midtrans Snap)
+ * Snap token dibuat server; Server Key tidak pernah sampai ke browser.
+ * ------------------------------------------------------------- */
+function initPayment() {
+    const button = document.getElementById('pay-button');
+    if (!button) return;
+
+    const errorEl = document.getElementById('pay-error');
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    const showError = (message) => {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+        button.disabled = false;
+    };
+
+    const reload = () => window.location.reload();
+
+    button.addEventListener('click', async () => {
+        errorEl.classList.add('hidden');
+        button.disabled = true;
+
+        if (!window.snap) {
+            showError('Modul pembayaran Midtrans belum termuat. Muat ulang halaman.');
+            return;
+        }
+
+        try {
+            const response = await fetch(button.dataset.payUrl, {
+                method: 'POST',
+                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf },
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                showError(data.message || 'Gagal memulai pembayaran.');
+                return;
+            }
+
+            window.snap.pay(data.token, {
+                onSuccess: reload,
+                onPending: reload,
+                onError: () => showError('Pembayaran gagal diproses. Silakan coba lagi.'),
+                onClose: () => {
+                    button.disabled = false;
+                },
+            });
+        } catch (error) {
+            showError('Tidak dapat menghubungi server. Coba lagi.');
+        }
+    });
+}
+
+/* ---------------------------------------------------------------
+ * Halaman pesanan: polling status sambil menunggu pembayaran.
+ * Server menanyakan status ke Midtrans, jadi jalan juga di localhost tanpa webhook.
+ * ------------------------------------------------------------- */
+function initStatusPolling() {
+    const box = document.getElementById('status-poll');
+    if (!box) return;
+
+    let attempts = 0;
+
+    const timer = setInterval(async () => {
+        attempts += 1;
+
+        if (attempts > 360) { // berhenti setelah sekitar 30 menit
+            clearInterval(timer);
+            return;
+        }
+
+        if (document.hidden) return;
+
+        try {
+            const response = await fetch(box.dataset.url, { headers: { Accept: 'application/json' } });
+            if (!response.ok) return;
+
+            const data = await response.json();
+
+            if (data.status !== box.dataset.status) {
+                clearInterval(timer);
+                window.location.reload();
+            }
+        } catch (error) {
+            // abaikan, coba lagi pada putaran berikutnya
+        }
+    }, 5000);
+}
+
 function init() {
     initAvailabilityCalendar();
     initCheckout();
+    initPayment();
+    initStatusPolling();
 }
 
 if (document.readyState === 'loading') {
