@@ -2,24 +2,21 @@
 
 namespace App\Services;
 
-use App\Exceptions\MidtransException;
 use App\Exceptions\PaymentException;
 use App\Models\Payment;
 use App\Models\Rental;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
+use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
+/**
+ * Pembayaran DP via QRIS statis + bukti transfer, diverifikasi manual oleh admin.
+ */
 class PaymentService
 {
-    public function __construct(private readonly MidtransService $midtrans)
-    {
-    }
-
-    /** DP hanya bisa dibayar selama pesanan menunggu pembayaran dan belum melewati batas waktu. */
+    /** Bukti bayar hanya bisa dikirim selama pesanan menunggu pembayaran dan belum lewat batas waktu. */
     public function isPayable(Rental $rental): bool
     {
         return $rental->status === 'pending_payment'
@@ -27,248 +24,123 @@ class PaymentService
             && $rental->expires_at->isFuture();
     }
 
-    /**
-     * Snap token untuk pembayaran DP. Token dibuat sekali lalu dipakai ulang: Midtrans
-     * menolak order_id yang sama untuk token kedua, dan token yang sama boleh dipakai
-     * membuka ulang popup selama belum kedaluwarsa.
-     *
-     * @throws PaymentException
-     * @throws MidtransException
-     */
-    public function startDpPayment(Rental $rental): string
+    /** Penyewa mengunggah bukti bayar DP: pesanan masuk antrean verifikasi admin. */
+    public function submitDpProof(Rental $rental, UploadedFile $file): Payment
     {
-        if (! $this->isPayable($rental)) {
-            throw new PaymentException('Pesanan ini tidak dapat dibayar (sudah diproses, dibatalkan, atau melewati batas waktu).');
+        $disk = Storage::disk('local');
+        $path = $disk->putFile('payments/proof', $file);
+        $oldPath = null;
+
+        try {
+            $payment = DB::transaction(function () use ($rental, $path, &$oldPath) {
+                $locked = Rental::lockForUpdate()->findOrFail($rental->id);
+
+                if (! $this->isPayable($locked)) {
+                    throw new PaymentException('Pesanan ini tidak dapat dibayar (sudah diproses, dibatalkan, atau melewati batas waktu).');
+                }
+
+                $payment = $this->dpPayment($locked);
+
+                if ($payment->payment_status !== 'pending') {
+                    throw new PaymentException('Pembayaran DP untuk pesanan ini sudah diproses.');
+                }
+
+                $oldPath = $payment->proof_photo; // unggah ulang setelah ditolak
+
+                $payment->update([
+                    'proof_photo' => $path,
+                    'proof_uploaded_at' => now(),
+                    'rejection_reason' => null,
+                ]);
+                $locked->update(['status' => 'pending_verification']);
+
+                return $payment;
+            });
+        } catch (Throwable $e) {
+            $disk->delete($path);
+            throw $e;
         }
 
-        return DB::transaction(function () use ($rental) {
-            // Kunci baris agar klik ganda tidak membuat dua token
-            $payment = Payment::where('rental_id', $rental->id)
-                ->where('type', 'dp')
-                ->lockForUpdate()
-                ->first();
+        if ($oldPath) {
+            $disk->delete($oldPath);
+        }
 
-            if (! $payment || $payment->payment_status !== 'pending') {
-                throw new PaymentException('Pembayaran DP untuk pesanan ini tidak ditemukan atau sudah diproses.');
-            }
-
-            if ($payment->snap_token) {
-                return $payment->snap_token;
-            }
-
-            $token = $this->midtrans->createSnapToken($this->snapParams($rental, $payment));
-            $payment->update(['snap_token' => $token]);
-
-            return $token;
-        });
+        return $payment;
     }
 
-    /**
-     * Memproses notifikasi Midtrans (dari webhook maupun dari Status API).
-     * Idempotent: notifikasi yang sama boleh datang berulang kali.
-     * Pemanggil webhook wajib memverifikasi signature lebih dulu.
-     */
-    public function applyNotification(array $payload): ?Payment
+    /** Admin menyetujui DP + dokumen sekaligus. */
+    public function approveDp(Rental $rental, User $admin): void
     {
-        $orderId = $payload['order_id'] ?? null;
-        $newStatus = $this->mapStatus($payload);
+        DB::transaction(function () use ($rental, $admin) {
+            [$locked, $payment] = $this->lockForVerification($rental);
 
-        if (! is_string($orderId) || $newStatus === null) {
-            return null;
-        }
-
-        return DB::transaction(function () use ($payload, $orderId, $newStatus) {
-            $payment = Payment::where('order_id', $orderId)->lockForUpdate()->first();
-
-            if (! $payment) {
-                return null;
-            }
-
-            // Nominal harus sama dengan yang kita minta
-            if (isset($payload['gross_amount'])
-                && (int) round((float) $payload['gross_amount']) !== (int) round((float) $payment->gross_amount)) {
-                Log::error('Midtrans: nominal notifikasi tidak cocok, diabaikan', [
-                    'order_id' => $orderId,
-                    'expected' => $payment->gross_amount,
-                    'received' => $payload['gross_amount'],
-                ]);
-
-                return $payment;
-            }
-
-            if ($this->isFinal($payment, $newStatus)) {
-                return $payment;
-            }
-
-            $payment->fill([
-                'transaction_id' => $payload['transaction_id'] ?? $payment->transaction_id,
-                'payment_type' => $payload['payment_type'] ?? $payment->payment_type,
-                'payment_status' => $newStatus,
-                'raw_response' => $payload,
+            $payment->update([
+                'payment_status' => 'settlement',
+                'payment_type' => 'qris',
+                'paid_at' => now(),
+                'received_by' => $admin->id,
             ]);
 
-            if ($newStatus === 'settlement') {
-                $payment->paid_at = $this->parseTime($payload['settlement_time'] ?? null);
-            }
+            $locked->verification()->update([
+                'status' => 'approved',
+                'verified_by' => $admin->id,
+                'verified_at' => now(),
+            ]);
 
-            $payment->save();
-
-            if ($payment->type === 'dp') {
-                $this->applyToRentalForDp($payment, $newStatus);
-            }
-
-            return $payment;
+            $locked->update(['status' => 'approved', 'payment_status' => 'dp_paid']);
         });
     }
 
-    /**
-     * Menarik status terbaru dari Midtrans untuk DP yang masih menunggu.
-     * Berguna saat webhook tidak bisa masuk (mis. localhost) dan sebagai jaring pengaman
-     * bila notifikasi terlewat. Tidak pernah melempar error ke pemanggil.
-     */
-    public function syncStatus(Rental $rental): void
+    /** Bukti bayar ditolak (buram, nominal salah, dsb.): penyewa boleh unggah ulang. */
+    public function rejectDpProof(Rental $rental, string $reason): void
     {
-        $payment = $rental->payments()
-            ->where('type', 'dp')
-            ->where('payment_status', 'pending')
-            ->whereNotNull('snap_token')
-            ->first();
+        $oldPath = null;
+
+        DB::transaction(function () use ($rental, $reason, &$oldPath) {
+            [$locked, $payment] = $this->lockForVerification($rental);
+
+            $oldPath = $payment->proof_photo;
+
+            $payment->update([
+                'proof_photo' => null,
+                'proof_uploaded_at' => null,
+                'rejection_reason' => $reason,
+            ]);
+
+            $locked->update([
+                'status' => 'pending_payment',
+                'expires_at' => now()->addMinutes((int) config('rental.lock_minutes')),
+            ]);
+        });
+
+        if ($oldPath) {
+            Storage::disk('local')->delete($oldPath);
+        }
+    }
+
+    private function dpPayment(Rental $rental): Payment
+    {
+        $payment = Payment::where('rental_id', $rental->id)->where('type', 'dp')->lockForUpdate()->first();
 
         if (! $payment) {
-            return;
+            throw new PaymentException('Data pembayaran DP tidak ditemukan.');
         }
 
-        // Batasi frekuensi panggilan ke Midtrans
-        if (! Cache::add("midtrans-sync:{$payment->id}", 1, 4)) {
-            return;
-        }
-
-        try {
-            $status = $this->midtrans->fetchStatus($payment->order_id);
-
-            if ($status !== null) {
-                $this->applyNotification($status);
-            }
-        } catch (Throwable $e) {
-            Log::warning('Midtrans: sinkronisasi status gagal', [
-                'order_id' => $payment->order_id,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        return $payment;
     }
 
-    /** Status Midtrans -> payments.payment_status. Null = tidak diproses otomatis. */
-    private function mapStatus(array $payload): ?string
+    /** @return array{0: Rental, 1: Payment} */
+    private function lockForVerification(Rental $rental): array
     {
-        $status = $payload['transaction_status'] ?? null;
-        $fraud = $payload['fraud_status'] ?? null;
+        $locked = Rental::lockForUpdate()->findOrFail($rental->id);
+        $payment = $this->dpPayment($locked);
 
-        return match ($status) {
-            'settlement' => 'settlement',
-            'capture' => $fraud === 'challenge' ? 'pending' : 'settlement',
-            'pending', 'authorize' => 'pending',
-            'expire' => 'expire',
-            'cancel' => 'cancel',
-            'deny', 'failure' => 'deny',
-            // refund, partial_refund, chargeback, dst.: dicatat manual oleh admin
-            default => null,
-        };
-    }
-
-    /**
-     * settlement dan refund tidak pernah ditimpa. expire/cancel/deny hanya boleh ditimpa
-     * settlement, karena uang yang benar-benar diterima adalah kebenaran yang harus tercatat.
-     */
-    private function isFinal(Payment $payment, string $newStatus): bool
-    {
-        if (in_array($payment->payment_status, ['settlement', 'refund'], true)) {
-            return true;
+        if ($locked->status !== 'pending_verification'
+            || $payment->payment_status !== 'pending'
+            || ! $payment->proof_photo) {
+            throw new PaymentException('Pesanan ini tidak sedang menunggu verifikasi pembayaran.');
         }
 
-        if (in_array($payment->payment_status, ['expire', 'cancel', 'deny'], true)) {
-            return $newStatus !== 'settlement';
-        }
-
-        return false;
-    }
-
-    private function applyToRentalForDp(Payment $payment, string $newStatus): void
-    {
-        $rental = Rental::lockForUpdate()->find($payment->rental_id);
-
-        if (! $rental) {
-            return;
-        }
-
-        if ($newStatus === 'settlement') {
-            if ($rental->status === 'pending_payment') {
-                $rental->update(['status' => 'pending_verification', 'payment_status' => 'dp_paid']);
-
-                return;
-            }
-
-            // DP masuk setelah pesanan kedaluwarsa/dibatalkan: jangan hidupkan kembali secara otomatis
-            Log::warning('Midtrans: DP diterima untuk pesanan yang tidak lagi menunggu pembayaran', [
-                'rental_id' => $rental->id,
-                'status' => $rental->status,
-            ]);
-
-            $note = "Pembayaran DP diterima setelah pesanan berstatus {$rental->status}; perlu ditangani admin (refund atau pemulihan jadwal).";
-            $rental->update(['notes' => trim(($rental->notes ? $rental->notes . "\n" : '') . $note)]);
-
-            return;
-        }
-
-        if ($rental->status !== 'pending_payment') {
-            return;
-        }
-
-        match ($newStatus) {
-            'expire' => $rental->update(['status' => 'expired']),
-            'cancel' => $rental->update(['status' => 'cancelled', 'cancelled_reason' => 'Pembayaran DP dibatalkan.']),
-            'deny' => $rental->update(['status' => 'cancelled', 'cancelled_reason' => 'Pembayaran DP ditolak.']),
-            default => null,
-        };
-    }
-
-    private function snapParams(Rental $rental, Payment $payment): array
-    {
-        $rental->loadMissing(['user', 'bike']);
-
-        $amount = (int) round((float) $payment->gross_amount);
-
-        // Masa berlaku pembayaran = sisa waktu kunci slot (expires_at), minimal 1 menit
-        $remainingMinutes = max(1, (int) ceil(($rental->expires_at->getTimestamp() - now()->getTimestamp()) / 60));
-
-        return [
-            'transaction_details' => [
-                'order_id' => $payment->order_id,
-                'gross_amount' => $amount,
-            ],
-            'item_details' => [[
-                'id' => 'DP-' . $rental->booking_code,
-                'price' => $amount,
-                'quantity' => 1,
-                'name' => Str::limit('DP sewa ' . $rental->bike->name, 50, ''),
-            ]],
-            'customer_details' => array_filter([
-                'first_name' => Str::limit($rental->user->name, 50, ''),
-                'email' => $rental->user->email,
-                'phone' => $rental->user->phone_number,
-            ]),
-            'expiry' => [
-                'unit' => 'minutes',
-                'duration' => $remainingMinutes,
-            ],
-        ];
-    }
-
-    private function parseTime(?string $value): Carbon
-    {
-        try {
-            return $value ? Carbon::parse($value) : now();
-        } catch (Throwable) {
-            return now();
-        }
+        return [$locked, $payment];
     }
 }

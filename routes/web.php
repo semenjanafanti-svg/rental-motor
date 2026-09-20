@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\BikeController;
 use App\Http\Controllers\BookingController;
-use App\Http\Controllers\MidtransNotificationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RentalController;
@@ -17,17 +16,13 @@ Route::get('/motor/{bike}/availability', [BikeController::class, 'availability']
 Route::get('/motor/{bike}/available-dates', [BikeController::class, 'dates'])->name('bikes.dates');
 Route::get('/motor/{bike}/quote', [BikeController::class, 'quote'])->name('bikes.quote');
 
-// Webhook Midtrans: tanpa login, dilindungi verifikasi signature_key
-Route::post('/midtrans/notification', MidtransNotificationController::class)->name('midtrans.notification');
-
 // Khusus customer
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/motor/{bike}/checkout', [BookingController::class, 'create'])->name('bookings.create');
     Route::post('/motor/{bike}/checkout', [BookingController::class, 'store'])->name('bookings.store');
     Route::get('/riwayat', [RentalController::class, 'index'])->name('rentals.index');
     Route::get('/riwayat/{rental}', [RentalController::class, 'show'])->name('rentals.show');
-    Route::post('/riwayat/{rental}/bayar', [PaymentController::class, 'snapToken'])->name('rentals.pay');
-    Route::get('/riwayat/{rental}/status', [RentalController::class, 'status'])->name('rentals.status');
+    Route::post('/riwayat/{rental}/bukti-bayar', [PaymentController::class, 'storeProof'])->name('rentals.proof');
 });
 
 // Tujuan setelah login (Breeze mengarah ke route bernama "dashboard")

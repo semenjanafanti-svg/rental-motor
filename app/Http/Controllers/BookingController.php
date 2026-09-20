@@ -8,12 +8,17 @@ use App\Services\BookingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Throwable;
 
 class BookingController extends Controller
 {
-    public function create(Bike $bike): View|RedirectResponse
+    /**
+     * Halaman checkout. Jadwal datang dari halaman detail motor lewat query string
+     * (start_date, start_time, end_date) dan dihitung ulang oleh server.
+     */
+    public function create(Request $request, Bike $bike, BookingService $booking): View|RedirectResponse
     {
         if ($bike->status !== 'available') {
             return redirect()
@@ -21,10 +26,32 @@ class BookingController extends Controller
                 ->withErrors(['booking' => 'Motor ini sedang tidak tersedia untuk disewa.']);
         }
 
+        $schedule = $request->only(['start_date', 'start_time', 'end_date']);
+
+        $validator = Validator::make($schedule, [
+            'start_date' => ['required', 'date_format:Y-m-d'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_date' => ['required', 'date_format:Y-m-d'],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()
+                ->route('bikes.show', $bike)
+                ->withErrors(['booking' => 'Pilih jadwal sewa terlebih dahulu.']);
+        }
+
+        try {
+            $quote = $booking->quote($bike, $schedule['start_date'], $schedule['start_time'], $schedule['end_date']);
+        } catch (BookingException $e) {
+            return redirect()
+                ->route('bikes.show', ['bike' => $bike] + $schedule)
+                ->withErrors(['booking' => $e->getMessage()]);
+        }
+
         return view('bookings.create', [
             'bike' => $bike,
-            'minDays' => max(1, (int) config('rental.min_days')),
-            'maxDays' => (int) config('rental.max_days'),
+            'schedule' => $schedule,
+            'quote' => $quote,
             'lockMinutes' => (int) config('rental.lock_minutes'),
         ]);
     }
@@ -83,6 +110,6 @@ class BookingController extends Controller
 
         return redirect()
             ->route('rentals.show', $rental)
-            ->with('status', 'Pemesanan berhasil dibuat. Selesaikan pembayaran DP sebelum batas waktu.');
+            ->with('status', 'Pesanan dibuat. Scan QRIS, bayar DP, lalu unggah bukti pembayaran sebelum batas waktu.');
     }
 }

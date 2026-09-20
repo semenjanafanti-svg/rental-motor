@@ -35,7 +35,7 @@
                 <li>Anda memilih tanggal mulai, jam mulai, dan tanggal pengembalian. Jam pengembalian otomatis sama dengan jam mulai.</li>
                 <li>Keterlambatan dikenai denda per jam sesuai tarif di atas.</li>
                 <li>Motor diserahkan dengan bensin penuh dan harus dikembalikan dalam kondisi yang sama.</li>
-                <li>DP {{ $dpPercent }}% dibayar online, sisanya dilunasi di lokasi saat serah terima.</li>
+                <li>DP {{ $dpPercent }}% dibayar via QRIS (unggah bukti pembayaran), sisanya dilunasi di lokasi saat serah terima.</li>
                 <li>Wajib mengunggah KTP dan SIM C.</li>
             </ul>
         </div>
@@ -69,13 +69,73 @@
                         Akun staf tidak dapat membuat pemesanan.
                     </div>
                 @else
-                    <a href="{{ route('bookings.create', $bike) }}"
-                       class="block rounded-md bg-indigo-600 px-4 py-3 text-center font-medium text-white hover:bg-indigo-700">
-                        Pesan Sekarang
-                    </a>
-                    @guest
-                        <p class="mt-2 text-center text-xs text-gray-500">Anda akan diminta masuk atau mendaftar terlebih dahulu.</p>
-                    @endguest
+                    {{-- Form GET: jadwal dikirim lewat query string ke halaman checkout --}}
+                    <form id="schedule-form" method="GET" action="{{ route('bookings.create', $bike) }}"
+                          data-dates-url="{{ route('bikes.dates', $bike, false) }}"
+                          data-quote-url="{{ route('bikes.quote', $bike, false) }}"
+                          data-min-days="{{ $minDays }}" data-max-days="{{ $maxDays }}"
+                          class="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
+                        <h2 class="font-semibold">Pilih jadwal sewa</h2>
+
+                        <div>
+                            <label for="start_time" class="mb-1 block text-sm font-medium">Jam mulai</label>
+                            <input type="text" id="start_time" name="start_time"
+                                   value="{{ $schedule['start_time'] ?? '08:00' }}"
+                                   autocomplete="off" required
+                                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Jam pengembalian otomatis sama dengan jam mulai.</p>
+                        </div>
+
+                        <div>
+                            <label for="start_date" class="mb-1 block text-sm font-medium">Tanggal mulai</label>
+                            <input type="text" id="start_date" name="start_date"
+                                   value="{{ $schedule['start_date'] ?? '' }}"
+                                   autocomplete="off" required placeholder="Pilih tanggal yang tersedia"
+                                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Hanya tanggal yang tersedia pada jam mulai tersebut yang bisa dipilih.</p>
+                        </div>
+
+                        <div>
+                            <label for="end_date" class="mb-1 block text-sm font-medium">Tanggal pengembalian</label>
+                            <input type="text" id="end_date" name="end_date"
+                                   value="{{ $schedule['end_date'] ?? '' }}"
+                                   autocomplete="off" required placeholder="Pilih tanggal pengembalian"
+                                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Minimal {{ $minDays }} hari, maksimal {{ $maxDays }} hari.</p>
+                        </div>
+
+                        {{-- ID elemen di bawah dipakai oleh resources/js/rental.js --}}
+                        <div id="quote-box" class="rounded-md bg-gray-50 p-4 text-sm">
+                            <p id="quote-placeholder" class="text-gray-500">
+                                Pilih jam mulai, tanggal mulai, dan tanggal pengembalian untuk melihat harga.
+                            </p>
+                            <p id="quote-error" class="hidden text-red-600"></p>
+
+                            <dl id="quote-ok" class="hidden space-y-2">
+                                <div class="flex justify-between"><dt>Mulai</dt><dd id="q-start"></dd></div>
+                                <div class="flex justify-between"><dt>Kembali (otomatis)</dt><dd id="q-end"></dd></div>
+                                <div class="flex justify-between"><dt>Durasi</dt><dd id="q-days"></dd></div>
+                                <div class="flex justify-between border-t pt-2"><dt>Total harga</dt><dd id="q-total"></dd></div>
+                                <div class="flex justify-between font-semibold">
+                                    <dt>DP ({{ $dpPercent }}%, dibayar sekarang)</dt><dd id="q-dp"></dd>
+                                </div>
+                                <div class="flex justify-between text-gray-600">
+                                    <dt>Sisa pelunasan (di lokasi)</dt><dd id="q-balance"></dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <button type="submit" disabled
+                                class="block w-full rounded-md bg-indigo-600 px-4 py-3 text-center font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300">
+                            Sewa
+                        </button>
+
+                        @guest
+                            <p class="text-center text-xs text-gray-500">
+                                Anda akan diminta masuk atau mendaftar terlebih dahulu. Jadwal yang dipilih tetap tersimpan.
+                            </p>
+                        @endguest
+                    </form>
                 @endif
             </div>
         </div>

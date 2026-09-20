@@ -11,6 +11,7 @@ class Payment extends Model
         'rental_id', 'order_id', 'transaction_id', 'type', 'method', 'payment_type',
         'gross_amount', 'payment_status', 'snap_token', 'paid_at',
         'refunded_amount', 'received_by', 'raw_response',
+        'proof_photo', 'proof_uploaded_at', 'rejection_reason',
     ];
 
     protected function casts(): array
@@ -19,6 +20,7 @@ class Payment extends Model
             'gross_amount' => 'decimal:2',
             'refunded_amount' => 'decimal:2',
             'paid_at' => 'datetime',
+            'proof_uploaded_at' => 'datetime',
             'raw_response' => 'array',
         ];
     }

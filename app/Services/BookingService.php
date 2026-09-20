@@ -97,7 +97,7 @@ class BookingService
                 'rental_id' => $rental->id,
                 'order_id' => $rental->booking_code . '-DP',
                 'type' => 'dp',
-                'method' => 'midtrans',
+                'method' => 'manual_transfer', // QRIS statis + bukti transfer, diverifikasi admin
                 'gross_amount' => $price['dp_amount'],
                 'payment_status' => 'pending',
             ]);

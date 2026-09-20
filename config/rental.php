@@ -6,9 +6,14 @@ return [
     'min_days' => 1,   // minimal 1 hari = 24 jam
     'max_days' => 30,  // batas atas durasi sewa (asumsi, ubah sesuai kebijakan)
 
-    // Masa kunci slot sementara setelah checkout (menit).
-    // Masa berlaku Snap Midtrans harus disamakan dengan nilai ini.
-    'lock_minutes' => 30,
+    // Batas waktu bayar DP setelah checkout (menit): transfer QRIS + unggah bukti.
+    // Slot motor terkunci selama waktu ini; lewat dari itu pesanan expired.
+    'lock_minutes' => 60,
+
+    // QRIS toko (gambar di public/images/qris.png).
+    'qris' => [
+        'image' => 'images/qris.png',
+    ],
 
     // Persentase DP dari total harga, dan kelipatan pembulatan ke atas (rupiah).
     'dp_percent' => 30,

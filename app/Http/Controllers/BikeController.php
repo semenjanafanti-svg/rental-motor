@@ -39,13 +39,15 @@ class BikeController extends Controller
         ]);
     }
 
-    public function show(Bike $bike): View
+    public function show(Request $request, Bike $bike): View
     {
         return view('bikes.show', [
             'bike' => $bike,
             'minDays' => max(1, (int) config('rental.min_days')),
             'maxDays' => (int) config('rental.max_days'),
             'dpPercent' => config('rental.dp_percent'),
+            // Jadwal yang sudah dipilih (dari checkout "Ubah jadwal" atau redirect login)
+            'schedule' => $request->only(['start_date', 'start_time', 'end_date']),
         ]);
     }
 
