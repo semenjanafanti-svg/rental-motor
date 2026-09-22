@@ -6,6 +6,7 @@ use App\Exceptions\PaymentException;
 use App\Models\Payment;
 use App\Models\Rental;
 use App\Models\User;
+use App\Support\Format;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -116,6 +117,113 @@ class PaymentService
         if ($oldPath) {
             Storage::disk('local')->delete($oldPath);
         }
+    }
+
+    /**
+     * KTP/SIM ditolak: pesanan dibatalkan. DP sudah masuk, jadi dicatat sebagai diterima
+     * dan wajib dikembalikan penuh (refund manual, lalu catat lewat recordDpRefund).
+     */
+    public function rejectDocuments(Rental $rental, User $admin, string $reason): void
+    {
+        DB::transaction(function () use ($rental, $admin, $reason) {
+            [$locked, $payment] = $this->lockForVerification($rental);
+
+            $payment->update([
+                'payment_status' => 'settlement',
+                'payment_type' => 'qris',
+                'paid_at' => now(),
+                'received_by' => $admin->id,
+            ]);
+
+            $locked->verification()->update([
+                'status' => 'rejected',
+                'rejection_reason' => $reason,
+                'verified_by' => $admin->id,
+                'verified_at' => now(),
+            ]);
+
+            $note = 'Dokumen ditolak; DP ' . Format::rupiah($payment->gross_amount) . ' perlu dikembalikan penuh (refund manual).';
+
+            $locked->update([
+                'status' => 'cancelled',
+                'payment_status' => 'dp_paid',
+                'cancelled_reason' => 'Dokumen ditolak: ' . $reason,
+                'notes' => trim(($locked->notes ? $locked->notes . "\n" : '') . $note),
+            ]);
+        });
+    }
+
+    /** Admin sudah mentransfer balik DP ke penyewa: catat refund penuh. */
+    public function recordDpRefund(Rental $rental): void
+    {
+        DB::transaction(function () use ($rental) {
+            $locked = Rental::lockForUpdate()->findOrFail($rental->id);
+            $payment = $this->dpPayment($locked);
+
+            if ($locked->status !== 'cancelled' || $payment->payment_status !== 'settlement') {
+                throw new PaymentException('Tidak ada DP yang perlu dikembalikan untuk pesanan ini.');
+            }
+
+            $payment->update([
+                'refunded_amount' => $payment->gross_amount,
+                'payment_status' => 'refund',
+            ]);
+            $locked->update(['payment_status' => 'refunded']);
+        });
+    }
+
+    /** Customer boleh batal hanya sampai H-N (config rental.cancellation.min_days_before). */
+    public function canCancel(Rental $rental): bool
+    {
+        if (! in_array($rental->status, ['pending_payment', 'pending_verification', 'approved'], true)) {
+            return false;
+        }
+
+        $days = (int) now()->startOfDay()->diffInDays($rental->start_time->copy()->startOfDay(), false);
+
+        return $days >= (int) config('rental.cancellation.min_days_before');
+    }
+
+    /** Customer membatalkan. Bila DP sudah dikirim, admin mengembalikannya lewat aksi "Catat refund DP". */
+    public function cancelByCustomer(Rental $rental): void
+    {
+        DB::transaction(function () use ($rental) {
+            $locked = Rental::lockForUpdate()->findOrFail($rental->id);
+
+            if (! $this->canCancel($locked)) {
+                throw new PaymentException(
+                    'Pesanan tidak dapat dibatalkan. Batas pembatalan H-' . config('rental.cancellation.min_days_before') . '.'
+                );
+            }
+
+            $payment = $this->dpPayment($locked);
+
+            // Belum kirim bukti bayar: cukup batalkan.
+            if ($locked->status === 'pending_payment') {
+                $payment->update(['payment_status' => 'cancel']);
+                $locked->update(['status' => 'cancelled', 'cancelled_reason' => 'Dibatalkan oleh penyewa.']);
+
+                return;
+            }
+
+            // DP sudah dikirim: catat diterima supaya alur refund yang ada (recordDpRefund) bisa dipakai.
+            if ($payment->payment_status === 'pending') {
+                $payment->update([
+                    'payment_status' => 'settlement',
+                    'payment_type' => 'qris',
+                    'paid_at' => now(),
+                ]);
+            }
+
+            $locked->update([
+                'status' => 'cancelled',
+                'payment_status' => 'dp_paid',
+                'cancelled_reason' => 'Dibatalkan oleh penyewa.',
+                'notes' => trim(($locked->notes ? $locked->notes . "\n" : '')
+                    . 'Dibatalkan penyewa; DP ' . Format::rupiah($payment->gross_amount)
+                    . ' dikembalikan penuh. Cek mutasi rekening sebelum transfer refund.'),
+            ]);
+        });
     }
 
     private function dpPayment(Rental $rental): Payment

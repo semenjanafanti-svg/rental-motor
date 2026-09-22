@@ -1,0 +1,572 @@
+/* =========================================================
+   THEME PANEL ADMIN — Filament v4/v5 (CSS statis, tanpa Tailwind/Vite)
+
+   Dimuat lewat render hook di AdminPanelProvider, BUKAN lewat ->viteTheme(),
+   supaya tidak bentrok dengan Tailwind v3 di frontend customer.
+
+   Kenapa tidak perlu !important:
+   CSS bawaan Filament ditulis di dalam @layer. Aturan di luar layer (seperti
+   file ini) selalu menang atas aturan di dalam layer, apa pun spesifisitasnya.
+
+   Dua strategi:
+   1. Skala abu-abu Filament (--gray-50 ... --gray-950) diganti dengan skala
+      hangat bernuansa zaitun dari palet prototipe. Hampir semua border, teks
+      sekunder, dan latar Filament otomatis ikut.
+   2. Komponen yang tampilannya khas prototipe (topbar, sidebar, tombol, badge,
+      tabel) ditimpa langsung dengan token di bawah.
+
+   Token disalin dari resources/css/app.css (frontend customer). Kalau warna
+   berubah, samakan di kedua file.
+========================================================= */
+
+/* =========================================================
+   TOKEN
+   Mode gelap Filament memakai class .dark pada <html>, bukan media query,
+   jadi token gelap ditulis di :root.dark.
+========================================================= */
+:root {
+    color-scheme: light;
+    --ink: #1c1d1a;
+    --paper: #eef0e7;
+    --surface: #fdfdf9;
+    --line: #d7dacb;
+    --muted: #5f6354;
+    --amber: #f0b429;
+    --amber-ink: #5c3d05;
+    --teal: #2f6f5e;
+    --teal-bg: #e2efe9;
+    --on-teal: #ffffff;
+    --rust: #c0392b;
+    --rust-bg: #f8e6e3;
+    --on-rust: #ffffff;
+    --shadow: 0 1px 2px rgba(28, 29, 26, .05), 0 10px 24px -18px rgba(28, 29, 26, .35);
+
+    /* Topbar mengikuti .topbar di frontend: latar --ink, teks --paper */
+    --bar-bg: var(--ink);
+    --bar-fg: var(--paper);
+    --bar-muted: color-mix(in srgb, var(--paper) 70%, transparent);
+    --bar-soft: color-mix(in srgb, var(--paper) 12%, transparent);
+
+    --font-display: 'Oswald', 'Arial Narrow', ui-sans-serif, system-ui, sans-serif;
+}
+
+:root.dark {
+    color-scheme: dark;
+    --ink: #f1f0e8;
+    --paper: #171813;
+    --surface: #202119;
+    --line: #34362b;
+    --muted: #a3a596;
+    --amber-ink: #2a1c02;
+    --teal: #4fae91;
+    --teal-bg: #173c31;
+    --on-teal: #0f2a22;
+    --rust: #e07362;
+    --rust-bg: #3b1f1a;
+    --on-rust: #2a0f0b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 24px -18px rgba(0, 0, 0, .6);
+}
+
+/* Skala abu-abu Filament diganti. :root:root (spesifisitas 0,2,0) mengalahkan
+   :root milik Filament walau urutan pemuatannya berbeda. */
+:root:root {
+    --gray-50: #f5f6ef;
+    --gray-100: #eceee3;
+    --gray-200: #d7dacb;
+    --gray-300: #c2c6b3;
+    --gray-400: #9a9e8c;
+    --gray-500: #6b6f5f;
+    --gray-600: #575b4c;
+    --gray-700: #42463a;
+    --gray-800: #2c2e26;
+    --gray-900: #202119;
+    --gray-950: #171813;
+}
+
+/* =========================================================
+   DASAR
+========================================================= */
+.fi-body {
+    background-color: var(--paper);
+    color: var(--ink);
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+/* =========================================================
+   TIPOGRAFI — Oswald untuk judul dan angka, Work Sans untuk isi
+   (Work Sans diset lewat ->font('Work Sans') di AdminPanelProvider)
+========================================================= */
+.fi-header-heading,
+.fi-simple-header-heading,
+.fi-section-header-heading,
+.fi-modal-heading,
+.fi-ta-header-heading,
+.fi-empty-state-heading,
+.fi-ta-empty-state-heading,
+.fi-account-widget-heading,
+.fi-wi-stats-overview-stat-value {
+    font-family: var(--font-display);
+    letter-spacing: .2px;
+}
+
+.fi-header-heading,
+.fi-simple-header-heading {
+    font-size: 1.625rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--ink);
+}
+
+.fi-header-subheading,
+.fi-simple-header-subheading {
+    font-size: .875rem;
+    color: var(--muted);
+}
+
+/* Label kolom info dan form: sama dengan .label di frontend */
+.fi-in-entry-label,
+.fi-fo-field-label-content {
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--muted);
+}
+
+.fi-link:not(.fi-color) {
+    color: var(--teal);
+    font-weight: 600;
+}
+
+/* =========================================================
+   BRAND — pelat "SM" amber + SEWAMOTOR, seperti .brand di frontend
+   (diisi lewat ->brandName(HtmlString) di AdminPanelProvider)
+========================================================= */
+.fi-logo {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .5px;
+    white-space: nowrap;
+}
+
+.fi-logo .brand-plate {
+    background: var(--amber);
+    color: var(--amber-ink);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.fi-topbar .fi-logo,
+.fi-sidebar-header .fi-logo {
+    color: var(--bar-fg);
+}
+
+.fi-simple-header .fi-logo {
+    font-size: 1.25rem;
+    color: var(--ink);
+}
+
+/* =========================================================
+   TOPBAR & HEADER SIDEBAR (mobile) — bar gelap dengan garis putus-putus amber
+========================================================= */
+.fi-topbar,
+.fi-sidebar-header {
+    background-color: var(--bar-bg);
+    color: var(--bar-fg);
+    box-shadow: none;
+    border-bottom: 3px solid transparent;
+    border-image: repeating-linear-gradient(90deg, var(--amber) 0 22px, transparent 22px 38px) 3;
+}
+
+.fi-topbar .fi-icon-btn,
+.fi-sidebar-header .fi-icon-btn {
+    color: var(--bar-muted);
+}
+
+.fi-topbar .fi-icon-btn:hover,
+.fi-sidebar-header .fi-icon-btn:hover {
+    color: var(--bar-fg);
+    background-color: var(--bar-soft);
+}
+
+/* Pencarian global di topbar */
+.fi-topbar .fi-input-wrp {
+    background-color: var(--bar-soft);
+    border-color: transparent;
+}
+
+.fi-topbar input.fi-input {
+    color: var(--bar-fg);
+}
+
+.fi-topbar input.fi-input::placeholder {
+    color: var(--bar-muted);
+}
+
+.fi-topbar .fi-input-wrp .fi-icon {
+    color: var(--bar-muted);
+}
+
+/* =========================================================
+   SIDEBAR — terang (surface), item aktif bergaris amber di kiri
+========================================================= */
+.fi-sidebar {
+    background-color: var(--surface);
+    border-inline-end: 1px solid var(--line);
+}
+
+@media (min-width: 64rem) {
+    .fi-sidebar,
+    .fi-sidebar.fi-sidebar-open {
+        box-shadow: none;
+    }
+}
+
+.fi-sidebar-group-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+}
+
+.fi-sidebar-group-btn .fi-icon,
+.fi-sidebar-item-btn > .fi-icon {
+    color: var(--muted);
+}
+
+.fi-sidebar-item-btn {
+    border-radius: .375rem;
+}
+
+.fi-sidebar-item-label {
+    color: var(--ink);
+}
+
+.fi-sidebar-item-btn:hover {
+    background-color: var(--paper);
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    background-color: var(--paper);
+    box-shadow: inset 3px 0 0 var(--amber);
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon {
+    color: var(--ink);
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+/* Badge jumlah di menu: pil solid merah, seperti .count di prototipe */
+.fi-sidebar-item-badge-ctn .fi-badge {
+    background-color: var(--rust);
+    color: var(--on-rust);
+    min-width: 1.125rem;
+    padding: 1px 7px;
+}
+
+/* =========================================================
+   KARTU — surface + border --line + shadow tipis, seperti .card
+========================================================= */
+.fi-section:not(.fi-section-not-contained):not(.fi-aside),
+.fi-section:not(.fi-section-not-contained).fi-aside > .fi-section-content-ctn,
+.fi-ta-ctn,
+.fi-wi-stats-overview-stat,
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window,
+.fi-dropdown-panel,
+.fi-global-search-results-ctn,
+.fi-fo-date-time-picker-panel,
+.fi-simple-main,
+.fi-fo-repeater-item,
+.fi-fo-builder-item,
+.fi-in-key-value,
+.fi-tabs:not(.fi-contained),
+.fi-no-notification:not(.fi-inline) {
+    background-color: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    box-shadow: var(--shadow);
+}
+
+/* =========================================================
+   TOMBOL — radius 6px, tebal 600, warna solid seperti .btn di prototipe
+========================================================= */
+.fi-btn {
+    border-radius: .375rem;
+    font-weight: 600;
+    letter-spacing: .2px;
+    transition: transform .12s ease, opacity .12s ease;
+}
+
+.fi-btn:not(.fi-disabled):not([disabled]):hover {
+    transform: translateY(-1px);
+}
+
+/* Warna dasar per jenis tombol */
+.fi-btn.fi-color-primary,
+.fi-btn.fi-color-warning {
+    --btn: var(--amber);
+    --on-btn: var(--amber-ink);
+}
+
+.fi-btn.fi-color-success,
+.fi-btn.fi-color-info {
+    --btn: var(--teal);
+    --on-btn: var(--on-teal);
+}
+
+.fi-btn.fi-color-danger {
+    --btn: var(--rust);
+    --on-btn: var(--on-rust);
+}
+
+/* Tombol berwarna: variabel --bg/--text milik Filament diarahkan ke warna palet */
+.fi-btn.fi-color:not(.fi-color-gray):not(.fi-outlined):not(label) {
+    --bg: var(--btn, var(--color-600));
+    --hover-bg: var(--btn, var(--color-600));
+    --dark-bg: var(--btn, var(--color-600));
+    --dark-hover-bg: var(--btn, var(--color-600));
+    --text: var(--on-btn, #fff);
+    --hover-text: var(--on-btn, #fff);
+    --dark-text: var(--on-btn, #fff);
+    --dark-hover-text: var(--on-btn, #fff);
+    border: 1px solid var(--btn, transparent);
+}
+
+.fi-btn.fi-color:not(.fi-color-gray):not(.fi-outlined):not(label):hover {
+    opacity: .9;
+}
+
+/* Tombol netral: transparan dengan border --ink (.btn.secondary) */
+.fi-btn:not(label):not(.fi-outlined):is(:not(.fi-color), .fi-color-gray) {
+    background-color: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    box-shadow: none;
+}
+
+.fi-btn:not(label):not(.fi-outlined):is(:not(.fi-color), .fi-color-gray):not(.fi-disabled):not([disabled]):hover {
+    background-color: var(--paper);
+}
+
+.fi-btn:not(label):not(.fi-outlined):is(:not(.fi-color), .fi-color-gray) > .fi-icon {
+    color: var(--muted);
+}
+
+/* =========================================================
+   BADGE — pil, huruf 11.5px tebal, sama seperti .badge
+========================================================= */
+.fi-badge {
+    border-radius: 9999px;
+    box-shadow: none;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .2px;
+    padding: 3px 9px;
+    background-color: var(--line);
+    color: var(--ink);
+}
+
+.fi-badge.fi-color-primary,
+.fi-badge.fi-color-warning {
+    background-color: var(--amber);
+    color: var(--amber-ink);
+}
+
+.fi-badge.fi-color-success,
+.fi-badge.fi-color-info {
+    background-color: var(--teal-bg);
+    color: var(--teal);
+}
+
+.fi-badge.fi-color-danger {
+    background-color: var(--rust-bg);
+    color: var(--rust);
+}
+
+.fi-badge.fi-color-gray {
+    background-color: var(--line);
+    color: var(--ink);
+}
+
+/* Titik status hanya di tabel dan infolist, bukan di badge menu */
+.fi-ta-cell .fi-badge::before,
+.fi-in-entry .fi-badge::before {
+    content: "●";
+    font-size: 8px;
+}
+
+/* =========================================================
+   TABEL
+========================================================= */
+.fi-ta-table > thead > tr {
+    background-color: transparent;
+}
+
+.fi-ta-header-cell {
+    padding-block: .625rem;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+}
+
+.fi-ta-header-cell .fi-ta-header-cell-sort-btn {
+    text-transform: inherit;
+}
+
+.fi-ta-row.fi-clickable:hover {
+    background-color: var(--paper);
+}
+
+/* =========================================================
+   FORM & INPUT — border --line, fokus --teal
+========================================================= */
+.fi-input-wrp {
+    background-color: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: .375rem;
+    box-shadow: none;
+}
+
+.fi-input-wrp:not(.fi-disabled):not(:has(.fi-ac-action:focus)):focus-within {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 1px var(--teal);
+}
+
+.fi-input-wrp.fi-invalid {
+    border-color: var(--rust);
+}
+
+.fi-input-wrp.fi-invalid:not(.fi-disabled):focus-within {
+    border-color: var(--rust);
+    box-shadow: 0 0 0 1px var(--rust);
+}
+
+.fi-input-wrp.fi-disabled {
+    background-color: var(--paper);
+}
+
+.fi-fo-field-wrp-error-message,
+.fi-fo-field .fi-fo-field-wrp-error-message {
+    color: var(--rust);
+}
+
+/* =========================================================
+   LAIN-LAIN
+========================================================= */
+.fi-dropdown-list-item:not(.fi-disabled):not([disabled]):hover,
+.fi-dropdown-list-item:not(.fi-disabled):not([disabled]):focus-visible {
+    background-color: var(--paper);
+}
+
+/* Foto KTP, SIM, dan bukti bayar */
+.fi-in-image:not(.fi-circular) img {
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+}
+
+.fi-pagination-item.fi-active .fi-pagination-item-btn {
+    background-color: var(--amber);
+}
+
+.fi-pagination-item.fi-active .fi-pagination-item-label {
+    color: var(--amber-ink);
+}
+
+.fi-tabs-item.fi-active {
+    background-color: var(--paper);
+    box-shadow: inset 0 -3px 0 var(--amber);
+}
+
+.fi-tabs-item.fi-active .fi-tabs-item-label,
+.fi-tabs-item.fi-active > .fi-icon {
+    color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fi-btn { transition: none; }
+    .fi-btn:not(.fi-disabled):not([disabled]):hover { transform: none; }
+}
+
+/* =========================================================
+   PENYESUAIAN LANJUTAN (samakan dengan prototipe)
+========================================================= */
+
+/* Badge hitungan di sidebar dan tab: merah solid seperti .count prototipe.
+   Spesifisitas lebih tinggi supaya menimpa aturan .fi-color-primary */
+.fi-sidebar-item-badge-ctn .fi-badge.fi-color,
+.fi-tabs-item .fi-badge.fi-color {
+    background-color: var(--rust);
+    color: var(--on-rust);
+    padding: 1px 7px;
+    min-width: 1.125rem;
+}
+
+/* Tab status: rata kiri dengan garis bawah amber, seperti .custnav prototipe */
+.fi-tabs:not(.fi-contained) {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    margin-inline: 0;
+    width: 100%;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item {
+    border-radius: 0;
+    padding: .75rem .875rem;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item .fi-tabs-item-label {
+    font-family: var(--font-display);
+    letter-spacing: .3px;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active {
+    background: transparent;
+    box-shadow: inset 0 -3px 0 var(--amber);
+}
+
+/* Tabel lebih padat: padding sel 11px 12px seperti prototipe */
+.fi-ta-text:not(.fi-inline) {
+    padding-block: .6875rem;
+}
+
+.fi-ta-cell {
+    font-size: .84375rem;
+}
+
+/* Judul halaman: 26px seperti .page-title */
+.fi-header-heading {
+    font-size: 1.625rem;
+}
+
+/* Bar tab disembunyikan: navigasi antrean sudah ada di sidebar.
+   Filter tetap jalan lewat ?tab= dari getTabs() */
+.fi-resource-list-records-page .fi-sc-tabs,
+.fi-resource-list-records-page .fi-tabs {
+    display: none;
+}
+
+/* Reminder overdue: baris merah muda seperti prototipe */
+.fi-ta-row.fi-row-overdue {
+    background-color: var(--rust-bg);
+}

@@ -114,7 +114,7 @@ class BookingServiceTest extends TestCase
         $this->assertEquals(100000, $rental->total_price);
         $this->assertEquals(30000, $rental->dp_amount);
         $this->assertEquals(70000, $rental->balance_amount);
-        $this->assertTrue($rental->expires_at->equalTo(now()->addMinutes(30)));
+        $this->assertTrue($rental->expires_at->equalTo(now()->addMinutes(10)));
 
         $this->assertDatabaseHas('verifications', ['rental_id' => $rental->id, 'status' => 'pending']);
         $this->assertDatabaseHas('payments', [
@@ -143,10 +143,10 @@ class BookingServiceTest extends TestCase
     {
         $rental = $this->service()->create(
             User::factory()->create(),
-            $this->data($this->bike(), '2026-09-20', '14:30', '2026-09-22')
+            $this->data($this->bike(), '2026-09-20', '14:00', '2026-09-22')
         );
 
-        $this->assertSame('2026-09-22 14:30', $rental->end_time->format('Y-m-d H:i'));
+        $this->assertSame('2026-09-22 14:00', $rental->end_time->format('Y-m-d H:i'));
         $this->assertSame(48, $rental->total_hours);
     }
 

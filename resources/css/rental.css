@@ -1,11 +1,149 @@
-/* Hari yang memiliki jadwal terisi di kalender ketersediaan (Flatpickr) */
-.flatpickr-day.has-booking {
-    background: #fee2e2;
-    border-color: #fecaca;
-    color: #991b1b;
+/* =========================================================
+   Flatpickr mengikuti token warna (terang/gelap).
+   File ini di-import SETELAH flatpickr.min.css (lihat rental.js),
+   jadi aturan dengan spesifisitas sama akan menimpa bawaan.
+========================================================= */
+
+.flatpickr-calendar {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    color: var(--ink);
+    font-family: inherit;
 }
 
-.flatpickr-day.has-booking:hover {
-    background: #fecaca;
-    border-color: #fca5a5;
+/* Kalender inline (detail motor) memenuhi lebar kartu */
+.flatpickr-calendar.inline {
+    width: 100%;
+    max-width: 100%;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
 }
+.flatpickr-calendar.inline .flatpickr-innerContainer,
+.flatpickr-calendar.inline .flatpickr-rContainer,
+.flatpickr-calendar.inline .flatpickr-days,
+.flatpickr-calendar.inline .dayContainer {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+}
+.flatpickr-calendar.inline .flatpickr-day {
+    max-width: none;
+}
+
+/* Panah popup */
+.flatpickr-calendar.arrowTop:before { border-bottom-color: var(--line); }
+.flatpickr-calendar.arrowTop:after { border-bottom-color: var(--surface); }
+.flatpickr-calendar.arrowBottom:before { border-top-color: var(--line); }
+.flatpickr-calendar.arrowBottom:after { border-top-color: var(--surface); }
+
+/* Bulan & tahun */
+.flatpickr-months .flatpickr-month,
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year {
+    color: var(--ink);
+    fill: var(--ink);
+    font-weight: 600;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: var(--surface);
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover {
+    background: var(--paper);
+}
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    color: var(--ink);
+    fill: var(--ink);
+}
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--teal);
+}
+span.flatpickr-weekday {
+    background: transparent;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+/* Hari */
+.flatpickr-day {
+    border-radius: 6px;
+    color: var(--ink);
+}
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+    background: var(--paper);
+    border-color: var(--line);
+}
+.flatpickr-day.today {
+    border-color: var(--ink);
+    font-weight: 700;
+}
+.flatpickr-day.today:hover,
+.flatpickr-day.today:focus {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+}
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay,
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    color: var(--muted);
+    opacity: .45;
+    background: transparent;
+    border-color: transparent;
+}
+
+/* Hari yang punya jadwal terisi. Harus sebelum .selected agar pilihan tetap terlihat */
+.flatpickr-day.has-booking {
+    background: var(--rust-bg);
+    border-color: transparent;
+    color: var(--rust);
+    opacity: 1;
+}
+.flatpickr-day.has-booking:hover {
+    background: var(--rust-bg);
+    border-color: var(--rust);
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+    opacity: 1;
+}
+
+/* Pemilih jam */
+.flatpickr-calendar.hasTime .flatpickr-time {
+    border-top: 1px solid var(--line);
+}
+.flatpickr-time input,
+.flatpickr-time .flatpickr-time-separator,
+.flatpickr-time .flatpickr-am-pm {
+    background: transparent;
+    color: var(--ink);
+}
+.flatpickr-time input:hover,
+.flatpickr-time input:focus,
+.flatpickr-time .flatpickr-am-pm:hover,
+.flatpickr-time .flatpickr-am-pm:focus,
+.numInputWrapper:hover {
+    background: var(--paper);
+}
+.numInputWrapper span {
+    border-color: var(--line);
+}
+.numInputWrapper span:hover {
+    background: var(--paper);
+}
+.numInputWrapper span.arrowUp:after { border-bottom-color: var(--muted); }
+.numInputWrapper span.arrowDown:after { border-top-color: var(--muted); }

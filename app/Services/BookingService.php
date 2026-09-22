@@ -148,7 +148,15 @@ class BookingService
         if ($days > $maxDays) {
             throw new InvalidBookingPeriodException("Durasi sewa maksimal {$maxDays} hari.");
         }
+        
+        $open = (int) config('rental.open_hour');
+        $close = (int) config('rental.close_hour');
 
+        if ($start->minute !== 0 || $start->hour < $open || $start->hour > $close) {
+            throw new InvalidBookingPeriodException(
+                sprintf('Jam mulai harus jam bulat antara %02d:00 dan %02d:00.', $open, $close)
+            );
+        }
         if ($start->lessThan(now())) {
             throw new InvalidBookingPeriodException('Waktu mulai tidak boleh di masa lalu.');
         }

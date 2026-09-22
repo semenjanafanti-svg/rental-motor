@@ -110,6 +110,19 @@ class AvailabilityService
         return $dates;
     }
 
+    /** ID motor yang terkunci pada rentang waktu tertentu (untuk filter katalog). */
+    public function busyBikeIds(CarbonInterface $from, CarbonInterface $to): array
+    {
+        return Rental::query()
+            ->whereIn('status', self::BLOCKING_STATUSES)
+            ->where(fn ($q) => $q->where('status', '!=', 'pending_payment')->orWhere('expires_at', '>', now()))
+            ->where('start_time', '<', $to)
+            ->where('end_time', '>', $from)
+            ->pluck('bike_id')
+            ->unique()
+            ->all();
+    }
+
     private function blockingQuery(int $bikeId): Builder
     {
         return Rental::query()

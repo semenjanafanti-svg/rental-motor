@@ -3,73 +3,79 @@
 @section('title', 'Checkout ' . $bike->name)
 
 @php
-    $fmt = fn ($value) => \Carbon\Carbon::parse($value)->locale('id')->translatedFormat('d M Y H:i');
+    $fmt = fn ($value) => \Carbon\Carbon::parse($value)->locale('id')->translatedFormat('d M Y, H:i');
 @endphp
 
 @section('content')
-    <a href="{{ route('bikes.show', ['bike' => $bike] + $schedule) }}" class="text-sm text-indigo-600 hover:underline">&larr; Ubah jadwal</a>
+    <div class="mx-auto max-w-2xl">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="{{ route('bikes.index') }}" class="link">Katalog</a>
+            <span aria-hidden="true">/</span>
+            <a href="{{ route('bikes.show', ['bike' => $bike] + $schedule) }}" class="link">{{ $bike->name }}</a>
+            <span aria-hidden="true">/</span>
+            <b class="text-ink">Checkout</b>
+        </nav>
 
-    <h1 class="mt-4 text-2xl font-semibold">Checkout {{ $bike->name }}</h1>
+        <h1 class="page-title">Checkout</h1>
+        <p class="page-sub">Periksa ringkasan pesanan, lalu unggah dokumen untuk diverifikasi.</p>
 
-    <form method="POST" action="{{ route('bookings.store', $bike) }}" enctype="multipart/form-data"
-          class="mt-6 grid gap-8 lg:grid-cols-2">
-        @csrf
-        <input type="hidden" name="start_date" value="{{ $schedule['start_date'] }}">
-        <input type="hidden" name="start_time" value="{{ $schedule['start_time'] }}">
-        <input type="hidden" name="end_date" value="{{ $schedule['end_date'] }}">
+        <form method="POST" action="{{ route('bookings.store', $bike) }}" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="start_date" value="{{ $schedule['start_date'] }}">
+            <input type="hidden" name="start_time" value="{{ $schedule['start_time'] }}">
+            <input type="hidden" name="end_date" value="{{ $schedule['end_date'] }}">
 
-        <div class="space-y-5 rounded-lg border border-gray-200 bg-white p-6">
-            <h2 class="font-semibold">Dokumen identitas</h2>
+            <h2 class="section-title mt-0">Ringkasan jadwal &amp; harga</h2>
+            <dl class="summary">
+                <div class="summary-row"><dt>Motor</dt><dd>{{ $bike->name }} ({{ $bike->license_plate }})</dd></div>
+                <div class="summary-row"><dt>Mulai</dt><dd>{{ $fmt($quote['start_at']) }}</dd></div>
+                <div class="summary-row"><dt>Kembali</dt><dd>{{ $fmt($quote['end_at']) }}</dd></div>
+                <div class="summary-row"><dt>Durasi</dt><dd>{{ $quote['days'] }} hari ({{ $quote['total_hours'] }} jam)</dd></div>
+                <div class="summary-row"><dt>Total sewa</dt><dd>{{ \App\Support\Format::rupiah($quote['total_price']) }}</dd></div>
+                <div class="summary-row summary-total"><dt>DP dibayar sekarang</dt><dd>{{ \App\Support\Format::rupiah($quote['dp_amount']) }}</dd></div>
+                <div class="summary-row"><dt>Sisa dibayar di lokasi</dt><dd>{{ \App\Support\Format::rupiah($quote['balance_amount']) }}</dd></div>
+            </dl>
 
-            <div>
-                <label for="ktp_photo" class="mb-1 block text-sm font-medium">Foto KTP</label>
-                <input type="file" id="ktp_photo" name="ktp_photo" accept="image/png,image/jpeg" required class="w-full text-sm">
-                @error('ktp_photo')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+            <div class="notice mt-4">
+                <b>Setelah menekan Buat Pesanan, DP harus dibayar dalam {{ $lockMinutes }} menit.</b>
+                <p class="hint mb-0">Jika lewat, pesanan hangus dan jadwal dilepas untuk penyewa lain. Harga dihitung ulang oleh server.</p>
             </div>
 
-            <div>
-                <label for="sim_photo" class="mb-1 block text-sm font-medium">Foto SIM C</label>
-                <input type="file" id="sim_photo" name="sim_photo" accept="image/png,image/jpeg" required class="w-full text-sm">
-                @error('sim_photo')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+            <h2 class="section-title">Unggah dokumen</h2>
+
+            <div class="mb-4" x-data="{ file: null }">
+                <label for="ktp_photo" class="label">Foto KTP</label>
+                <div class="filepick" :class="{ 'filepick-filled': file }">
+                    <input type="file" id="ktp_photo" name="ktp_photo" accept="image/png,image/jpeg" required
+                           @change="file = $event.target.files[0] ? $event.target.files[0].name : null">
+                    <span x-text="file ? '📎 ' + file : 'Ketuk untuk memilih foto KTP (JPG/PNG)'">Ketuk untuk memilih foto KTP (JPG/PNG)</span>
+                </div>
+                @error('ktp_photo')<p class="field-error">{{ $message }}</p>@enderror
+            </div>
+
+            <div class="mb-4" x-data="{ file: null }">
+                <label for="sim_photo" class="label">Foto SIM C</label>
+                <div class="filepick" :class="{ 'filepick-filled': file }">
+                    <input type="file" id="sim_photo" name="sim_photo" accept="image/png,image/jpeg" required
+                           @change="file = $event.target.files[0] ? $event.target.files[0].name : null">
+                    <span x-text="file ? '📎 ' + file : 'Ketuk untuk memilih foto SIM C (JPG/PNG)'">Ketuk untuk memilih foto SIM C (JPG/PNG)</span>
+                </div>
+                @error('sim_photo')<p class="field-error">{{ $message }}</p>@enderror
             </div>
 
             @foreach (['start_date', 'start_time', 'end_date'] as $field)
-                @error($field)<p class="text-sm text-red-600">{{ $message }}</p>@enderror
+                @error($field)<p class="field-error mb-2">{{ $message }}</p>@enderror
             @endforeach
 
-            <p class="text-xs text-gray-500">
-                Format JPG atau PNG, maksimal 2 MB per file. Dokumen disimpan secara privat dan hanya dapat dilihat
-                oleh petugas yang memverifikasi.
+            <p class="hint mb-4">
+                Maksimal 2 MB per file. Dokumen disimpan di server privat dan hanya dapat dilihat admin yang memverifikasi.
             </p>
+
+            <button type="submit" class="btn btn-amber btn-block">Buat Pesanan</button>
+        </form>
+
+        <div class="mt-7">
+            <x-rental-policy :bike="$bike" />
         </div>
-
-        <div class="space-y-4">
-            <div class="rounded-lg border border-gray-200 bg-white p-6 text-sm">
-                <h2 class="mb-3 font-semibold">Ringkasan sewa</h2>
-                <dl class="space-y-2">
-                    <div class="flex justify-between"><dt>Motor</dt><dd>{{ $bike->name }}</dd></div>
-                    <div class="flex justify-between"><dt>Mulai</dt><dd>{{ $fmt($quote['start_at']) }}</dd></div>
-                    <div class="flex justify-between"><dt>Kembali</dt><dd>{{ $fmt($quote['end_at']) }}</dd></div>
-                    <div class="flex justify-between"><dt>Durasi</dt><dd>{{ $quote['days'] }} hari ({{ $quote['total_hours'] }} jam)</dd></div>
-                    <div class="flex justify-between border-t pt-2"><dt>Total harga</dt><dd>{{ \App\Support\Format::rupiah($quote['total_price']) }}</dd></div>
-                    <div class="flex justify-between font-semibold"><dt>DP (dibayar sekarang)</dt><dd>{{ \App\Support\Format::rupiah($quote['dp_amount']) }}</dd></div>
-                    <div class="flex justify-between text-gray-600"><dt>Sisa pelunasan (di lokasi)</dt><dd>{{ \App\Support\Format::rupiah($quote['balance_amount']) }}</dd></div>
-                </dl>
-            </div>
-
-            <div class="rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3 text-xs text-yellow-800">
-                Motor diserahkan dengan bensin penuh dan wajib dikembalikan dalam kondisi yang sama.
-                Keterlambatan setelah jam pengembalian dikenai denda per jam.
-            </div>
-
-            <button type="submit" class="w-full rounded-md bg-indigo-600 px-4 py-3 font-medium text-white hover:bg-indigo-700">
-                Buat Pesanan
-            </button>
-
-            <p class="text-xs text-gray-500">
-                Setelah pesanan dibuat, Anda punya {{ $lockMinutes }} menit untuk membayar DP via QRIS dan mengunggah
-                bukti pembayaran. Lewat dari itu pesanan kedaluwarsa otomatis. Harga dihitung ulang oleh server.
-            </p>
-        </div>
-    </form>
+    </div>
 @endsection

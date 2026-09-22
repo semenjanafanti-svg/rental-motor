@@ -11,20 +11,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Carbon\Carbon;
 
 class BikeController extends Controller
 {
-    /** Katalog: hanya motor berstatus available, dengan filter kategori dan harga. */
-    public function index(Request $request): View
+    /** Katalog: hanya motor berstatus available, dengan filter kategori, harga, dan tanggal. */
+    public function index(Request $request, AvailabilityService $availability): View
     {
         $filters = $request->validate([
             'category' => ['nullable', Rule::in(['matic', 'manual', 'sport'])],
             'max_price' => ['nullable', 'integer', 'min:0'],
             'sort' => ['nullable', Rule::in(['price_asc', 'price_desc'])],
+            'available_on' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today'],
         ]);
+
+        $busy = isset($filters['available_on'])
+            ? $availability->busyBikeIds(
+                Carbon::parse($filters['available_on'])->startOfDay(),
+                Carbon::parse($filters['available_on'])->addDay()->startOfDay(),
+            )
+            : [];
 
         $query = Bike::query()
             ->where('status', 'available')
+            ->when($busy, fn ($q) => $q->whereNotIn('id', $busy))
             ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
             ->when($filters['max_price'] ?? null, fn ($q, $max) => $q->where('daily_rate', '<=', $max));
 

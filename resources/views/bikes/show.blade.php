@@ -3,141 +3,133 @@
 @section('title', $bike->name)
 
 @section('content')
-    <a href="{{ route('bikes.index') }}" class="text-sm text-indigo-600 hover:underline">&larr; Kembali ke katalog</a>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ route('bikes.index') }}" class="link">Katalog</a>
+        <span aria-hidden="true">/</span>
+        <b class="text-ink">{{ $bike->name }}</b>
+    </nav>
 
-    <div class="mt-4 grid gap-8 lg:grid-cols-2">
-        <div>
+    <div class="flex flex-wrap gap-5">
+        <div class="h-32 w-44 shrink-0 overflow-hidden rounded-lg border border-line">
             @if ($bike->photo)
-                <img src="{{ asset('storage/' . $bike->photo) }}" alt="{{ $bike->name }}" class="h-64 w-full rounded-lg object-cover">
+                <img src="{{ asset('storage/' . $bike->photo) }}" alt="{{ $bike->name }}" class="h-full w-full object-cover">
             @else
-                <div class="flex h-64 items-center justify-center rounded-lg bg-gray-100 text-7xl">🏍️</div>
+                <x-bike-icon :category="$bike->category" :size="64" />
             @endif
-
-            <h1 class="mt-4 text-2xl font-semibold">{{ $bike->name }}</h1>
-
-            <dl class="mt-4 grid grid-cols-2 gap-y-2 rounded-lg border border-gray-200 bg-white p-4 text-sm">
-                <dt class="text-gray-500">Merek</dt><dd>{{ $bike->brand }}</dd>
-                <dt class="text-gray-500">Kategori</dt><dd>{{ ucfirst($bike->category) }}</dd>
-                @if ($bike->cc)
-                    <dt class="text-gray-500">Kapasitas mesin</dt><dd>{{ $bike->cc }} cc</dd>
-                @endif
-                @if ($bike->year)
-                    <dt class="text-gray-500">Tahun</dt><dd>{{ $bike->year }}</dd>
-                @endif
-                <dt class="text-gray-500">Tarif per 24 jam</dt>
-                <dd class="font-semibold text-indigo-600">{{ \App\Support\Format::rupiah($bike->daily_rate) }}</dd>
-                <dt class="text-gray-500">Denda terlambat / jam</dt>
-                <dd>{{ \App\Support\Format::rupiah($bike->hourly_rate) }}</dd>
-            </dl>
-
-            <ul class="mt-4 list-disc space-y-1 pl-5 text-sm text-gray-600">
-                <li>Sewa dihitung per 24 jam: minimal {{ $minDays }} hari, maksimal {{ $maxDays }} hari.</li>
-                <li>Anda memilih tanggal mulai, jam mulai, dan tanggal pengembalian. Jam pengembalian otomatis sama dengan jam mulai.</li>
-                <li>Keterlambatan dikenai denda per jam sesuai tarif di atas.</li>
-                <li>Motor diserahkan dengan bensin penuh dan harus dikembalikan dalam kondisi yang sama.</li>
-                <li>DP {{ $dpPercent }}% dibayar via QRIS (unggah bukti pembayaran), sisanya dilunasi di lokasi saat serah terima.</li>
-                <li>Wajib mengunggah KTP dan SIM C.</li>
-            </ul>
         </div>
 
         <div>
-            <div class="rounded-lg border border-gray-200 bg-white p-4">
-                <h2 class="mb-3 font-semibold">Ketersediaan</h2>
+            <h1 class="page-title">{{ $bike->name }}</h1>
+            <p class="mt-0.5 text-sm text-muted">{{ $bike->brand }} - Plat {{ $bike->license_plate }}</p>
 
+            <div class="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[13px] text-muted">
+                @if ($bike->cc)<span><b class="text-ink">{{ $bike->cc }}cc</b> mesin</span>@endif
+                @if ($bike->year)<span><b class="text-ink">{{ $bike->year }}</b> tahun</span>@endif
+                <span><b class="text-ink">{{ \App\Support\Format::rupiah($bike->daily_rate) }}</b> / 24 jam</span>
+                <span>Denda telat <b class="text-ink">{{ \App\Support\Format::rupiah($bike->hourly_rate) }}</b> / jam</span>
+                @if ($bike->status === 'available')
+                    <span class="badge badge-teal badge-dot">Tersedia</span>
+                @else
+                    <span class="badge badge-rust badge-dot">Tidak tersedia</span>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-7 grid items-start gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        {{-- Kiri: ketersediaan + ketentuan --}}
+        <div>
+            <h2 class="section-title mt-0">Kalender ketersediaan</h2>
+            <div class="card p-4">
                 {{-- Input disembunyikan; Flatpickr menampilkan kalender inline di sebelahnya --}}
                 <input type="text" id="availability-calendar" style="display:none"
                        data-url="{{ route('bikes.availability', $bike, false) }}">
 
-                <p class="mt-3 flex items-center gap-2 text-xs text-gray-500">
-                    <span class="inline-block h-3 w-3 rounded" style="background:#fee2e2;border:1px solid #fecaca"></span>
-                    Tanggal dengan jadwal terisi (sebagian atau seluruh hari)
+                <p class="mt-3 flex items-center gap-2 text-xs text-muted">
+                    <span class="inline-block h-3 w-3 rounded-[3px] bg-rust-bg"></span>
+                    Ada jadwal terisi pada tanggal ini (sebagian atau seluruh hari)
                 </p>
 
-                <h3 class="mt-4 text-sm font-medium">Jadwal terisi (90 hari ke depan)</h3>
-                <ul id="booked-list" class="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600">
+                <h3 class="mb-2 mt-4 text-sm font-semibold">Jadwal terisi (90 hari ke depan)</h3>
+                <ul id="booked-list" class="list-disc space-y-1 pl-5 text-sm text-muted">
                     <li>Memuat jadwal...</li>
                 </ul>
             </div>
-
-            <div class="mt-4">
-                @if ($bike->status !== 'available')
-                    <div class="rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-                        Motor ini sedang tidak tersedia untuk disewa.
-                    </div>
-                @elseif (auth()->check() && auth()->user()->role !== 'customer')
-                    <div class="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-                        Akun staf tidak dapat membuat pemesanan.
-                    </div>
-                @else
-                    {{-- Form GET: jadwal dikirim lewat query string ke halaman checkout --}}
-                    <form id="schedule-form" method="GET" action="{{ route('bookings.create', $bike) }}"
-                          data-dates-url="{{ route('bikes.dates', $bike, false) }}"
-                          data-quote-url="{{ route('bikes.quote', $bike, false) }}"
-                          data-min-days="{{ $minDays }}" data-max-days="{{ $maxDays }}"
-                          class="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
-                        <h2 class="font-semibold">Pilih jadwal sewa</h2>
-
-                        <div>
-                            <label for="start_time" class="mb-1 block text-sm font-medium">Jam mulai</label>
-                            <input type="text" id="start_time" name="start_time"
-                                   value="{{ $schedule['start_time'] ?? '08:00' }}"
-                                   autocomplete="off" required
-                                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
-                            <p class="mt-1 text-xs text-gray-500">Jam pengembalian otomatis sama dengan jam mulai.</p>
-                        </div>
-
-                        <div>
-                            <label for="start_date" class="mb-1 block text-sm font-medium">Tanggal mulai</label>
-                            <input type="text" id="start_date" name="start_date"
-                                   value="{{ $schedule['start_date'] ?? '' }}"
-                                   autocomplete="off" required placeholder="Pilih tanggal yang tersedia"
-                                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
-                            <p class="mt-1 text-xs text-gray-500">Hanya tanggal yang tersedia pada jam mulai tersebut yang bisa dipilih.</p>
-                        </div>
-
-                        <div>
-                            <label for="end_date" class="mb-1 block text-sm font-medium">Tanggal pengembalian</label>
-                            <input type="text" id="end_date" name="end_date"
-                                   value="{{ $schedule['end_date'] ?? '' }}"
-                                   autocomplete="off" required placeholder="Pilih tanggal pengembalian"
-                                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
-                            <p class="mt-1 text-xs text-gray-500">Minimal {{ $minDays }} hari, maksimal {{ $maxDays }} hari.</p>
-                        </div>
-
-                        {{-- ID elemen di bawah dipakai oleh resources/js/rental.js --}}
-                        <div id="quote-box" class="rounded-md bg-gray-50 p-4 text-sm">
-                            <p id="quote-placeholder" class="text-gray-500">
-                                Pilih jam mulai, tanggal mulai, dan tanggal pengembalian untuk melihat harga.
-                            </p>
-                            <p id="quote-error" class="hidden text-red-600"></p>
-
-                            <dl id="quote-ok" class="hidden space-y-2">
-                                <div class="flex justify-between"><dt>Mulai</dt><dd id="q-start"></dd></div>
-                                <div class="flex justify-between"><dt>Kembali (otomatis)</dt><dd id="q-end"></dd></div>
-                                <div class="flex justify-between"><dt>Durasi</dt><dd id="q-days"></dd></div>
-                                <div class="flex justify-between border-t pt-2"><dt>Total harga</dt><dd id="q-total"></dd></div>
-                                <div class="flex justify-between font-semibold">
-                                    <dt>DP ({{ $dpPercent }}%, dibayar sekarang)</dt><dd id="q-dp"></dd>
-                                </div>
-                                <div class="flex justify-between text-gray-600">
-                                    <dt>Sisa pelunasan (di lokasi)</dt><dd id="q-balance"></dd>
-                                </div>
-                            </dl>
-                        </div>
-
-                        <button type="submit" disabled
-                                class="block w-full rounded-md bg-indigo-600 px-4 py-3 text-center font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300">
-                            Sewa
-                        </button>
-
-                        @guest
-                            <p class="text-center text-xs text-gray-500">
-                                Anda akan diminta masuk atau mendaftar terlebih dahulu. Jadwal yang dipilih tetap tersimpan.
-                            </p>
-                        @endguest
-                    </form>
-                @endif
-            </div>
         </div>
+
+        {{-- Kanan: form jadwal --}}
+        <div>
+            <h2 class="section-title mt-0">Atur jadwal sewa</h2>
+
+            @if ($bike->status !== 'available')
+                <div class="notice">Motor ini sedang tidak tersedia untuk disewa.</div>
+            @elseif (auth()->check() && auth()->user()->role !== 'customer')
+                <div class="notice">Akun staf tidak dapat membuat pemesanan.</div>
+            @else
+                {{-- Form GET: jadwal dikirim lewat query string ke halaman checkout --}}
+                <form id="schedule-form" method="GET" action="{{ route('bookings.create', $bike) }}"
+                      data-dates-url="{{ route('bikes.dates', $bike, false) }}"
+                      data-quote-url="{{ route('bikes.quote', $bike, false) }}"
+                      data-min-days="{{ $minDays }}" data-max-days="{{ $maxDays }}"
+                      data-open-hour="{{ config('rental.open_hour') }}" data-close-hour="{{ config('rental.close_hour') }}"
+                      class="summary space-y-4">
+
+                    <div>
+                        <label for="start_time" class="label">Jam mulai</label>
+                        <input type="text" id="start_time" name="start_time"
+                               value="{{ $schedule['start_time'] ?? '08:00' }}"
+                               autocomplete="off" required class="input">
+                        <p class="hint">Jam kembali otomatis sama dengan jam mulai.</p>
+                    </div>
+
+                    <div>
+                        <label for="start_date" class="label">Tanggal mulai</label>
+                        <input type="text" id="start_date" name="start_date"
+                               value="{{ $schedule['start_date'] ?? '' }}"
+                               autocomplete="off" required placeholder="Pilih tanggal yang tersedia" class="input">
+                        <p class="hint">Hanya tanggal yang tersedia pada jam mulai tersebut yang bisa dipilih.</p>
+                    </div>
+
+                    <div>
+                        <label for="end_date" class="label">Tanggal kembali</label>
+                        <input type="text" id="end_date" name="end_date"
+                               value="{{ $schedule['end_date'] ?? '' }}"
+                               autocomplete="off" required placeholder="Pilih tanggal kembali" class="input">
+                        <p class="hint">Minimal {{ $minDays }} hari, maksimal {{ $maxDays }} hari.</p>
+                    </div>
+
+                    {{-- ID elemen di bawah dipakai oleh resources/js/rental.js. Jangan beri kelas display pada elemen yang di-toggle "hidden". --}}
+                    <div id="quote-box" class="border-t border-line pt-3">
+                        <p id="quote-placeholder" class="text-sm text-muted">
+                            Pilih jam mulai, tanggal mulai, dan tanggal kembali untuk melihat harga.
+                        </p>
+                        <p id="quote-error" class="hidden text-sm text-rust" role="alert"></p>
+
+                        <dl id="quote-ok" class="hidden">
+                            <div class="summary-row"><dt>Mulai</dt><dd id="q-start"></dd></div>
+                            <div class="summary-row"><dt>Kembali</dt><dd id="q-end"></dd></div>
+                            <div class="summary-row"><dt>Durasi</dt><dd id="q-days"></dd></div>
+                            <div class="summary-row"><dt>Total harga</dt><dd id="q-total"></dd></div>
+                            <div class="summary-row"><dt>DP ({{ $dpPercent }}%) dibayar sekarang</dt><dd id="q-dp" class="font-semibold"></dd></div>
+                            <div class="summary-row summary-total"><dt>Sisa dibayar saat ambil motor</dt><dd id="q-balance"></dd></div>
+                        </dl>
+                    </div>
+
+                    <button type="submit" disabled class="btn btn-amber btn-block">Sewa Sekarang</button>
+
+                    @guest
+                        <p class="text-center text-xs text-muted">
+                            Kamu akan diminta masuk atau mendaftar dulu. Jadwal yang dipilih tetap tersimpan.
+                        </p>
+                    @endguest
+                </form>
+            @endif
+        </div>
+    </div>
+
+    {{-- Di bawah grid agar di ponsel urutannya: kalender, form jadwal, lalu ketentuan --}}
+    <div class="mt-2 max-w-2xl">
+        <h2 class="section-title">Ketentuan sewa</h2>
+        <x-rental-policy :bike="$bike" />
     </div>
 @endsection

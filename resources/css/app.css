@@ -1,3 +1,215 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* =========================================================
+   TOKEN (dari prototipe). Ubah warna cukup di sini.
+========================================================= */
+@layer base {
+    :root {
+        color-scheme: light;
+        --ink: #1c1d1a;
+        --paper: #eef0e7;
+        --surface: #fdfdf9;
+        --line: #d7dacb;
+        --muted: #5f6354;
+        --amber: #f0b429;
+        --amber-ink: #5c3d05;   /* teks di atas isian amber */
+        --sun-soft: #f6e2ae;    /* latar lembut kategori manual */
+        --sun-text: #5c3d05;
+        --teal: #2f6f5e;
+        --teal-bg: #e2efe9;
+        --rust: #c0392b;
+        --rust-bg: #f8e6e3;
+        --shadow: 0 1px 2px rgba(28, 29, 26, .05), 0 10px 24px -18px rgba(28, 29, 26, .35);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            color-scheme: dark;
+            --ink: #f1f0e8;
+            --paper: #171813;
+            --surface: #202119;
+            --line: #34362b;
+            --muted: #a3a596;
+            --amber: #f0b429;
+            --amber-ink: #2a1c02;
+            --sun-soft: #3a2d0e;
+            --sun-text: #f0b429;
+            --teal: #4fae91;
+            --teal-bg: #173c31;
+            --rust: #e07362;
+            --rust-bg: #3b1f1a;
+        }
+    }
+
+    html {
+        @apply font-sans antialiased;
+    }
+
+    body {
+        @apply min-h-screen bg-paper text-ink;
+        font-size: 15px;
+        line-height: 1.5;
+    }
+
+    h1, h2, h3, h4 {
+        @apply font-display tracking-wide;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--teal);
+        outline-offset: 2px;
+    }
+
+    ::-webkit-scrollbar { height: 8px; width: 8px; }
+    ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+}
+
+/* =========================================================
+   KOMPONEN
+========================================================= */
+@layer components {
+    /* ---- rangka halaman ---- */
+    .topbar {
+        @apply sticky top-0 z-40 flex items-center gap-2 overflow-x-auto bg-ink pl-4 pr-3 text-paper;
+        border-bottom: 3px solid transparent;
+        border-image: repeating-linear-gradient(90deg, var(--amber) 0 22px, transparent 22px 38px) 3;
+    }
+    .brand {
+        @apply flex items-center gap-2 whitespace-nowrap py-3.5 pr-4 font-display text-base font-bold tracking-wide;
+    }
+    .brand-plate {
+        @apply rounded-[3px] bg-sun px-1.5 py-0.5 font-display text-[11px] font-bold tracking-widest text-sun-ink;
+    }
+    .topbar-link {
+        @apply inline-block max-w-[10rem] truncate whitespace-nowrap rounded px-3 py-2 text-[13px] opacity-80 transition-opacity hover:opacity-100;
+    }
+
+    .subnav {
+        @apply flex gap-1 overflow-x-auto border-b border-line bg-surface px-4 pt-2.5;
+    }
+    .tab {
+        @apply whitespace-nowrap border-b-[3px] border-transparent px-3.5 py-3 font-display text-[13px] tracking-wide text-muted transition-colors hover:text-ink;
+    }
+    .tab[aria-current='page'] {
+        @apply border-sun font-semibold text-ink;
+    }
+
+    .page {
+        @apply mx-auto w-full max-w-5xl px-4 pb-16 pt-7 sm:px-8;
+    }
+
+    .page-title { @apply text-[26px] font-semibold leading-tight; }
+    .page-sub { @apply mb-5 mt-1 text-sm text-muted; }
+    .section-title { @apply mb-3 mt-7 text-[17px] font-semibold; }
+
+    .breadcrumb { @apply mb-4 flex flex-wrap items-center gap-1.5 text-[12.5px] text-muted; }
+    .link { @apply font-semibold text-moss hover:underline; }
+
+    /* ---- kartu ---- */
+    .card {
+        @apply overflow-hidden rounded-lg border border-line bg-surface;
+        box-shadow: var(--shadow);
+    }
+
+    .bike-card {
+        @apply block overflow-hidden rounded-lg border border-line bg-surface transition duration-150 hover:-translate-y-0.5 hover:border-ink motion-reduce:transition-none motion-reduce:hover:translate-y-0;
+        box-shadow: var(--shadow);
+    }
+
+    .bike-thumb { @apply flex h-full w-full items-center justify-center; }
+    .bike-thumb-matic { @apply bg-moss-bg text-moss; }
+    .bike-thumb-manual { @apply bg-sun-soft text-sun-text; }
+    .bike-thumb-sport { @apply bg-rust-bg text-rust; }
+
+    /* ---- badge ---- */
+    .badge {
+        @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-wide;
+    }
+    .badge-dot::before { content: "●"; font-size: 8px; }
+    .badge-amber { @apply bg-sun text-sun-ink; }
+    .badge-teal { @apply bg-moss-bg text-moss; }
+    .badge-rust { @apply bg-rust-bg text-rust; }
+    .badge-neutral { @apply bg-line text-ink; }
+
+    /* ---- tombol ---- */
+    .btn {
+        @apply inline-flex items-center justify-center rounded-md border border-ink bg-ink px-[18px] py-2.5 text-sm font-semibold tracking-wide text-paper transition duration-150 hover:-translate-y-px hover:opacity-90 active:translate-y-0 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none;
+    }
+    .btn-outline { @apply bg-transparent text-ink; }
+    .btn-amber { @apply border-sun bg-sun text-sun-ink; }
+    .btn-teal { @apply border-moss bg-moss text-surface; }
+    .btn-rust { @apply border-rust bg-rust text-white; }
+    .btn-rust-outline { @apply border-rust bg-transparent text-rust; }
+    .btn-sm { @apply rounded px-3 py-1.5 text-[12.5px]; }
+    .btn-block { @apply w-full; }
+
+    /* ---- form ---- */
+    .label {
+        @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+    }
+    .input {
+        @apply block w-full rounded-md border border-line bg-surface py-2.5 pl-3 pr-3 text-sm text-ink placeholder:text-muted;
+    }
+    .select { @apply pr-9; }
+    .input:focus {
+        outline: none;
+        border-color: var(--teal);
+        box-shadow: 0 0 0 1px var(--teal);
+    }
+    .check { @apply rounded border-line bg-surface text-moss; }
+    .hint { @apply mt-1 text-xs text-muted; }
+    .field-error { @apply mt-1.5 text-sm text-rust; }
+
+    .filepick {
+        @apply relative rounded-md border-[1.5px] border-dashed border-line bg-surface p-4 text-center text-sm text-muted transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-moss;
+    }
+    .filepick input[type='file'] {
+        @apply absolute inset-0 h-full w-full cursor-pointer opacity-0;
+    }
+    .filepick-filled { @apply border-solid border-moss bg-moss-bg text-moss; }
+
+    /* ---- ringkasan harga ---- */
+    .summary { @apply rounded-lg border border-line bg-surface p-4 sm:p-5; }
+    .summary-row { @apply flex justify-between gap-3 py-1.5 text-sm; }
+    .summary-row dt { @apply text-muted; }
+    .summary-row dd { @apply text-right; }
+    .summary-total { @apply mt-1.5 border-t border-line pt-3 text-base font-bold; }
+
+    /* ---- pemberitahuan ---- */
+    .notice {
+        @apply rounded-lg border border-l-4 border-line border-l-sun bg-surface px-4 py-3.5 text-[13.5px];
+    }
+    .notice-teal { @apply border-l-moss; }
+    .notice-rust { @apply border-l-rust; }
+
+    /* ---- tabel & daftar ---- */
+    .tablewrap { @apply overflow-x-auto rounded-lg border border-line bg-surface; }
+    .data-table { @apply w-full border-collapse text-[13.5px]; }
+    .data-table th {
+        @apply border-b border-line px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted;
+    }
+    .data-table td { @apply border-b border-line px-3 py-3 align-middle; }
+    .data-table tr:last-child td { @apply border-b-0; }
+
+    .list-row {
+        @apply flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3.5 last:border-b-0;
+    }
+    .empty { @apply px-5 py-10 text-center text-muted; }
+
+    .qris-box { @apply rounded-[10px] border border-line bg-surface p-5 text-center; }
+    .qris-box img { @apply mx-auto rounded-lg bg-white p-3; }
+}
+
+/* =========================================================
+   KOMPATIBILITAS: partial Breeze (profil) masih memakai
+   text-gray-*. Di dalam .breeze-compat warnanya ikut token.
+========================================================= */
+.breeze-compat .text-gray-900,
+.breeze-compat .text-gray-800 { color: var(--ink); }
+.breeze-compat .text-gray-700,
+.breeze-compat .text-gray-600,
+.breeze-compat .text-gray-500 { color: var(--muted); }
+.breeze-compat .border-gray-200,
+.breeze-compat .border-gray-300 { border-color: var(--line); }

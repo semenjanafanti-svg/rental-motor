@@ -222,12 +222,16 @@ function initCheckout() {
         },
     });
 
+    const pad2 = (n) => String(n).padStart(2, '0');
+
     flatpickr(timeInput, {
         noCalendar: true,
         enableTime: true,
         time_24hr: true,
         dateFormat: 'H:i',
-        minuteIncrement: 30,
+        minuteIncrement: 60,
+        minTime: `${pad2(form.dataset.openHour)}:00`,
+        maxTime: `${pad2(form.dataset.closeHour)}:00`,
         defaultDate: timeInput.value || '08:00',
         onChange: loadDates,
     });
@@ -235,9 +239,25 @@ function initCheckout() {
     loadDates();
 }
 
+function initCountdown() {
+    const el = document.getElementById('countdown');
+    if (!el) return;
+
+    const expires = Number(el.dataset.expires);
+    const tick = () => {
+        const s = Math.max(0, Math.ceil((expires - Date.now()) / 1000));
+        el.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+        el.classList.toggle('text-rust', s < 120);
+        if (s === 0) { clearInterval(timer); window.location.reload(); }
+    };
+    const timer = setInterval(tick, 1000);
+    tick();
+}
+
 function init() {
     initAvailabilityCalendar();
     initCheckout();
+    initCountdown();
 }
 
 if (document.readyState === 'loading') {
