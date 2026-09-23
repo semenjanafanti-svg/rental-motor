@@ -113,14 +113,25 @@ class AvailabilityService
     /** ID motor yang terkunci pada rentang waktu tertentu (untuk filter katalog). */
     public function busyBikeIds(CarbonInterface $from, CarbonInterface $to): array
     {
+        return $this->busyBikeQuery($from, $to)
+            ->pluck('bike_id')
+            ->unique()
+            ->all();
+    }
+
+    /**
+     * Subquery motor yang terkunci pada suatu periode.
+     *
+     * Dipakai oleh katalog agar database yang menyaring motor, tanpa memindahkan
+     * seluruh ID rental aktif ke PHP lalu membentuk WHERE NOT IN yang besar.
+     */
+    public function busyBikeQuery(CarbonInterface $from, CarbonInterface $to): Builder
+    {
         return Rental::query()
             ->whereIn('status', self::BLOCKING_STATUSES)
             ->where(fn ($q) => $q->where('status', '!=', 'pending_payment')->orWhere('expires_at', '>', now()))
             ->where('start_time', '<', $to)
-            ->where('end_time', '>', $from)
-            ->pluck('bike_id')
-            ->unique()
-            ->all();
+            ->where('end_time', '>', $from);
     }
 
     private function blockingQuery(int $bikeId): Builder

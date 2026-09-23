@@ -35,6 +35,9 @@
                         @endif
                         <x-status-badge :status="$rental->status" />
                         <a href="{{ route('rentals.show', $rental) }}" class="btn btn-outline btn-sm">Lihat</a>
+                        @if ($rental->status === 'completed')
+                            <a href="{{ route('rentals.receipt', $rental) }}" class="btn btn-sm">Unduh Nota PDF</a>
+                        @endif
                     </div>
                 </div>
             @endforeach

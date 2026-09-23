@@ -75,6 +75,10 @@ class PaymentService
         DB::transaction(function () use ($rental, $admin) {
             [$locked, $payment] = $this->lockForVerification($rental);
 
+            if ($locked->verification?->rejection_reason) {
+                throw new PaymentException('Customer masih perlu mengunggah ulang dokumen yang diminta sebelum pesanan dapat disetujui.');
+            }
+
             $payment->update([
                 'payment_status' => 'settlement',
                 'payment_type' => 'qris',
@@ -102,10 +106,31 @@ class PaymentService
 
             $oldPath = $payment->proof_photo;
 
+            // Bukti hanya dapat diperbaiki satu kali. Setelah itu transaksi dibatalkan
+            // agar slot tidak terus terkunci dan DP masuk alur refund admin.
+            if ($payment->rejection_count >= 1) {
+                $payment->update([
+                    'payment_status' => 'settlement',
+                    'payment_type' => 'qris',
+                    'paid_at' => now(),
+                    'rejection_reason' => $reason,
+                    'rejection_count' => $payment->rejection_count + 1,
+                ]);
+                $locked->update([
+                    'status' => 'cancelled',
+                    'payment_status' => 'dp_paid',
+                    'cancelled_reason' => 'Bukti pembayaran ditolak dua kali: ' . $reason,
+                    'notes' => 'DP perlu dikembalikan penuh oleh admin.',
+                ]);
+
+                return;
+            }
+
             $payment->update([
                 'proof_photo' => null,
                 'proof_uploaded_at' => null,
                 'rejection_reason' => $reason,
+                'rejection_count' => $payment->rejection_count + 1,
             ]);
 
             $locked->update([
@@ -128,6 +153,20 @@ class PaymentService
         DB::transaction(function () use ($rental, $admin, $reason) {
             [$locked, $payment] = $this->lockForVerification($rental);
 
+            $verification = $locked->verification;
+
+            if ($verification->rejection_count === 0) {
+                $verification->update([
+                    'status' => 'pending',
+                    'rejection_reason' => $reason,
+                    'rejection_count' => 1,
+                    'verified_by' => $admin->id,
+                    'verified_at' => now(),
+                ]);
+
+                return;
+            }
+
             $payment->update([
                 'payment_status' => 'settlement',
                 'payment_type' => 'qris',
@@ -135,7 +174,7 @@ class PaymentService
                 'received_by' => $admin->id,
             ]);
 
-            $locked->verification()->update([
+            $verification->update([
                 'status' => 'rejected',
                 'rejection_reason' => $reason,
                 'verified_by' => $admin->id,

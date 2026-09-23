@@ -35,6 +35,14 @@
             @endif
         </div>
 
+        <div>
+            <x-input-label for="phone_number" value="Nomor WhatsApp" />
+            <x-text-input id="phone_number" name="phone_number" type="tel" :value="old('phone_number', $user->phone_number)"
+                          autocomplete="tel" placeholder="Contoh: 081234567890" />
+            <p class="hint">Dipakai untuk notifikasi status pesanan dan verifikasi.</p>
+            <x-input-error class="mt-1.5" :messages="$errors->get('phone_number')" />
+        </div>
+
         <div class="flex items-center gap-4">
             <x-primary-button>Simpan perubahan</x-primary-button>
 

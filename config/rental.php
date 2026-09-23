@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'business_name' => 'Mitra Jalan',
     // Sewa dihitung per 24 jam. Penyewa memilih tanggal mulai, jam mulai, dan tanggal
     // pengembalian; jam pengembalian otomatis sama dengan jam mulai (kelipatan 24 jam).
     'min_days' => 1,   // minimal 1 hari = 24 jam

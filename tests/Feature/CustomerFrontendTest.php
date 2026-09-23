@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Bike;
 use App\Models\Rental;
+use App\Models\RentalReturn;
 use App\Models\User;
 use App\Models\Verification;
 use App\Services\BookingService;
@@ -255,5 +256,37 @@ class CustomerFrontendTest extends TestCase
 
         $this->actingAs($other)->get('/riwayat')->assertOk()->assertDontSee($rental->booking_code);
         $this->actingAs($other)->get("/riwayat/{$rental->id}")->assertNotFound();
+    }
+
+    public function test_customer_can_download_receipt_only_after_completed_return(): void
+    {
+        $customer = $this->customer();
+        $rental = app(BookingService::class)->create($customer, $this->bookingData($this->bike()));
+        $rental->payments()->where('type', 'dp')->update(['payment_status' => 'settlement', 'paid_at' => now()]);
+        $rental->update(['status' => 'completed', 'payment_status' => 'fully_paid', 'balance_amount' => 0]);
+        RentalReturn::create([
+            'rental_id' => $rental->id,
+            'actual_return_time' => Carbon::parse('2026-09-21 08:00'),
+            'late_hours' => 0,
+            'late_fee' => 0,
+            'damage_fee' => 0,
+            'fuel_fee' => 0,
+            'checked_by' => $customer->id,
+        ]);
+
+        $this->actingAs($customer)
+            ->get("/riwayat/{$rental->id}/nota")
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertSee('%PDF-1.4', false);
+    }
+
+    public function test_customer_cannot_download_receipt_for_no_show_rental(): void
+    {
+        $customer = $this->customer();
+        $rental = app(BookingService::class)->create($customer, $this->bookingData($this->bike()));
+        $rental->update(['status' => 'no_show']);
+
+        $this->actingAs($customer)->get("/riwayat/{$rental->id}/nota")->assertNotFound();
     }
 }

@@ -4,13 +4,14 @@ namespace App\Filament\Resources\Bikes;
 
 use App\Filament\Resources\Bikes\Pages\CreateBike;
 use App\Filament\Resources\Bikes\Pages\EditBike;
-use App\Filament\Resources\Bikes\Pages\ListBikes;
+use App\Filament\Resources\Bikes\Pages\ListBike;
 use App\Models\Bike;
 use App\Support\Format;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
@@ -73,6 +74,8 @@ class BikeResource extends Resource
                     ->numeric()->minValue(50)->maxValue(2000),
                 TextInput::make('year')->label('Tahun')
                     ->numeric()->minValue(1990)->maxValue((int) date('Y') + 1),
+                TextInput::make('color')->label('Warna kendaraan')->maxLength(50)
+                    ->placeholder('Contoh: Hitam doff'),
             ]),
 
             Section::make('Tarif')->columns(2)->components([
@@ -90,6 +93,17 @@ class BikeResource extends Resource
                 FileUpload::make('photo')->label('Foto')
                     ->image()->disk('public')->directory('bikes')->maxSize(2048),
             ]),
+            Section::make('Fasilitas yang didapat')->components([
+                CheckboxList::make('facilities')->label('Termasuk saat sewa')
+                    ->options([
+                        'helm' => 'Helm',
+                        'stnk' => 'STNK',
+                        'kunci_ganda' => 'Kunci ganda',
+                        'jas_hujan' => 'Jas hujan',
+                        'phone_holder' => 'Phone holder',
+                        'charger' => 'Charger USB',
+                    ])->columns(3),
+            ]),
         ]);
     }
 
@@ -106,6 +120,19 @@ class BikeResource extends Resource
                     ->fontFamily('mono'),
                 TextColumn::make('category')->label('Kategori')
                     ->formatStateUsing(fn (string $state) => self::CATEGORY_LABELS[$state] ?? $state),
+                TextColumn::make('color')->label('Warna')->placeholder('-')->toggleable(),
+                TextColumn::make('facilities')->label('Fasilitas')
+                    ->formatStateUsing(function ($state) {
+                        if (is_string($state)) {
+                            $state = json_decode($state, true);
+                        }
+
+                        return is_array($state) && count($state)
+                            ? implode(', ', $state)
+                            : '-';
+                    })
+                    ->limit(30)
+                    ->toggleable(),
                 TextColumn::make('daily_rate')->label('Tarif/24 jam')->sortable()
                     ->formatStateUsing(fn ($state) => Format::rupiah($state)),
                 TextColumn::make('hourly_rate')->label('Denda/jam')
@@ -139,7 +166,7 @@ class BikeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListBikes::route('/'),
+            'index' => ListBike::route('/'),
             'create' => CreateBike::route('/create'),
             'edit' => EditBike::route('/{record}/edit'),
         ];

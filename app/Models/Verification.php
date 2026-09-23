@@ -9,7 +9,7 @@ class Verification extends Model
 {
     protected $fillable = [
         'rental_id', 'ktp_photo', 'sim_photo', 'status',
-        'rejection_reason', 'verified_by', 'verified_at',
+        'rejection_reason', 'rejection_count', 'verified_by', 'verified_at',
     ];
 
     protected function casts(): array

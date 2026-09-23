@@ -25,6 +25,7 @@
             <div class="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[13px] text-muted">
                 @if ($bike->cc)<span><b class="text-ink">{{ $bike->cc }}cc</b> mesin</span>@endif
                 @if ($bike->year)<span><b class="text-ink">{{ $bike->year }}</b> tahun</span>@endif
+                @if ($bike->color)<span>Warna <b class="text-ink">{{ $bike->color }}</b></span>@endif
                 <span><b class="text-ink">{{ \App\Support\Format::rupiah($bike->daily_rate) }}</b> / 24 jam</span>
                 <span>Denda telat <b class="text-ink">{{ \App\Support\Format::rupiah($bike->hourly_rate) }}</b> / jam</span>
                 @if ($bike->status === 'available')
@@ -129,6 +130,14 @@
 
     {{-- Di bawah grid agar di ponsel urutannya: kalender, form jadwal, lalu ketentuan --}}
     <div class="mt-2 max-w-2xl">
+        @if ($bike->facilities)
+            <h2 class="section-title">Fasilitas termasuk</h2>
+            <div class="card flex flex-wrap gap-2 p-4">
+                @foreach ($bike->facilities as $facility)
+                    <span class="badge badge-teal">{{ str_replace('_', ' ', $facility) }}</span>
+                @endforeach
+            </div>
+        @endif
         <h2 class="section-title">Ketentuan sewa</h2>
         <x-rental-policy :bike="$bike" />
     </div>

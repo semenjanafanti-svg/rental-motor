@@ -73,7 +73,7 @@
                 <a href="{{ route('bikes.show', $bike) }}" class="bike-card">
                     <div class="h-32">
                         @if ($bike->photo)
-                            <img src="{{ asset('storage/' . $bike->photo) }}" alt="{{ $bike->name }}" class="h-full w-full object-cover">
+                            <img src="{{ asset('storage/' . $bike->photo) }}" alt="{{ $bike->name }}" loading="lazy" decoding="async" class="h-full w-full object-cover">
                         @else
                             <x-bike-icon :category="$bike->category" />
                         @endif
@@ -83,6 +83,7 @@
                         <h2 class="text-base font-semibold">{{ $bike->name }}</h2>
                         <p class="mt-0.5 text-[12.5px] text-muted">
                             {{ $bike->brand }} · {{ $bike->cc ? $bike->cc . 'cc · ' : '' }}{{ ucfirst($bike->category) }}
+                            @if ($bike->color) · {{ $bike->color }} @endif
                         </p>
                         <p class="mt-2.5 text-[14.5px] font-semibold">
                             {{ \App\Support\Format::rupiah($bike->daily_rate) }}
@@ -91,6 +92,9 @@
 
                         @if ($availableLabel)
                             <span class="badge badge-teal badge-dot mt-2">Bebas {{ $availableLabel }}</span>
+                        @endif
+                        @if ($bike->facilities)
+                            <p class="mt-2 text-[12px] text-muted">Termasuk: {{ implode(' · ', array_slice($bike->facilities, 0, 3)) }}</p>
                         @endif
                     </div>
                 </a>

@@ -14,31 +14,33 @@ class RentalExpirationService
      */
     public function expireOverdue(?int $userId = null): int
     {
-        $ids = Rental::where('status', 'pending_payment')
+        $query = Rental::where('status', 'pending_payment')
             ->where('expires_at', '<=', now())
-            ->when($userId, fn ($query) => $query->where('user_id', $userId))
-            ->pluck('id');
+            ->when($userId, fn ($query) => $query->where('user_id', $userId));
 
         $count = 0;
 
-        foreach ($ids as $id) {
-            DB::transaction(function () use ($id, &$count) {
-                $rental = Rental::lockForUpdate()->find($id);
+        $query->select('id')->chunkById(100, function ($rentals) use (&$count) {
+            foreach ($rentals as $rental) {
+                DB::transaction(function () use ($rental, &$count) {
+                    $id = $rental->id;
+                    $rental = Rental::lockForUpdate()->find($id);
 
-                // Cek ulang: bukti bayar bisa saja baru masuk
-                if (! $rental || $rental->status !== 'pending_payment' || $rental->expires_at->isFuture()) {
-                    return;
-                }
+                    // Cek ulang: bukti bayar bisa saja baru masuk
+                    if (! $rental || $rental->status !== 'pending_payment' || $rental->expires_at->isFuture()) {
+                        return;
+                    }
 
-                $rental->update(['status' => 'expired']);
-                $rental->payments()
-                    ->where('type', 'dp')
-                    ->where('payment_status', 'pending')
-                    ->update(['payment_status' => 'expire']);
+                    $rental->update(['status' => 'expired']);
+                    $rental->payments()
+                        ->where('type', 'dp')
+                        ->where('payment_status', 'pending')
+                        ->update(['payment_status' => 'expire']);
 
-                $count++;
-            });
-        }
+                    $count++;
+                });
+            }
+        });
 
         return $count;
     }

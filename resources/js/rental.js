@@ -102,6 +102,8 @@ function initCheckout() {
     };
 
     let quoteCounter = 0;
+    let quoteController = null;
+    let quoteTimer = null;
 
     async function refreshQuote() {
         const startDate = startDateInput.value;
@@ -115,6 +117,8 @@ function initCheckout() {
         }
 
         const currentRequest = ++quoteCounter;
+        quoteController?.abort();
+        quoteController = new AbortController();
 
         try {
             const url = new URL(quoteUrl, window.location.origin);
@@ -122,7 +126,10 @@ function initCheckout() {
             url.searchParams.set('start_time', startTime);
             url.searchParams.set('end_date', endDate);
 
-            const response = await fetch(url, { headers: { Accept: 'application/json' } });
+            const response = await fetch(url, {
+                headers: { Accept: 'application/json' },
+                signal: quoteController.signal,
+            });
             const data = await response.json();
 
             if (currentRequest !== quoteCounter) return; // ada permintaan yang lebih baru
@@ -143,10 +150,18 @@ function initCheckout() {
             }
         } catch (error) {
             if (currentRequest !== quoteCounter) return;
+            if (error.name === 'AbortError') return;
             // Jika ringkasan gagal dimuat, biarkan server yang memvalidasi saat submit
             showState('placeholder');
             submitButton.disabled = false;
         }
+    }
+
+    // Flatpickr dapat memicu beberapa perubahan beruntun. Menunggu sebentar
+    // mencegah server menghitung quote untuk setiap perubahan perantara.
+    function scheduleQuote() {
+        clearTimeout(quoteTimer);
+        quoteTimer = setTimeout(refreshQuote, 150);
     }
 
     // Batas tanggal pengembalian mengikuti tanggal mulai dan jadwal orang lain
@@ -172,15 +187,25 @@ function initCheckout() {
     }
 
     let datesCounter = 0;
+    let datesController = null;
 
     async function loadDates() {
         const currentRequest = ++datesCounter;
+        datesController?.abort();
+        datesController = new AbortController();
+        availableDates = null;
+        startPicker.set('disable', [() => true]);
+        startPicker.set('clickOpens', false);
+        submitButton.disabled = true;
 
         try {
             const url = new URL(datesUrl, window.location.origin);
             url.searchParams.set('start_time', timeInput.value);
 
-            const response = await fetch(url, { headers: { Accept: 'application/json' } });
+            const response = await fetch(url, {
+                headers: { Accept: 'application/json' },
+                signal: datesController.signal,
+            });
             const data = await response.json();
 
             if (currentRequest !== datesCounter) return;
@@ -188,8 +213,17 @@ function initCheckout() {
             availableDates = data.ok ? data.dates : null;
         } catch (error) {
             if (currentRequest !== datesCounter) return;
+            if (error.name === 'AbortError') return;
             availableDates = null;
         }
+
+        if (availableDates === null) {
+            startPicker.set('disable', [() => true]);
+            return;
+        }
+
+        startPicker.set('disable', [(date) => !(ymd(date) in availableDates)]);
+        startPicker.set('clickOpens', true);
 
         // Pilihan tanggal mulai yang tidak tersedia lagi untuk jam ini dibersihkan
         const selected = startPicker.selectedDates[0];
@@ -200,7 +234,7 @@ function initCheckout() {
 
         startPicker.redraw();
         updateEndBounds();
-        refreshQuote();
+        scheduleQuote();
     }
 
     const today = new Date();
@@ -209,16 +243,17 @@ function initCheckout() {
         dateFormat: 'Y-m-d',
         minDate: today,
         maxDate: addDays(today, 90 + maxDays),
-        onChange: refreshQuote,
+        onChange: scheduleQuote,
     });
 
     const startPicker = flatpickr(startDateInput, {
         dateFormat: 'Y-m-d',
         minDate: 'today',
-        enable: [(date) => availableDates === null || ymd(date) in availableDates],
+        disable: [() => true],
+        clickOpens: false,
         onChange: () => {
             updateEndBounds();
-            refreshQuote();
+            scheduleQuote();
         },
     });
 

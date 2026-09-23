@@ -132,7 +132,10 @@ class HandoverService
         }
 
         $toleranceSeconds = ((int) config('rental.late_tolerance_minutes')) * 60;
-        $lateSeconds = $actualReturnTime->diffInSeconds($rental->end_time);
+        // Carbon v3 mengembalikan selisih bertanda secara default. Untuk waktu
+        // pengembalian yang lebih lambat kita butuh nilai absolut agar denda
+        // tidak keliru menjadi nol.
+        $lateSeconds = $actualReturnTime->diffInSeconds($rental->end_time, true);
 
         if ($lateSeconds <= $toleranceSeconds) {
             return [0, 0.0];

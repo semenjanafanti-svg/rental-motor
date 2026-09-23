@@ -87,6 +87,17 @@
             <x-status-panel icon="⏳" title="Menunggu verifikasi pembayaran & dokumen">
                 Bukti pembayaran, KTP, dan SIM C kamu sedang diperiksa admin. Status akan berubah di halaman ini setelah selesai.
             </x-status-panel>
+            @if ($rental->verification?->rejection_reason)
+                <div class="notice notice-rust mt-5">
+                    <b>Dokumen perlu diperbaiki:</b> {{ $rental->verification->rejection_reason }}. Kamu mendapat satu kesempatan untuk mengunggah ulang.
+                </div>
+                <form method="POST" action="{{ route('rentals.documents.resubmit', $rental) }}" enctype="multipart/form-data" class="card mt-4 space-y-4 p-4">
+                    @csrf
+                    <div><label class="label" for="ktp_photo">Foto KTP baru</label><input class="input" id="ktp_photo" name="ktp_photo" type="file" accept="image/png,image/jpeg" required></div>
+                    <div><label class="label" for="sim_photo">Foto SIM C baru</label><input class="input" id="sim_photo" name="sim_photo" type="file" accept="image/png,image/jpeg" required></div>
+                    <button class="btn btn-amber" type="submit">Kirim Ulang Dokumen</button>
+                </form>
+            @endif
         @endif
 
         @if ($rental->status === 'approved')
@@ -115,6 +126,7 @@
                     Motor dikembalikan {{ $fmt($return->actual_return_time) }}.
                 @endif
             </x-status-panel>
+            <a href="{{ route('rentals.receipt', $rental) }}" class="btn mt-4">Unduh Nota PDF</a>
         @endif
 
         @if ($rental->status === 'cancelled')

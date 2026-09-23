@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Rental Motor') }}</title>
+    <title>{{ config('rental.business_name') }}</title>
     @include('layouts.partials.assets')
 </head>
 <body>
     <div class="topbar">
         <a href="{{ route('bikes.index') }}" class="brand">
-            <span class="brand-plate">SM</span> SEWAMOTOR
+            <span class="brand-plate">MJ</span> {{ config('rental.business_name') }}
         </a>
     </div>
 

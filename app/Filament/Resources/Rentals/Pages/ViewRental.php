@@ -7,6 +7,7 @@ use App\Filament\Resources\Rentals\RentalResource;
 use App\Services\HandoverService;
 use App\Services\PaymentService;
 use App\Support\Format;
+use App\Support\VerificationMessage;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
@@ -33,6 +34,14 @@ class ViewRental extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('sendVerificationResult')
+                ->label('Kirim hasil verifikasi via WhatsApp')
+                ->icon('heroicon-o-chat-bubble-left-right')
+                ->color('success')
+                ->visible(fn () => filled($this->record->user?->phone_number)
+                    && in_array($this->record->status, ['approved', 'cancelled'], true))
+                ->url(fn () => VerificationMessage::waLink($this->record), shouldOpenInNewTab: true),
+
             Action::make('approve')
                 ->label('Setujui DP & dokumen')
                 ->icon('heroicon-o-check-circle')
@@ -51,7 +60,9 @@ class ViewRental extends ViewRecord
                 ->icon('heroicon-o-banknotes')
                 ->color('warning')
                 ->modalHeading('Tolak bukti pembayaran')
-                ->modalDescription('Penyewa boleh mengunggah ulang bukti bayar. Batas waktu bayar diperpanjang.')
+                ->modalDescription(fn () => $this->record->payments()->where('type', 'dp')->value('rejection_count') >= 1
+                    ? 'Kesempatan unggah ulang sudah digunakan. Pesanan akan dibatalkan dan DP masuk proses refund.'
+                    : 'Penyewa mendapat satu kesempatan untuk mengunggah ulang bukti bayar. Batas waktu bayar diperpanjang.')
                 ->schema([
                     Textarea::make('reason')->label('Alasan (dilihat penyewa)')->required()->maxLength(255),
                 ])
@@ -67,7 +78,9 @@ class ViewRental extends ViewRecord
                 ->icon('heroicon-o-identification')
                 ->color('danger')
                 ->modalHeading('Tolak dokumen identitas')
-                ->modalDescription('Pesanan dibatalkan dan DP wajib dikembalikan penuh ke penyewa.')
+                ->modalDescription(fn () => $this->record->verification?->rejection_count >= 1
+                    ? 'Kesempatan unggah ulang dokumen sudah digunakan. Pesanan akan dibatalkan dan DP wajib direfund.'
+                    : 'Penyewa mendapat satu kesempatan untuk mengunggah ulang KTP dan SIM C.')
                 ->schema([
                     Textarea::make('reason')->label('Alasan (dilihat penyewa)')->required()->maxLength(255),
                 ])

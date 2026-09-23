@@ -6,6 +6,8 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PrivateFileController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RentalController;
+use App\Http\Controllers\RentalReceiptController;
+use App\Http\Controllers\VerificationDocumentController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/motor');
@@ -23,8 +25,10 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::post('/motor/{bike}/checkout', [BookingController::class, 'store'])->name('bookings.store');
     Route::get('/riwayat', [RentalController::class, 'index'])->name('rentals.index');
     Route::get('/riwayat/{rental}', [RentalController::class, 'show'])->name('rentals.show');
+    Route::get('/riwayat/{rental}/nota', [RentalReceiptController::class, 'download'])->name('rentals.receipt');
     Route::post('/riwayat/{rental}/bukti-bayar', [PaymentController::class, 'storeProof'])->name('rentals.proof');
     Route::post('/riwayat/{rental}/batal', [PaymentController::class, 'cancel'])->name('rentals.cancel');
+    Route::post('/riwayat/{rental}/dokumen', [VerificationDocumentController::class, 'resubmit'])->name('rentals.documents.resubmit');
 });
 
 // Berkas privat (KTP, SIM, bukti bayar): otorisasi dicek di controller

@@ -24,25 +24,28 @@ Schedule::call(function () {
 
     Rental::where('status', 'approved')
         ->where('start_time', '<=', now()->subMinutes($toleranceMinutes))
-        ->pluck('id')
-        ->each(function ($id) use ($toleranceMinutes) {
-            DB::transaction(function () use ($id, $toleranceMinutes) {
-                $rental = Rental::lockForUpdate()->find($id);
+        ->select('id')
+        ->chunkById(100, function ($rentals) use ($toleranceMinutes) {
+            foreach ($rentals as $rental) {
+                $id = $rental->id;
+                DB::transaction(function () use ($id, $toleranceMinutes) {
+                    $rental = Rental::lockForUpdate()->find($id);
 
-                if (! $rental || $rental->status !== 'approved') {
-                    return;
-                }
+                    if (! $rental || $rental->status !== 'approved') {
+                        return;
+                    }
 
-                // Cek ulang di dalam transaksi: bisa jadi baru saja di-check-in
-                if ($rental->start_time->copy()->addMinutes($toleranceMinutes)->isFuture()) {
-                    return;
-                }
+                    // Cek ulang di dalam transaksi: bisa jadi baru saja di-check-in
+                    if ($rental->start_time->copy()->addMinutes($toleranceMinutes)->isFuture()) {
+                        return;
+                    }
 
-                $rental->update([
-                    'status' => 'no_show',
-                    'cancelled_reason' => 'Penyewa tidak datang mengambil motor sampai batas toleransi.',
-                ]);
-            });
+                    $rental->update([
+                        'status' => 'no_show',
+                        'cancelled_reason' => 'Penyewa tidak datang mengambil motor sampai batas toleransi.',
+                    ]);
+                });
+            }
         });
 })->everyFiveMinutes()->name('mark-no-show-rentals');
 
@@ -52,25 +55,28 @@ Schedule::call(function () {
     Rental::where('status', 'active')
         ->where('end_time', '<=', now())
         ->whereDoesntHave('reminders', fn($q) => $q->where('type', 'overdue'))
-        ->pluck('id')
-        ->each(function ($id) {
-            DB::transaction(function () use ($id) {
-                $rental = Rental::lockForUpdate()->find($id);
+        ->select('id')
+        ->chunkById(100, function ($rentals) {
+            foreach ($rentals as $rental) {
+                $id = $rental->id;
+                DB::transaction(function () use ($id) {
+                    $rental = Rental::lockForUpdate()->find($id);
 
-                if (! $rental || $rental->status !== 'active') {
-                    return;
-                }
+                    if (! $rental || $rental->status !== 'active') {
+                        return;
+                    }
 
-                if ($rental->reminders()->where('type', 'overdue')->exists()) {
-                    return;
-                }
+                    if ($rental->reminders()->where('type', 'overdue')->exists()) {
+                        return;
+                    }
 
-                RentalReminder::create([
-                    'rental_id' => $rental->id,
-                    'type' => 'overdue',
-                    'scheduled_at' => now(),
-                    'status' => 'pending',
-                ]);
-            });
+                    RentalReminder::create([
+                        'rental_id' => $rental->id,
+                        'type' => 'overdue',
+                        'scheduled_at' => now(),
+                        'status' => 'pending',
+                    ]);
+                });
+            }
         });
 })->everyFiveMinutes()->name('create-overdue-reminders');

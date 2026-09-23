@@ -32,9 +32,9 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->sidebarWidth('15rem')
             ->maxContentWidth(Width::Full)
-            // Pelat "SM" + SEWAMOTOR, sama dengan .brand di navbar customer.
+            // Pelat "MJ" + Mitra Jalan, sama dengan .brand di navbar customer.
             // Gayanya ada di public/css/filament-admin-theme.css (.fi-logo .brand-plate).
-            ->brandName(new HtmlString('<span class="brand-plate">SM</span> SEWAMOTOR'))
+            ->brandName(new HtmlString('<span class="brand-plate">MJ</span> Mitra Jalan'))
             // Work Sans untuk isi. Oswald untuk judul dimuat lewat render hook di bawah.
             ->font('Work Sans')
             // Warna diambil langsung dari token prototipe, bukan preset bawaan Filament.

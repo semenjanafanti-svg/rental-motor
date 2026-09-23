@@ -25,18 +25,18 @@ class BikeController extends Controller
             'available_on' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today'],
         ]);
 
-        $busy = isset($filters['available_on'])
-            ? $availability->busyBikeIds(
-                Carbon::parse($filters['available_on'])->startOfDay(),
-                Carbon::parse($filters['available_on'])->addDay()->startOfDay(),
-            )
-            : [];
-
         $query = Bike::query()
+            ->select(['id', 'name', 'brand', 'category', 'cc', 'color', 'daily_rate', 'photo', 'facilities'])
             ->where('status', 'available')
-            ->when($busy, fn ($q) => $q->whereNotIn('id', $busy))
             ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
             ->when($filters['max_price'] ?? null, fn ($q, $max) => $q->where('daily_rate', '<=', $max));
+
+        if (isset($filters['available_on'])) {
+            $from = Carbon::parse($filters['available_on'])->startOfDay();
+            $to = $from->copy()->addDay();
+
+            $query->whereNotIn('id', $availability->busyBikeQuery($from, $to)->select('bike_id'));
+        }
 
         match ($filters['sort'] ?? null) {
             'price_asc' => $query->orderBy('daily_rate'),
