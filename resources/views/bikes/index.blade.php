@@ -72,8 +72,8 @@
             @foreach ($bikes as $bike)
                 <a href="{{ route('bikes.show', $bike) }}" class="bike-card">
                     <div class="h-32">
-                        @if ($bike->photo)
-                            <img src="{{ asset('storage/' . $bike->photo) }}" alt="{{ $bike->name }}" loading="lazy" decoding="async" class="h-full w-full object-cover">
+                        @if ($bike->hasPhoto())
+                            <img src="{{ $bike->photoUrl() }}" alt="{{ $bike->name }}" loading="lazy" decoding="async" class="h-full w-full object-cover">
                         @else
                             <x-bike-icon :category="$bike->category" />
                         @endif

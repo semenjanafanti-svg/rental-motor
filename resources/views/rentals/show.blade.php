@@ -89,14 +89,21 @@
             </x-status-panel>
             @if ($rental->verification?->rejection_reason)
                 <div class="notice notice-rust mt-5">
-                    <b>Dokumen perlu diperbaiki:</b> {{ $rental->verification->rejection_reason }}. Kamu mendapat satu kesempatan untuk mengunggah ulang.
+                    <b>Dokumen perlu diperbaiki:</b> {{ $rental->verification->rejection_reason }}.
+                    @if ($rental->resubmission_expires_at?->isFuture())
+                        Unggah ulang sebelum <b>{{ $rental->resubmission_expires_at->locale('id')->translatedFormat('H:i') }} WIB</b>.
+                    @else
+                        Batas waktu unggah ulang sudah lewat.
+                    @endif
                 </div>
+                @if ($rental->resubmission_expires_at?->isFuture())
                 <form method="POST" action="{{ route('rentals.documents.resubmit', $rental) }}" enctype="multipart/form-data" class="card mt-4 space-y-4 p-4">
                     @csrf
                     <div><label class="label" for="ktp_photo">Foto KTP baru</label><input class="input" id="ktp_photo" name="ktp_photo" type="file" accept="image/png,image/jpeg" required></div>
                     <div><label class="label" for="sim_photo">Foto SIM C baru</label><input class="input" id="sim_photo" name="sim_photo" type="file" accept="image/png,image/jpeg" required></div>
                     <button class="btn btn-amber" type="submit">Kirim Ulang Dokumen</button>
                 </form>
+                @endif
             @endif
         @endif
 

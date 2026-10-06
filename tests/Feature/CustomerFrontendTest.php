@@ -110,6 +110,23 @@ class CustomerFrontendTest extends TestCase
             ->assertDontSee('Mahal');
     }
 
+    public function test_catalog_uses_uploaded_photo_and_falls_back_to_the_bike_icon_when_missing(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('bikes/vario.jpg', 'photo');
+
+        $this->bike(['name' => 'Dengan Foto', 'license_plate' => 'L 4 A', 'photo' => 'bikes/vario.jpg']);
+        $this->bike(['name' => 'Foto Hilang', 'license_plate' => 'L 5 A', 'photo' => 'bikes/tidak-ada.jpg']);
+        $this->bike(['name' => 'Tanpa Foto', 'license_plate' => 'L 6 A']);
+
+        $this->get('/motor')
+            ->assertOk()
+            ->assertSee('/storage/bikes/vario.jpg')
+            ->assertSee('Foto Hilang')
+            ->assertSee('Tanpa Foto')
+            ->assertDontSee('/storage/bikes/tidak-ada.jpg');
+    }
+
     public function test_guest_is_redirected_to_login_for_checkout(): void
     {
         $bike = $this->bike();

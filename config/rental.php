@@ -11,6 +11,9 @@ return [
     // Slot motor terkunci selama waktu ini; lewat dari itu pesanan expired.
     'lock_minutes' => 10,
 
+    // Kesempatan perbaikan setelah bukti pembayaran atau dokumen ditolak admin.
+    'resubmission_minutes' => 180,
+
     // QRIS toko (gambar di public/images/qris.png).
     'qris' => [
         'image' => 'images/qris.png',

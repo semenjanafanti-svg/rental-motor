@@ -11,8 +11,8 @@
 
     <div class="flex flex-wrap gap-5">
         <div class="h-32 w-44 shrink-0 overflow-hidden rounded-lg border border-line">
-            @if ($bike->photo)
-                <img src="{{ asset('storage/' . $bike->photo) }}" alt="{{ $bike->name }}" class="h-full w-full object-cover">
+            @if ($bike->hasPhoto())
+                <img src="{{ $bike->photoUrl() }}" alt="{{ $bike->name }}" class="h-full w-full object-cover">
             @else
                 <x-bike-icon :category="$bike->category" :size="64" />
             @endif

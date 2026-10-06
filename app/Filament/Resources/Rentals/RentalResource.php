@@ -9,6 +9,7 @@ use App\Support\Format;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -16,7 +17,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Navigation\NavigationItem;
 
 class RentalResource extends Resource
 {
@@ -71,18 +71,17 @@ class RentalResource extends Resource
     /** Badge menu: jumlah pesanan yang menunggu verifikasi admin. */
     public static function getNavigationItems(): array
     {
-        $item = fn (string $label, string $icon, int $sort, ?string $tab, ?string $status = null) =>
-            NavigationItem::make($label)
-                ->group('Operasional')
-                ->icon($icon)
-                ->sort($sort)
-                ->badge(
-                    $status ? (Rental::where('status', $status)->count() ?: null) : null,
-                    'danger'
-                )
-                ->url(fn () => static::getUrl('index', $tab ? ['tab' => $tab] : []))
-                ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName() . '.index')
-                    && request()->query('tab') === $tab);
+        $item = fn (string $label, string $icon, int $sort, ?string $tab, ?string $status = null) => NavigationItem::make($label)
+            ->group('Operasional')
+            ->icon($icon)
+            ->sort($sort)
+            ->badge(
+                $status ? (Rental::where('status', $status)->count() ?: null) : null,
+                'danger'
+            )
+            ->url(fn () => static::getUrl('index', $tab ? ['tab' => $tab] : []))
+            ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.index')
+                && request()->query('tab') === $tab);
 
         return [
             $item('Verifikasi', 'heroicon-o-check-circle', 1, 'verif', 'pending_verification'),
@@ -133,7 +132,7 @@ class RentalResource extends Resource
                 TextEntry::make('start_time')->label('Mulai')->dateTime('d M Y, H:i'),
                 TextEntry::make('end_time')->label('Batas kembali')->dateTime('d M Y, H:i'),
                 TextEntry::make('total_hours')->label('Durasi')
-                    ->formatStateUsing(fn ($state) => intdiv((int) $state, 24) . ' hari (' . $state . ' jam)'),
+                    ->formatStateUsing(fn ($state) => intdiv((int) $state, 24).' hari ('.$state.' jam)'),
                 TextEntry::make('verification.verifier.name')->label('Diverifikasi oleh')
                     ->visible(fn (Rental $record) => filled($record->verification?->verified_at)),
                 TextEntry::make('verification.verified_at')->label('Waktu verifikasi')->dateTime('d M Y, H:i')
@@ -150,6 +149,8 @@ class RentalResource extends Resource
                     ->formatStateUsing(fn ($state) => Format::rupiah($state)),
                 TextEntry::make('expires_at')->label('Batas bayar DP')->dateTime('d M Y, H:i')
                     ->visible(fn (Rental $record) => $record->status === 'pending_payment'),
+                TextEntry::make('resubmission_expires_at')->label('Batas unggah ulang dokumen')->dateTime('d M Y, H:i')
+                    ->visible(fn (Rental $record) => filled($record->resubmission_expires_at)),
                 TextEntry::make('dp_rejection')->label('Bukti sebelumnya ditolak karena')
                     ->getStateUsing(fn (Rental $record) => $record->payments->firstWhere('type', 'dp')?->rejection_reason)
                     ->visible(fn (Rental $record) => filled($record->payments->firstWhere('type', 'dp')?->rejection_reason)),

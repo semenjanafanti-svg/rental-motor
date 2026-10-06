@@ -15,7 +15,7 @@ class Rental extends Model
         'hourly_rate_applied', 'daily_rate_applied',
         'total_price', 'dp_amount', 'balance_amount',
         'payment_status', 'status',
-        'expires_at', 'picked_up_at', 'handed_over_by',
+        'expires_at', 'resubmission_expires_at', 'picked_up_at', 'handed_over_by',
         'cancelled_reason', 'notes',
     ];
 
@@ -25,6 +25,7 @@ class Rental extends Model
             'start_time' => 'datetime',
             'end_time' => 'datetime',
             'expires_at' => 'datetime',
+            'resubmission_expires_at' => 'datetime',
             'picked_up_at' => 'datetime',
             'hourly_rate_applied' => 'decimal:2',
             'daily_rate_applied' => 'decimal:2',

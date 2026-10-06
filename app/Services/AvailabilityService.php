@@ -129,7 +129,7 @@ class AvailabilityService
     {
         return Rental::query()
             ->whereIn('status', self::BLOCKING_STATUSES)
-            ->where(fn ($q) => $q->where('status', '!=', 'pending_payment')->orWhere('expires_at', '>', now()))
+            ->where($this->activeBlockingDeadlineQuery(...))
             ->where('start_time', '<', $to)
             ->where('end_time', '>', $from);
     }
@@ -139,10 +139,16 @@ class AvailabilityService
         return Rental::query()
             ->where('bike_id', $bikeId)
             ->whereIn('status', self::BLOCKING_STATUSES)
-            ->where(function ($q) {
-                // pending_payment yang sudah kedaluwarsa tidak menghalangi
-                $q->where('status', '!=', 'pending_payment')
-                    ->orWhere('expires_at', '>', now());
-            });
+            ->where($this->activeBlockingDeadlineQuery(...));
+    }
+
+    /** Pending pembayaran dan unggah ulang hanya mengunci slot sebelum tenggatnya. */
+    private function activeBlockingDeadlineQuery(Builder $query): void
+    {
+        $query->whereNotIn('status', ['pending_payment', 'pending_verification'])
+            ->orWhere(fn (Builder $query) => $query->where('status', 'pending_payment')->where('expires_at', '>', now()))
+            ->orWhere(fn (Builder $query) => $query->where('status', 'pending_verification')->where(function (Builder $query) {
+                $query->whereNull('resubmission_expires_at')->orWhere('resubmission_expires_at', '>', now());
+            }));
     }
 }

@@ -23,7 +23,7 @@ class ViewRental extends ViewRecord
 
     public function getTitle(): string
     {
-        return 'Pesanan ' . $this->record->booking_code;
+        return 'Pesanan '.$this->record->booking_code;
     }
 
     public function getBreadcrumb(): string
@@ -35,11 +35,14 @@ class ViewRental extends ViewRecord
     {
         return [
             Action::make('sendVerificationResult')
-                ->label('Kirim hasil verifikasi via WhatsApp')
+                ->label(fn () => VerificationMessage::hasResubmissionRequest($this->record)
+                    ? 'Kirim instruksi unggah ulang via WhatsApp'
+                    : 'Kirim hasil verifikasi via WhatsApp')
                 ->icon('heroicon-o-chat-bubble-left-right')
                 ->color('success')
                 ->visible(fn () => filled($this->record->user?->phone_number)
-                    && in_array($this->record->status, ['approved', 'cancelled'], true))
+                    && (in_array($this->record->status, ['approved', 'cancelled'], true)
+                        || VerificationMessage::hasResubmissionRequest($this->record)))
                 ->url(fn () => VerificationMessage::waLink($this->record), shouldOpenInNewTab: true),
 
             Action::make('approve')
@@ -62,7 +65,7 @@ class ViewRental extends ViewRecord
                 ->modalHeading('Tolak bukti pembayaran')
                 ->modalDescription(fn () => $this->record->payments()->where('type', 'dp')->value('rejection_count') >= 1
                     ? 'Kesempatan unggah ulang sudah digunakan. Pesanan akan dibatalkan dan DP masuk proses refund.'
-                    : 'Penyewa mendapat satu kesempatan untuk mengunggah ulang bukti bayar. Batas waktu bayar diperpanjang.')
+                    : 'Penyewa mendapat satu kesempatan untuk mengunggah ulang bukti bayar dalam 3 jam.')
                 ->schema([
                     Textarea::make('reason')->label('Alasan (dilihat penyewa)')->required()->maxLength(255),
                 ])
@@ -70,7 +73,7 @@ class ViewRental extends ViewRecord
                 ->action(fn (array $data) => $this->run(
                     PaymentService::class,
                     fn (PaymentService $s) => $s->rejectDpProof($this->record, $data['reason']),
-                    'Bukti pembayaran ditolak. Penyewa diminta mengunggah ulang.'
+                    'Bukti pembayaran ditolak. Klik “Kirim instruksi unggah ulang via WhatsApp” untuk menghubungi penyewa.'
                 )),
 
             Action::make('rejectDocuments')
@@ -80,7 +83,7 @@ class ViewRental extends ViewRecord
                 ->modalHeading('Tolak dokumen identitas')
                 ->modalDescription(fn () => $this->record->verification?->rejection_count >= 1
                     ? 'Kesempatan unggah ulang dokumen sudah digunakan. Pesanan akan dibatalkan dan DP wajib direfund.'
-                    : 'Penyewa mendapat satu kesempatan untuk mengunggah ulang KTP dan SIM C.')
+                    : 'Penyewa mendapat satu kesempatan untuk mengunggah ulang KTP dan SIM C dalam 3 jam.')
                 ->schema([
                     Textarea::make('reason')->label('Alasan (dilihat penyewa)')->required()->maxLength(255),
                 ])
@@ -88,7 +91,7 @@ class ViewRental extends ViewRecord
                 ->action(fn (array $data) => $this->run(
                     PaymentService::class,
                     fn (PaymentService $s) => $s->rejectDocuments($this->record, auth()->user(), $data['reason']),
-                    'Dokumen ditolak dan pesanan dibatalkan. Kembalikan DP ke penyewa.'
+                    'Dokumen ditolak. Klik “Kirim instruksi unggah ulang via WhatsApp” untuk menghubungi penyewa.'
                 )),
 
             Action::make('checkIn')
@@ -96,8 +99,8 @@ class ViewRental extends ViewRecord
                 ->icon('heroicon-o-key')
                 ->color('success')
                 ->modalHeading('Catat pelunasan & serah terima motor')
-                ->modalDescription(fn () => 'Sisa pelunasan: ' . Format::rupiah($this->record->balance_amount)
-                    . '. Pastikan sudah diterima sebelum motor diserahkan.')
+                ->modalDescription(fn () => 'Sisa pelunasan: '.Format::rupiah($this->record->balance_amount)
+                    .'. Pastikan sudah diterima sebelum motor diserahkan.')
                 ->schema([
                     Select::make('method')
                         ->label('Metode pelunasan')
@@ -118,8 +121,8 @@ class ViewRental extends ViewRecord
                 ->color('primary')
                 ->modalHeading('Catat pengembalian motor')
                 ->modalDescription('Denda telat dihitung otomatis dari batas kembali ('
-                    . (int) config('rental.late_tolerance_minutes')
-                    . ' menit toleransi). Isi denda kerusakan/bensin bila ada.')
+                    .(int) config('rental.late_tolerance_minutes')
+                    .' menit toleransi). Isi denda kerusakan/bensin bila ada.')
                 ->schema([
                     DateTimePicker::make('actual_return_time')
                         ->label('Waktu aktual kembali')
@@ -174,7 +177,7 @@ class ViewRental extends ViewRecord
     /**
      * Jalankan aksi service, tampilkan notifikasi, lalu segarkan data halaman.
      *
-     * @param class-string $serviceClass PaymentService::class atau HandoverService::class
+     * @param  class-string  $serviceClass  PaymentService::class atau HandoverService::class
      */
     private function run(string $serviceClass, callable $callback, string $successMessage): void
     {

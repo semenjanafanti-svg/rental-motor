@@ -92,7 +92,11 @@ class PaymentService
                 'verified_at' => now(),
             ]);
 
-            $locked->update(['status' => 'approved', 'payment_status' => 'dp_paid']);
+            $locked->update([
+                'status' => 'approved',
+                'payment_status' => 'dp_paid',
+                'resubmission_expires_at' => null,
+            ]);
         });
     }
 
@@ -119,7 +123,7 @@ class PaymentService
                 $locked->update([
                     'status' => 'cancelled',
                     'payment_status' => 'dp_paid',
-                    'cancelled_reason' => 'Bukti pembayaran ditolak dua kali: ' . $reason,
+                    'cancelled_reason' => 'Bukti pembayaran ditolak dua kali: '.$reason,
                     'notes' => 'DP perlu dikembalikan penuh oleh admin.',
                 ]);
 
@@ -135,7 +139,7 @@ class PaymentService
 
             $locked->update([
                 'status' => 'pending_payment',
-                'expires_at' => now()->addMinutes((int) config('rental.lock_minutes')),
+                'expires_at' => now()->addMinutes((int) config('rental.resubmission_minutes')),
             ]);
         });
 
@@ -164,6 +168,10 @@ class PaymentService
                     'verified_at' => now(),
                 ]);
 
+                $locked->update([
+                    'resubmission_expires_at' => now()->addMinutes((int) config('rental.resubmission_minutes')),
+                ]);
+
                 return;
             }
 
@@ -181,13 +189,13 @@ class PaymentService
                 'verified_at' => now(),
             ]);
 
-            $note = 'Dokumen ditolak; DP ' . Format::rupiah($payment->gross_amount) . ' perlu dikembalikan penuh (refund manual).';
+            $note = 'Dokumen ditolak; DP '.Format::rupiah($payment->gross_amount).' perlu dikembalikan penuh (refund manual).';
 
             $locked->update([
                 'status' => 'cancelled',
                 'payment_status' => 'dp_paid',
-                'cancelled_reason' => 'Dokumen ditolak: ' . $reason,
-                'notes' => trim(($locked->notes ? $locked->notes . "\n" : '') . $note),
+                'cancelled_reason' => 'Dokumen ditolak: '.$reason,
+                'notes' => trim(($locked->notes ? $locked->notes."\n" : '').$note),
             ]);
         });
     }
@@ -231,7 +239,7 @@ class PaymentService
 
             if (! $this->canCancel($locked)) {
                 throw new PaymentException(
-                    'Pesanan tidak dapat dibatalkan. Batas pembatalan H-' . config('rental.cancellation.min_days_before') . '.'
+                    'Pesanan tidak dapat dibatalkan. Batas pembatalan H-'.config('rental.cancellation.min_days_before').'.'
                 );
             }
 
@@ -258,9 +266,9 @@ class PaymentService
                 'status' => 'cancelled',
                 'payment_status' => 'dp_paid',
                 'cancelled_reason' => 'Dibatalkan oleh penyewa.',
-                'notes' => trim(($locked->notes ? $locked->notes . "\n" : '')
-                    . 'Dibatalkan penyewa; DP ' . Format::rupiah($payment->gross_amount)
-                    . ' dikembalikan penuh. Cek mutasi rekening sebelum transfer refund.'),
+                'notes' => trim(($locked->notes ? $locked->notes."\n" : '')
+                    .'Dibatalkan penyewa; DP '.Format::rupiah($payment->gross_amount)
+                    .' dikembalikan penuh. Cek mutasi rekening sebelum transfer refund.'),
             ]);
         });
     }

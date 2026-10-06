@@ -14,7 +14,13 @@ class VerificationDocumentController extends Controller
         abort_unless($rental->user_id === $request->user()->id, 404);
 
         $verification = $rental->verification;
-        abort_unless($rental->status === 'pending_verification' && $verification?->rejection_count === 1 && $verification->rejection_reason, 404);
+        abort_unless(
+            $rental->status === 'pending_verification'
+            && $verification?->rejection_count === 1
+            && $verification->rejection_reason
+            && $rental->resubmission_expires_at?->isFuture(),
+            404,
+        );
 
         $request->validate([
             'ktp_photo' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:2048'],
@@ -32,6 +38,7 @@ class VerificationDocumentController extends Controller
             'status' => 'pending',
             'rejection_reason' => null,
         ]);
+        $rental->update(['resubmission_expires_at' => null]);
         $disk->delete(array_filter($old));
 
         return back()->with('status', 'Dokumen baru terkirim. Admin akan memverifikasinya kembali.');
