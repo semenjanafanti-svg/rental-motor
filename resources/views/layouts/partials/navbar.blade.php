@@ -2,7 +2,7 @@
     $user = auth()->user();
 @endphp
 
-<header>
+<header class="site-header">
     <div class="topbar">
         <a href="{{ route('home') }}" class="brand">
             <span class="brand-plate">MJ</span> {{ config('rental.business_name') }}
@@ -12,6 +12,8 @@
             @auth
                 @if ($user->isStaff())
                     <a href="{{ url('/admin') }}" class="topbar-link">Panel Admin</a>
+                @else
+                    <a href="{{ route('rentals.index') }}" class="topbar-link">Pesanan Saya</a>
                 @endif
                 <a href="{{ route('profile.edit') }}" class="topbar-link" title="Profil">{{ $user->name }}</a>
                 <form method="POST" action="{{ route('logout') }}">
@@ -24,13 +26,4 @@
             @endauth
         </div>
     </div>
-
-    <nav class="subnav" aria-label="Menu utama">
-        <a href="{{ route('bikes.index') }}" class="tab" @if (request()->routeIs('bikes.*', 'bookings.*')) aria-current="page" @endif>Katalog Motor</a>
-        @auth
-            @if (! $user->isStaff())
-                <a href="{{ route('rentals.index') }}" class="tab" @if (request()->routeIs('rentals.*')) aria-current="page" @endif>Pesanan Saya</a>
-            @endif
-        @endauth
-    </nav>
 </header>

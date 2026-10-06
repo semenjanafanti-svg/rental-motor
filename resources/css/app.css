@@ -53,28 +53,16 @@
 @layer components {
     /* ---- rangka halaman ---- */
     .topbar {
-        @apply sticky top-0 z-40 flex items-center gap-2 overflow-x-auto bg-white/95 pl-4 pr-3 text-ink shadow-sm backdrop-blur;
-        border-bottom: 1px solid var(--line);
-        
+        @apply sticky top-0 z-40 flex min-h-16 items-center justify-between gap-2 border-b border-line bg-white/95 px-4 text-ink shadow-sm backdrop-blur sm:px-8;
     }
     .brand {
-        @apply flex items-center gap-2 whitespace-nowrap py-3.5 pr-4 font-display text-base font-bold tracking-wide;
+        @apply flex items-center gap-3 whitespace-nowrap py-3 font-display text-lg font-bold tracking-wide;
     }
     .brand-plate {
-        @apply rounded-[3px] bg-sun px-1.5 py-0.5 font-display text-[11px] font-bold tracking-widest text-sun-ink;
+        @apply rounded-lg bg-gradient-to-br from-[#ffc928] to-[#f39812] px-2.5 py-1.5 font-display text-xs font-bold tracking-widest text-sun-ink shadow-sm;
     }
     .topbar-link {
-        @apply inline-block max-w-[10rem] truncate whitespace-nowrap rounded px-3 py-2 text-[13px] opacity-80 transition-opacity hover:opacity-100;
-    }
-
-    .subnav {
-        @apply flex gap-1 overflow-x-auto border-b border-line bg-surface px-4 pt-2.5;
-    }
-    .tab {
-        @apply whitespace-nowrap border-b-[3px] border-transparent px-3.5 py-3 font-display text-[13px] tracking-wide text-muted transition-colors hover:text-ink;
-    }
-    .tab[aria-current='page'] {
-        @apply border-sun font-semibold text-ink;
+        @apply inline-block max-w-[10rem] truncate whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-amber-50 hover:text-ink;
     }
 
     .page {

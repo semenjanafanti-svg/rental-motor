@@ -5,36 +5,36 @@
 @section('content')
     @php($heroBike = $featuredBikes->first(fn ($bike) => $bike->hasPhoto()) ?? $featuredBikes->first())
 
-    <section class="relative isolate grid gap-10 overflow-visible rounded-[2rem] border border-[#f1e5c9] bg-gradient-to-br from-[#fff8e8] via-[#fffefa] to-[#fff0df] px-5 py-10 shadow-sm sm:px-8 lg:min-h-[38rem] lg:grid-cols-[1.12fr_0.88fr] lg:items-center lg:gap-12 lg:px-12 lg:py-12">
-        <div class="pointer-events-none absolute -right-10 top-10 -z-10 h-64 w-64 rounded-full bg-gradient-to-br from-amber/30 to-orange-200/20 blur-3xl"></div>
-        <div class="relative z-10 flex flex-col gap-7">
+    <section class="relative isolate grid gap-7 overflow-hidden rounded-[1.75rem] border border-[#f1e5c9] bg-gradient-to-br from-[#fff8e8] via-[#fffefa] to-[#fff0df] px-5 py-8 shadow-sm sm:px-7 lg:min-h-[31rem] lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-9 lg:px-10 lg:py-9">
+        <div class="pointer-events-none absolute -right-10 top-10 -z-10 h-56 w-56 rounded-full bg-gradient-to-br from-amber/30 to-orange-200/20 blur-3xl"></div>
+        <div class="relative z-10 flex flex-col gap-5">
             <p class="inline-flex w-fit items-center gap-2 rounded-full border border-amber/50 bg-[#fff3cb] px-4 py-2 text-sm font-bold text-[#49220d]">
                 <span>{{ config('rental.business_name') }} · Rental Motor Harian</span><span class="text-amber">·</span><span class="text-[#c94713]">Booking praktis</span>
             </p>
-            <h1 class="max-w-3xl font-display text-6xl font-bold leading-[0.95] tracking-tight text-[#191917] sm:text-7xl lg:text-8xl">Sewa Motor <span class="bg-gradient-to-r from-[#f39812] via-[#ed6d24] to-[#d94b37] bg-clip-text text-transparent">Cepat,</span><br class="hidden sm:block"> Jalan Lebih Santai.</h1>
-            <p class="max-w-3xl text-lg leading-8 text-[#66665e] sm:text-xl sm:leading-9">Solusi sewa motor harian untuk liburan, kuliah, dan urusan kerja. Pilih unit, cek jadwal, lalu pesan online dengan <strong class="text-ink">DP 30% via QRIS</strong>.</p>
+            <h1 class="max-w-3xl font-display text-5xl font-bold leading-[0.98] tracking-tight text-[#191917] sm:text-6xl lg:text-7xl">Sewa Motor <span class="bg-gradient-to-r from-[#f39812] via-[#ed6d24] to-[#d94b37] bg-clip-text text-transparent">Cepat,</span><br class="hidden sm:block"> Jalan Lebih Santai.</h1>
+            <p class="max-w-2xl text-base leading-7 text-[#66665e] sm:text-lg sm:leading-8">Solusi sewa motor harian untuk liburan, kuliah, dan urusan kerja. Pilih unit, cek jadwal, lalu pesan online dengan <strong class="text-ink">DP 30% via QRIS</strong>.</p>
             <div class="flex flex-wrap items-center gap-4">
                 <a href="{{ route('bikes.index') }}" class="btn btn-amber rounded-xl bg-gradient-to-r from-[#ffc928] to-[#ff941f] px-6 py-3.5 shadow-md shadow-orange-200 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-orange-200">Pilih motor <span class="ml-2" aria-hidden="true">→</span></a>
                 <span class="text-sm text-muted">Mulai <strong class="text-ink">{{ \App\Support\Format::rupiah($featuredBikes->min('daily_rate') ?? 0) }}</strong> / 24 jam</span>
             </div>
-            <div class="grid gap-3 pt-2 sm:grid-cols-3">
-                <div class="group flex min-h-24 items-center gap-3 rounded-2xl border border-[#e9e6dc] bg-white/90 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-amber/50 hover:shadow-lg">
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#d8f7e9] to-[#a9e8d2] text-teal"><svg aria-hidden="true" viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m3 7.5 9-4.5 9 4.5-9 4.5-9-4.5Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5v9l9 4.5 9-4.5v-9M12 12v9"/></svg></span>
-                    <span><strong class="block text-sm leading-5">Fasilitas lengkap</strong><span class="mt-1 block text-xs leading-4 text-muted">{{ $heroBike?->facilities ? implode(' · ', array_map(fn ($facility) => ucwords(str_replace('_', ' ', $facility)), array_slice($heroBike->facilities, 0, 3))) : 'Cek fasilitas di detail tiap motor' }}</span></span>
+            <div class="grid gap-2.5 pt-1 sm:grid-cols-3">
+                <div class="group flex min-h-20 items-center gap-2.5 rounded-2xl border border-[#e9e6dc] bg-white/90 p-3 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-amber/50 hover:shadow-lg">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#d8f7e9] to-[#a9e8d2] text-teal"><svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m3 7.5 9-4.5 9 4.5-9 4.5-9-4.5Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5v9l9 4.5 9-4.5v-9M12 12v9"/></svg></span>
+                    <span><strong class="block text-sm leading-5">Fasilitas lengkap</strong><span class="mt-1 block text-[11px] leading-4 text-muted">{{ $heroBike?->facilities ? implode(' · ', array_map(fn ($facility) => ucwords(str_replace('_', ' ', $facility)), array_slice($heroBike->facilities, 0, 3))) : 'Cek fasilitas di detail tiap motor' }}</span></span>
                 </div>
-                <div class="group flex min-h-24 items-center gap-3 rounded-2xl border border-[#e9e6dc] bg-white/90 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-amber/50 hover:shadow-lg">
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#fff1c4] text-[#bd6500]"><svg aria-hidden="true" viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m13 2-8 12h6l-1 8 9-13h-6l1-7Z"/></svg></span>
-                    <span><strong class="block text-sm leading-5">DP 30% QRIS</strong><span class="mt-1 block text-xs leading-4 text-muted">Pembayaran praktis</span></span>
+                <div class="group flex min-h-20 items-center gap-2.5 rounded-2xl border border-[#e9e6dc] bg-white/90 p-3 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-amber/50 hover:shadow-lg">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff1c4] text-[#bd6500]"><svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m13 2-8 12h6l-1 8 9-13h-6l1-7Z"/></svg></span>
+                    <span><strong class="block text-sm leading-5">DP 30%</strong><span class="mt-1 block text-[11px] leading-4 text-muted">Pembayaran praktis</span></span>
                 </div>
-                <div class="group flex min-h-24 items-center gap-3 rounded-2xl border border-[#e9e6dc] bg-white/90 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-amber/50 hover:shadow-lg">
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#ffeadb] text-[#d45a1c]"><svg aria-hidden="true" viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
-                    <span><strong class="block text-sm leading-5">Jadwal jelas</strong><span class="mt-1 block text-xs leading-4 text-muted">Cek kalender sebelum pesan</span></span>
+                <div class="group flex min-h-20 items-center gap-2.5 rounded-2xl border border-[#e9e6dc] bg-white/90 p-3 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-amber/50 hover:shadow-lg">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ffeadb] text-[#d45a1c]"><svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
+                    <span><strong class="block text-sm leading-5">Jadwal jelas</strong><span class="mt-1 block text-[11px] leading-4 text-muted">Cek kalender sebelum pesan</span></span>
                 </div>
             </div>
         </div>
 
-        <div class="relative mx-auto h-[26rem] w-full max-w-xl overflow-visible sm:h-[32rem] lg:mt-10 lg:h-[34rem]">
-            <div class="group absolute inset-0 overflow-hidden rounded-[2rem] border border-amber/50 bg-[#f2d59c] shadow-xl shadow-orange-950/10">
+        <div class="relative mx-auto h-[21rem] w-full max-w-md overflow-visible sm:h-[25rem] lg:mt-5 lg:h-[27rem]">
+            <div class="group absolute inset-0 overflow-hidden rounded-[1.75rem] border border-amber/50 bg-[#f2d59c] shadow-xl shadow-orange-950/10">
                 @if ($heroBike?->hasPhoto())
                     <img src="{{ $heroBike->photoUrl() }}" alt="{{ $heroBike->name }} siap disewa" class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105">
                 @else
@@ -45,8 +45,8 @@
                     <div class="absolute bottom-5 left-5 rounded-full bg-gradient-to-r from-[#ffc928] to-[#ff941f] px-4 py-2 text-sm font-bold text-[#321b08] shadow-lg sm:bottom-7 sm:left-7">★ Unit pilihan · {{ $heroBike->name }}</div>
                 @endif
             </div>
-            <div class="absolute -right-2 top-5 flex items-center gap-3 rounded-2xl border border-amber/50 bg-white/95 px-4 py-3 shadow-xl sm:-right-5 sm:top-8 sm:px-5 sm:py-4">
-                <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ff9b20] text-white"><svg aria-hidden="true" viewBox="0 0 24 24" class="h-6 w-6" fill="currentColor"><path d="m13.2 2-8 11h5.6L9.9 22l8.9-12h-5.9L13.2 2Z"/></svg></span>
+            <div class="absolute -right-1 top-4 flex items-center gap-2.5 rounded-xl border border-amber/50 bg-white/95 px-3 py-2.5 shadow-xl sm:-right-4 sm:top-6 sm:px-4">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ff9b20] text-white"><svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor"><path d="m13.2 2-8 11h5.6L9.9 22l8.9-12h-5.9L13.2 2Z"/></svg></span>
                 <span><strong class="block text-sm">Pesan dalam hitungan menit</strong><span class="mt-1 block text-xs text-muted">DP QRIS · Konfirmasi jadwal</span></span>
             </div>
         </div>
@@ -115,6 +115,7 @@
                 <p class="mt-2 text-sm leading-6 text-muted">Hubungi kami untuk tanya jadwal, titik pengambilan, atau rekomendasi motor buat rute kamu.</p>
             </div>
             <div class="space-y-4 border-t border-teal/20 pt-5 text-sm">
+                <p><span class="block text-xs font-semibold uppercase tracking-wider text-muted">Kontak <span class="normal-case tracking-normal text-orange-700"></span></span><span class="mt-1 block font-semibold">0812-3456-7890</span></p>
                 <p><span class="block text-xs font-semibold uppercase tracking-wider text-muted">Jam layanan</span><span class="mt-1 block font-semibold">{{ config('rental.operating_hours') ?: sprintf('Serah terima motor %02d.00–%02d.00 WIB', config('rental.open_hour'), config('rental.close_hour')) }}</span></p>
                 <p><span class="block text-xs font-semibold uppercase tracking-wider text-muted">Alamat</span><span class="mt-1 block font-semibold">{{ config('rental.address') ?: (config('rental.whatsapp') ? 'Tanyakan titik pengambilan lewat WhatsApp.' : 'Jl. Pemuda Kelompok C No. A2, Airlangga, Kec. Mulyorejo, Kota Surabaya, Jawa Timur 60115') }}</span></p>
                 @if (config('rental.whatsapp'))
