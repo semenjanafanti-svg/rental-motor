@@ -11,12 +11,13 @@ class Rental extends Model
 {
     protected $fillable = [
         'booking_code', 'user_id', 'bike_id',
-        'start_time', 'end_time', 'total_hours',
-        'hourly_rate_applied', 'daily_rate_applied',
+        'start_time', 'end_time',
+        'hourly_rate_applied',
         'total_price', 'dp_amount', 'balance_amount',
         'payment_status', 'status',
         'expires_at', 'resubmission_expires_at', 'picked_up_at', 'handed_over_by',
-        'cancelled_reason', 'notes',
+        'cancelled_reason', 'notes', 'ktp_photo', 'sim_photo', 'verification_status',
+        'verification_rejection_reason', 'verification_rejection_count', 'verified_by', 'verified_at',
     ];
 
     protected function casts(): array
@@ -28,10 +29,10 @@ class Rental extends Model
             'resubmission_expires_at' => 'datetime',
             'picked_up_at' => 'datetime',
             'hourly_rate_applied' => 'decimal:2',
-            'daily_rate_applied' => 'decimal:2',
             'total_price' => 'decimal:2',
             'dp_amount' => 'decimal:2',
             'balance_amount' => 'decimal:2',
+            'verified_at' => 'datetime',
         ];
     }
 
@@ -51,9 +52,23 @@ class Rental extends Model
         return $this->belongsTo(User::class, 'handed_over_by');
     }
 
-    public function verification(): HasOne
+    public function verifiedBy(): BelongsTo
     {
-        return $this->hasOne(Verification::class);
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function getTotalHoursAttribute(): int
+    {
+        if (! $this->start_time || ! $this->end_time) {
+            return 0;
+        }
+
+        return (int) ceil($this->start_time->diffInMinutes($this->end_time, true) / 60);
+    }
+
+    public function isPickupPeriodOpen(): bool
+    {
+        return $this->start_time !== null && now()->greaterThanOrEqualTo($this->start_time);
     }
 
     public function payments(): HasMany

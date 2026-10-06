@@ -8,25 +8,25 @@ class VerificationMessage
 {
     public static function hasResubmissionRequest(Rental $rental): bool
     {
-        $rental->loadMissing(['payments', 'verification']);
+        $rental->loadMissing('payments');
 
         return ($rental->status === 'pending_payment'
                 && filled($rental->payments->firstWhere('type', 'dp')?->rejection_reason)
                 && $rental->expires_at?->isFuture())
             || ($rental->status === 'pending_verification'
-                && filled($rental->verification?->rejection_reason)
+                && filled($rental->verification_rejection_reason)
                 && $rental->resubmission_expires_at?->isFuture());
     }
 
     public static function waLink(Rental $rental): string
     {
-        $rental->loadMissing(['user', 'bike', 'payments', 'verification']);
+        $rental->loadMissing(['user', 'bike', 'payments']);
         $accepted = $rental->status === 'approved';
         $payment = $rental->payments->firstWhere('type', 'dp');
 
         if (self::hasResubmissionRequest($rental)) {
             $isPayment = $rental->status === 'pending_payment';
-            $reason = $isPayment ? $payment?->rejection_reason : $rental->verification?->rejection_reason;
+            $reason = $isPayment ? $payment?->rejection_reason : $rental->verification_rejection_reason;
             $deadline = $isPayment ? $rental->expires_at : $rental->resubmission_expires_at;
             $what = $isPayment ? 'bukti pembayaran DP' : 'dokumen KTP dan SIM C';
             $message = "Halo {$rental->user->name}, {$what} untuk {$rental->bike->name} ({$rental->booking_code}) ditolak. Alasan: {$reason}. Silakan "

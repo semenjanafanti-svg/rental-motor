@@ -75,7 +75,7 @@ class PaymentService
         DB::transaction(function () use ($rental, $admin) {
             [$locked, $payment] = $this->lockForVerification($rental);
 
-            if ($locked->verification?->rejection_reason) {
+            if ($locked->verification_rejection_reason) {
                 throw new PaymentException('Customer masih perlu mengunggah ulang dokumen yang diminta sebelum pesanan dapat disetujui.');
             }
 
@@ -86,8 +86,8 @@ class PaymentService
                 'received_by' => $admin->id,
             ]);
 
-            $locked->verification()->update([
-                'status' => 'approved',
+            $locked->update([
+                'verification_status' => 'approved',
                 'verified_by' => $admin->id,
                 'verified_at' => now(),
             ]);
@@ -157,13 +157,13 @@ class PaymentService
         DB::transaction(function () use ($rental, $admin, $reason) {
             [$locked, $payment] = $this->lockForVerification($rental);
 
-            $verification = $locked->verification;
+            $verification = $locked;
 
-            if ($verification->rejection_count === 0) {
+            if ($verification->verification_rejection_count === 0) {
                 $verification->update([
-                    'status' => 'pending',
-                    'rejection_reason' => $reason,
-                    'rejection_count' => 1,
+                    'verification_status' => 'pending',
+                    'verification_rejection_reason' => $reason,
+                    'verification_rejection_count' => 1,
                     'verified_by' => $admin->id,
                     'verified_at' => now(),
                 ]);
@@ -183,8 +183,8 @@ class PaymentService
             ]);
 
             $verification->update([
-                'status' => 'rejected',
-                'rejection_reason' => $reason,
+                'verification_status' => 'rejected',
+                'verification_rejection_reason' => $reason,
                 'verified_by' => $admin->id,
                 'verified_at' => now(),
             ]);

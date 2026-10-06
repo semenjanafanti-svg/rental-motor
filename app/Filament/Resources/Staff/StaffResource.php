@@ -8,7 +8,7 @@ use App\Filament\Resources\Staff\Pages\ListStaff;
 use App\Models\User;
 use App\Support\PhoneNumber;
 use Closure;
-use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -18,7 +18,6 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 
 class StaffResource extends Resource
@@ -44,7 +43,12 @@ class StaffResource extends Resource
     /** Hanya Super Admin (menu ikut tersembunyi untuk admin, URL langsung dijawab 403). */
     public static function canAccess(): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        return false;
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
     }
 
     /** Hanya akun admin operasional. Customer dan Super Admin tidak ikut tampil. */
@@ -103,23 +107,11 @@ class StaffResource extends Resource
             ->recordActions([
                 EditAction::make()->label('Ubah'),
 
-                DeleteAction::make()
-                    ->label('Hapus')
-                    ->modalHeading('Hapus akun staf?')
-                    ->modalDescription('Akun yang sudah punya riwayat verifikasi atau serah terima tidak bisa dihapus.')
-                    ->action(function (User $record) {
-                        try {
-                            $record->delete();
-                        } catch (QueryException) {
-                            Notification::make()
-                                ->title('Staf ini punya riwayat transaksi, jadi tidak bisa dihapus.')
-                                ->danger()
-                                ->send();
-
-                            return;
-                        }
-
-                        Notification::make()->title('Staf dihapus.')->success()->send();
+                Action::make('deactivate')->label('Nonaktifkan')->color('danger')->requiresConfirmation()
+                    ->visible(fn (User $record): bool => $record->is_active && $record->getKey() !== auth()->id())
+                    ->action(function (User $record): void {
+                        $record->forceFill(['is_active' => false])->save();
+                        Notification::make()->title('Akun staf dinonaktifkan.')->success()->send();
                     }),
             ]);
     }

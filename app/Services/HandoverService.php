@@ -31,6 +31,10 @@ class HandoverService
                 throw new PaymentException('Pesanan ini tidak sedang menunggu serah terima.');
             }
 
+            if (! $locked->isPickupPeriodOpen()) {
+                throw new PaymentException('Pelunasan dan check-in baru bisa dilakukan saat waktu pengambilan dimulai.');
+            }
+
             if ((float) $locked->balance_amount > 0) {
                 Payment::create([
                     'rental_id' => $locked->id,

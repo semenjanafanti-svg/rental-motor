@@ -20,7 +20,7 @@
     <li>Pembatalan hanya bisa dilakukan <b class="text-ink">H-{{ $cancelDays }}</b> atau lebih awal dengan refund DP 100%.</li>
     <li>
         Terlambat kembali (lewat toleransi {{ $lateTolerance }} menit): denda
-        {{ $bike ? \App\Support\Format::rupiah($bike->hourly_rate) . ' per jam' : 'per jam sesuai tarif motor' }}.
+        {{ $bike ? \App\Support\Format::rupiah($bike->hourly_rate) . ' per jam' : 'per jam sesuai jenis motor' }}.
     </li>
     <li>Motor diserahkan dengan bensin penuh dan harus dikembalikan dalam kondisi yang sama.</li>
     <li>Wajib mengunggah foto KTP dan SIM C.</li>

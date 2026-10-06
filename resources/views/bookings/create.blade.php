@@ -48,7 +48,8 @@
                 <div class="filepick" :class="{ 'filepick-filled': file }">
                     <input type="file" id="ktp_photo" name="ktp_photo" accept="image/png,image/jpeg" required
                            @change="file = $event.target.files[0] ? $event.target.files[0].name : null">
-                    <span x-text="file ? '📎 ' + file : 'Ketuk untuk memilih foto KTP (JPG/PNG)'">Ketuk untuk memilih foto KTP (JPG/PNG)</span>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" class="mr-2 inline h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 5.7-5.7a3 3 0 0 1 4.2 4.2l-7.8 7.8a4.2 4.2 0 0 1-6-6l8.5-8.5"/></svg>
+                    <span x-text="file || 'Ketuk untuk memilih foto KTP (JPG/PNG)'">Ketuk untuk memilih foto KTP (JPG/PNG)</span>
                 </div>
                 @error('ktp_photo')<p class="field-error">{{ $message }}</p>@enderror
             </div>
@@ -58,7 +59,8 @@
                 <div class="filepick" :class="{ 'filepick-filled': file }">
                     <input type="file" id="sim_photo" name="sim_photo" accept="image/png,image/jpeg" required
                            @change="file = $event.target.files[0] ? $event.target.files[0].name : null">
-                    <span x-text="file ? '📎 ' + file : 'Ketuk untuk memilih foto SIM C (JPG/PNG)'">Ketuk untuk memilih foto SIM C (JPG/PNG)</span>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" class="mr-2 inline h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 5.7-5.7a3 3 0 0 1 4.2 4.2l-7.8 7.8a4.2 4.2 0 0 1-6-6l8.5-8.5"/></svg>
+                    <span x-text="file || 'Ketuk untuk memilih foto SIM C (JPG/PNG)'">Ketuk untuk memilih foto SIM C (JPG/PNG)</span>
                 </div>
                 @error('sim_photo')<p class="field-error">{{ $message }}</p>@enderror
             </div>

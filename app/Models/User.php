@@ -4,16 +4,16 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 
-#[Fillable(['name', 'email', 'password', 'phone_number', 'address'])]
+#[Fillable(['name', 'email', 'password', 'phone_number'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -28,8 +28,8 @@ class User extends Authenticatable implements FilamentUser
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -41,7 +41,7 @@ class User extends Authenticatable implements FilamentUser
     /** Hanya admin dan super admin yang boleh masuk panel Filament. */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->isStaff();
+        return $this->is_active && $this->isStaff();
     }
 
     public function isStaff(): bool

@@ -17,11 +17,9 @@ return new class extends Migration
 
             $table->dateTime('start_time');
             $table->dateTime('end_time');
-            $table->unsignedInteger('total_hours');
 
             // Snapshot tarif saat booking
             $table->decimal('hourly_rate_applied', 12, 2);
-            $table->decimal('daily_rate_applied', 12, 2);
             $table->decimal('total_price', 12, 2);
             $table->decimal('dp_amount', 12, 2);
             $table->decimal('balance_amount', 12, 2);
@@ -39,6 +37,14 @@ return new class extends Migration
             ])->default('pending_payment');
 
             $table->dateTime('expires_at')->nullable();
+            $table->dateTime('resubmission_expires_at')->nullable()->index();
+            $table->string('ktp_photo')->nullable();
+            $table->string('sim_photo')->nullable();
+            $table->enum('verification_status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->text('verification_rejection_reason')->nullable();
+            $table->unsignedTinyInteger('verification_rejection_count')->default(0);
+            $table->foreignId('verified_by')->nullable()->constrained('users')->restrictOnDelete();
+            $table->dateTime('verified_at')->nullable();
             $table->dateTime('picked_up_at')->nullable();
             $table->foreignId('handed_over_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->string('cancelled_reason')->nullable();
@@ -48,12 +54,13 @@ return new class extends Migration
             $table->index(['bike_id', 'start_time', 'end_time', 'status']); // cek overlap
             $table->index(['status', 'end_time']);                          // rental mendekati/lewat batas kembali
             $table->index(['status', 'expires_at']);                        // job pembatalan otomatis
+            $table->index(['user_id', 'created_at'], 'rentals_user_created_index');
         });
 
-        // Perlindungan level database (MySQL 8.0.16+)
         if (DB::getDriverName() === 'mysql') {
             DB::statement('ALTER TABLE rentals ADD CONSTRAINT chk_rentals_time CHECK (end_time > start_time)');
         }
+
     }
 
     public function down(): void

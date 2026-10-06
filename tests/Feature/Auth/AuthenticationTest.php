@@ -30,6 +30,20 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
+    public function test_inactive_users_cannot_log_in_or_keep_an_authenticated_session(): void
+    {
+        $user = User::factory()->create();
+        $user->forceFill(['is_active' => false])->save();
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertSessionHasErrors('email');
+
+        $this->actingAs($user)->get('/profile')->assertRedirect('/login');
+        $this->assertGuest();
+    }
+
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();

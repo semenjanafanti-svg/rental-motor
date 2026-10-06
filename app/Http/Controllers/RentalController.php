@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Rental;
 use App\Services\PaymentService;
+use App\Services\RentalExpirationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use App\Services\RentalExpirationService;
 
 class RentalController extends Controller
 {
@@ -31,7 +31,7 @@ class RentalController extends Controller
         $expiration->expireOverdue($request->user()->id);
         $rental->refresh();
 
-        $rental->load(['bike', 'payments', 'verification']);
+        $rental->load(['bike', 'payments']);
 
         return view('rentals.show', [
             'rental' => $rental,

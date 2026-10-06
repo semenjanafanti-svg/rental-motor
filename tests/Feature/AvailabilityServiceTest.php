@@ -37,7 +37,7 @@ class AvailabilityServiceTest extends TestCase
         return Bike::create([
             'name' => 'Vario 160', 'brand' => 'Honda', 'license_plate' => 'L 9999 ZZ',
             'category' => 'matic', 'cc' => 160, 'year' => 2023,
-            'daily_rate' => 100000, 'hourly_rate' => 12000, 'status' => 'available',
+            'daily_rate' => 100000, 'status' => 'available',
         ]);
     }
 
@@ -49,9 +49,7 @@ class AvailabilityServiceTest extends TestCase
             'bike_id' => $bike->id,
             'start_time' => $start,
             'end_time' => $end,
-            'total_hours' => 48,
             'hourly_rate_applied' => 12000,
-            'daily_rate_applied' => 100000,
             'total_price' => 200000,
             'dp_amount' => 60000,
             'balance_amount' => 140000,

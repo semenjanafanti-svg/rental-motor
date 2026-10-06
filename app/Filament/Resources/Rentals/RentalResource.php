@@ -68,27 +68,16 @@ class RentalResource extends Resource
         return false;
     }
 
-    /** Badge menu: jumlah pesanan yang menunggu verifikasi admin. */
+    /** Status rental dikelola lewat tab pada satu halaman daftar. */
     public static function getNavigationItems(): array
     {
-        $item = fn (string $label, string $icon, int $sort, ?string $tab, ?string $status = null) => NavigationItem::make($label)
+        return [NavigationItem::make('Semua Rental')
             ->group('Operasional')
-            ->icon($icon)
-            ->sort($sort)
-            ->badge(
-                $status ? (Rental::where('status', $status)->count() ?: null) : null,
-                'danger'
-            )
-            ->url(fn () => static::getUrl('index', $tab ? ['tab' => $tab] : []))
+            ->icon('heroicon-o-list-bullet')
+            ->sort(1)
+            ->url(fn () => static::getUrl('index'))
             ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.index')
-                && request()->query('tab') === $tab);
-
-        return [
-            $item('Verifikasi', 'heroicon-o-check-circle', 1, 'verif', 'pending_verification'),
-            $item('Siap Diambil', 'heroicon-o-key', 2, 'pickup', 'approved'),
-            $item('Sedang Disewa', 'heroicon-o-clock', 3, 'active', 'active'),
-            $item('Semua Rental', 'heroicon-o-list-bullet', 4, null),
-        ];
+                && ! request()->query('tab'))];
     }
 
     public static function table(Table $table): Table
@@ -133,10 +122,10 @@ class RentalResource extends Resource
                 TextEntry::make('end_time')->label('Batas kembali')->dateTime('d M Y, H:i'),
                 TextEntry::make('total_hours')->label('Durasi')
                     ->formatStateUsing(fn ($state) => intdiv((int) $state, 24).' hari ('.$state.' jam)'),
-                TextEntry::make('verification.verifier.name')->label('Diverifikasi oleh')
-                    ->visible(fn (Rental $record) => filled($record->verification?->verified_at)),
-                TextEntry::make('verification.verified_at')->label('Waktu verifikasi')->dateTime('d M Y, H:i')
-                    ->visible(fn (Rental $record) => filled($record->verification?->verified_at)),
+                TextEntry::make('verifiedBy.name')->label('Diverifikasi oleh')
+                    ->visible(fn (Rental $record) => filled($record->verified_at)),
+                TextEntry::make('verified_at')->label('Waktu verifikasi')->dateTime('d M Y, H:i')
+                    ->visible(fn (Rental $record) => filled($record->verified_at)),
             ]),
 
             Section::make('Pembayaran DP (QRIS)')->columnSpanFull()->columns(3)->components([
@@ -171,21 +160,21 @@ class RentalResource extends Resource
                     ->imageHeight(300)
                     ->placeholder('Belum diunggah'),
                 ImageEntry::make('ktp_preview')->label('Foto KTP')
-                    ->getStateUsing(fn (Rental $record) => $record->verification
-                        ? route('files.verification', [$record->verification, 'ktp']) : null)
-                    ->url(fn (Rental $record) => $record->verification
-                        ? route('files.verification', [$record->verification, 'ktp']) : null, shouldOpenInNewTab: true)
+                    ->getStateUsing(fn (Rental $record) => $record->ktp_photo
+                        ? route('files.verification', [$record, 'ktp']) : null)
+                    ->url(fn (Rental $record) => $record->ktp_photo
+                        ? route('files.verification', [$record, 'ktp']) : null, shouldOpenInNewTab: true)
                     ->imageHeight(300)
                     ->placeholder('-'),
                 ImageEntry::make('sim_preview')->label('Foto SIM C')
-                    ->getStateUsing(fn (Rental $record) => $record->verification
-                        ? route('files.verification', [$record->verification, 'sim']) : null)
-                    ->url(fn (Rental $record) => $record->verification
-                        ? route('files.verification', [$record->verification, 'sim']) : null, shouldOpenInNewTab: true)
+                    ->getStateUsing(fn (Rental $record) => $record->sim_photo
+                        ? route('files.verification', [$record, 'sim']) : null)
+                    ->url(fn (Rental $record) => $record->sim_photo
+                        ? route('files.verification', [$record, 'sim']) : null, shouldOpenInNewTab: true)
                     ->imageHeight(300)
                     ->placeholder('-'),
-                TextEntry::make('verification.rejection_reason')->label('Alasan penolakan dokumen')
-                    ->visible(fn (Rental $record) => filled($record->verification?->rejection_reason))
+                TextEntry::make('verification_rejection_reason')->label('Alasan penolakan dokumen')
+                    ->visible(fn (Rental $record) => filled($record->verification_rejection_reason))
                     ->columnSpanFull(),
             ]),
 

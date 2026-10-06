@@ -5,10 +5,10 @@ import '../css/rental.css';
 
 flatpickr.localize(Indonesian);
 
-// "2026-09-20 08:00" -> Date (waktu lokal)
-const toDate = (value) => new Date(value.replace(' ', 'T'));
+// API rental memakai waktu Asia/Jakarta. Offset eksplisit mencegah tanggal bergeser di browser zona lain.
+const toDate = (value) => new Date(`${value.replace(' ', 'T')}+07:00`);
 const rupiah = (n) => 'Rp' + new Intl.NumberFormat('id-ID').format(n);
-const formatDateTime = (date) => date.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+const formatDateTime = (date) => date.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' });
 
 /* ---------------------------------------------------------------
  * Halaman detail motor: kalender ketersediaan
@@ -21,18 +21,33 @@ function initAvailabilityCalendar() {
     const list = document.getElementById('booked-list');
     let booked = [];
 
-    const overlapsDay = (day) => {
-        const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-        const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
-        return booked.some((range) => range.start < dayEnd && range.end > dayStart);
+    const dayCoverage = (day) => {
+        const dayStart = Date.UTC(day.getFullYear(), day.getMonth(), day.getDate()) - (7 * 60 * 60 * 1000);
+        const dayEnd = dayStart + (24 * 60 * 60 * 1000);
+        const intervals = booked
+            .map((range) => [Math.max(range.start.getTime(), dayStart), Math.min(range.end.getTime(), dayEnd)])
+            .filter(([start, end]) => start < end)
+            .sort((first, second) => first[0] - second[0]);
+
+        if (intervals.length === 0) return null;
+
+        let coveredUntil = dayStart;
+        for (const [start, end] of intervals) {
+            if (start > coveredUntil) break;
+            coveredUntil = Math.max(coveredUntil, end);
+            if (coveredUntil >= dayEnd) return 'fully-booked';
+        }
+
+        return 'partially-booked';
     };
 
     const calendar = flatpickr(input, {
         inline: true,
-        minDate: 'today',
+        minDate: input.dataset.today,
         onDayCreate: (_selected, _str, _instance, dayElem) => {
-            if (overlapsDay(dayElem.dateObj)) {
-                dayElem.classList.add('has-booking');
+            const coverage = dayCoverage(dayElem.dateObj);
+            if (coverage) {
+                dayElem.classList.add(coverage);
             }
         },
     });
@@ -77,6 +92,7 @@ function initCheckout() {
     const timeInput = document.getElementById('start_time');
     const startDateInput = document.getElementById('start_date');
     const endDateInput = document.getElementById('end_date');
+    const loadingEl = document.getElementById('availability-loading');
     const submitButton = form.querySelector('button[type="submit"]');
 
     const datesUrl = form.dataset.datesUrl;
@@ -151,9 +167,8 @@ function initCheckout() {
         } catch (error) {
             if (currentRequest !== quoteCounter) return;
             if (error.name === 'AbortError') return;
-            // Jika ringkasan gagal dimuat, biarkan server yang memvalidasi saat submit
             showState('placeholder');
-            submitButton.disabled = false;
+            submitButton.disabled = true;
         }
     }
 
@@ -173,7 +188,11 @@ function initCheckout() {
             return;
         }
 
-        const freeDays = availableDates && availableDates[ymd(start)] ? availableDates[ymd(start)] : maxDays;
+        const freeDays = availableDates?.[ymd(start)];
+        if (!freeDays) {
+            endPicker.clear(false);
+            return;
+        }
         const earliest = addDays(start, minDays);
         const latest = addDays(start, Math.min(maxDays, freeDays));
 
@@ -196,6 +215,10 @@ function initCheckout() {
         availableDates = null;
         startPicker.set('disable', [() => true]);
         startPicker.set('clickOpens', false);
+        startDateInput.disabled = true;
+        loadingEl.textContent = 'Memuat tanggal tersedia...';
+        loadingEl.classList.remove('text-rust');
+        loadingEl.hidden = false;
         submitButton.disabled = true;
 
         try {
@@ -218,12 +241,16 @@ function initCheckout() {
         }
 
         if (availableDates === null) {
+            loadingEl.textContent = 'Jadwal belum bisa dimuat. Muat ulang halaman untuk mencoba lagi.';
+            loadingEl.classList.add('text-rust');
             startPicker.set('disable', [() => true]);
             return;
         }
 
         startPicker.set('disable', [(date) => !(ymd(date) in availableDates)]);
         startPicker.set('clickOpens', true);
+        startDateInput.disabled = false;
+        loadingEl.hidden = true;
 
         // Pilihan tanggal mulai yang tidak tersedia lagi untuk jam ini dibersihkan
         const selected = startPicker.selectedDates[0];
@@ -237,7 +264,7 @@ function initCheckout() {
         scheduleQuote();
     }
 
-    const today = new Date();
+    const today = new Date(`${form.dataset.today}T00:00:00`);
 
     const endPicker = flatpickr(endDateInput, {
         dateFormat: 'Y-m-d',
@@ -248,7 +275,7 @@ function initCheckout() {
 
     const startPicker = flatpickr(startDateInput, {
         dateFormat: 'Y-m-d',
-        minDate: 'today',
+        minDate: form.dataset.today,
         disable: [() => true],
         clickOpens: false,
         onChange: () => {
@@ -268,7 +295,14 @@ function initCheckout() {
         minTime: `${pad2(form.dataset.openHour)}:00`,
         maxTime: `${pad2(form.dataset.closeHour)}:00`,
         defaultDate: timeInput.value || '08:00',
-        onChange: loadDates,
+        onChange: () => {
+            quoteCounter++;
+            quoteController?.abort();
+            submitButton.disabled = true;
+            startPicker.clear(false);
+            endPicker.clear(false);
+            loadDates();
+        },
     });
 
     loadDates();

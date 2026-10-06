@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
-use App\Models\Verification;
+use App\Models\Rental;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -15,11 +15,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class PrivateFileController extends Controller
 {
     /** KTP / SIM: hanya staf. */
-    public function verification(Request $request, Verification $verification, string $type): StreamedResponse
+    public function verification(Request $request, Rental $rental, string $type): StreamedResponse
     {
         abort_unless($request->user()->isStaff(), 403);
 
-        $path = $type === 'ktp' ? $verification->ktp_photo : $verification->sim_photo;
+        $path = $type === 'ktp' ? $rental->ktp_photo : $rental->sim_photo;
 
         return $this->serve($path);
     }

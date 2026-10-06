@@ -2,7 +2,8 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Http\Middleware\Authenticate;
+use App\Filament\Auth\Pages\ActiveLogin;
+use App\Http\Middleware\FilamentAuthenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -10,6 +11,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -19,7 +21,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Support\Enums\Width;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -29,7 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(ActiveLogin::class)
             ->sidebarWidth('15rem')
             ->maxContentWidth(Width::Full)
             // Pelat "MJ" + Mitra Jalan, sama dengan .brand di navbar customer.
@@ -51,8 +52,8 @@ class AdminPanelProvider extends PanelProvider
                 $version = is_file($css) ? filemtime($css) : 0;
 
                 return '<link rel="preconnect" href="https://fonts.bunny.net">'
-                    . '<link rel="stylesheet" href="https://fonts.bunny.net/css?family=oswald:500,600,700&display=swap">'
-                    . '<link rel="stylesheet" href="' . e(asset('css/filament-admin-theme.css')) . '?v=' . $version . '">';
+                    .'<link rel="stylesheet" href="https://fonts.bunny.net/css?family=oswald:500,600,700&display=swap">'
+                    .'<link rel="stylesheet" href="'.e(asset('css/filament-admin-theme.css')).'?v='.$version.'">';
             })
             ->navigationGroups(['Operasional', 'Owner'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
@@ -77,7 +78,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                FilamentAuthenticate::class,
             ]);
     }
 }

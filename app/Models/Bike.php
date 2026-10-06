@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,7 +14,7 @@ class Bike extends Model
 
     protected $fillable = [
         'name', 'brand', 'license_plate', 'category', 'cc', 'year', 'color',
-        'daily_rate', 'hourly_rate', 'status', 'photo', 'facilities',
+        'daily_rate', 'status', 'photo', 'facilities',
     ];
 
     protected function casts(): array
@@ -23,6 +24,25 @@ class Bike extends Model
             'hourly_rate' => 'decimal:2',
             'facilities' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (Bike $bike): void {
+            $bike->setAttribute('hourly_rate', self::calculateHourlyRate($bike->daily_rate));
+        });
+    }
+
+    /** Denda per jam = 20% tarif harian, dibulatkan ke Rp1.000 terdekat. */
+    public static function calculateHourlyRate(float|int|string|null $dailyRate): int
+    {
+        return (int) (round(((float) $dailyRate * 0.2) / 1000) * 1000);
+    }
+
+    /** Keep legacy rows consistent with the derived rate even before they are edited. */
+    protected function hourlyRate(): Attribute
+    {
+        return Attribute::get(fn () => self::calculateHourlyRate($this->daily_rate));
     }
 
     public function rentals(): HasMany

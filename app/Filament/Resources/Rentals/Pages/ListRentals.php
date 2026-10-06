@@ -12,6 +12,11 @@ class ListRentals extends ListRecords
 {
     protected static string $resource = RentalResource::class;
 
+    public function getSubheading(): ?string
+    {
+        return 'Pantau verifikasi, jadwal pengambilan, dan motor yang sedang disewa.';
+    }
+
     public function getHeading(): string
     {
         return match ($this->activeTab) {
@@ -31,8 +36,8 @@ class ListRentals extends ListRecords
         return [
             'all' => Tab::make('Semua'),
             'verif' => $tab('Verifikasi', 'pending_verification'),
-            'pickup' => $tab('Siap diambil', 'approved'),
-            'active' => $tab('Sedang disewa', 'active'),
+            'pickup' => $tab('Siap Diambil', 'approved'),
+            'active' => $tab('Sedang Disewa', 'active'),
         ];
     }
 

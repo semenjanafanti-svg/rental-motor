@@ -10,12 +10,15 @@ use App\Support\Format;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -33,7 +36,7 @@ class BikeResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Owner';
 
-    protected static ?string $navigationLabel = 'Fleet Management';
+    protected static ?string $navigationLabel = 'Manajemen Katalog';
 
     protected static ?string $modelLabel = 'Motor';
 
@@ -62,47 +65,49 @@ class BikeResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Data motor')->columns(2)->components([
-                TextInput::make('name')->label('Nama')->required()->maxLength(255),
-                TextInput::make('brand')->label('Merk')->required()->maxLength(100),
-                TextInput::make('license_plate')->label('Plat nomor')
-                    ->required()->maxLength(20)->unique(ignoreRecord: true)
-                    ->dehydrateStateUsing(fn ($state) => strtoupper(trim((string) $state))),
-                Select::make('category')->label('Kategori')
-                    ->options(self::CATEGORY_LABELS)->required(),
-                TextInput::make('cc')->label('Kapasitas mesin (cc)')
-                    ->numeric()->minValue(50)->maxValue(2000),
-                TextInput::make('year')->label('Tahun')
-                    ->numeric()->minValue(1990)->maxValue((int) date('Y') + 1),
-                TextInput::make('color')->label('Warna kendaraan')->maxLength(50)
-                    ->placeholder('Contoh: Hitam doff'),
-            ]),
+            Grid::make(['default' => 1, 'lg' => 12])->columnSpanFull()->schema([
+                Section::make('Data motor')->columnSpan(['default' => 1, 'lg' => 8])->columns(['default' => 1, 'md' => 2, 'xl' => 3])->components([
+                    TextInput::make('name')->label('Nama')->required()->maxLength(255),
+                    TextInput::make('brand')->label('Merk')->required()->maxLength(100),
+                    TextInput::make('license_plate')->label('Plat nomor')
+                        ->required()->maxLength(20)->unique(ignoreRecord: true)
+                        ->dehydrateStateUsing(fn ($state) => strtoupper(trim((string) $state))),
+                    Select::make('category')->label('Kategori')
+                        ->options(self::CATEGORY_LABELS)->required(),
+                    TextInput::make('cc')->label('Kapasitas mesin (cc)')
+                        ->numeric()->minValue(50)->maxValue(2000),
+                    TextInput::make('year')->label('Tahun')
+                        ->numeric()->minValue(1990)->maxValue((int) date('Y') + 1),
+                    TextInput::make('color')->label('Warna kendaraan')->maxLength(50)
+                        ->placeholder('Contoh: Hitam doff'),
+                    TextInput::make('daily_rate')->label('Tarif motor per 24 jam')
+                        ->numeric()->prefix('Rp')->minValue(1)->required()->live(onBlur: true),
+                    Placeholder::make('late_fee_preview')->label('Denda keterlambatan per jam')
+                        ->content(fn (Get $get): string => filled($get('daily_rate'))
+                            ? Format::rupiah(Bike::calculateHourlyRate($get('daily_rate')))
+                            : 'Isi tarif motor terlebih dahulu')
+                        ->helperText('Otomatis 20% dari tarif 24 jam, dibulatkan ke Rp1.000 terdekat.'),
+                ]),
 
-            Section::make('Tarif')->columns(2)->components([
-                TextInput::make('daily_rate')->label('Tarif per 24 jam')
-                    ->numeric()->prefix('Rp')->minValue(1)->required(),
-                TextInput::make('hourly_rate')->label('Denda telat per jam')
-                    ->numeric()->prefix('Rp')->minValue(1)->required()
-                    ->helperText('Di-snapshot ke tiap pesanan saat booking. Perubahan tarif tidak memengaruhi pesanan lama.'),
-            ]),
-
-            Section::make('Status & foto')->columns(2)->components([
-                Select::make('status')->label('Status')
-                    ->options(self::STATUS_LABELS)->default('available')->required()
-                    ->helperText('Hanya kondisi fisik. Ketersediaan per tanggal dihitung dari data pesanan.'),
-                FileUpload::make('photo')->label('Foto')
-                    ->image()->disk('public')->directory('bikes')->maxSize(2048),
-            ]),
-            Section::make('Fasilitas yang didapat')->components([
-                CheckboxList::make('facilities')->label('Termasuk saat sewa')
-                    ->options([
-                        'helm' => 'Helm',
-                        'stnk' => 'STNK',
-                        'kunci_ganda' => 'Kunci ganda',
-                        'jas_hujan' => 'Jas hujan',
-                        'phone_holder' => 'Phone holder',
-                        'charger' => 'Charger USB',
-                    ])->columns(3),
+                Section::make('Status & foto')->columnSpan(['default' => 1, 'lg' => 4])->columns(1)->components([
+                    Select::make('status')->label('Status')
+                        ->options(self::STATUS_LABELS)->default('available')->required()
+                        ->helperText('Hanya kondisi fisik. Ketersediaan per tanggal dihitung dari data pesanan.'),
+                    FileUpload::make('photo')->label('Foto')
+                        ->image()->disk('public')->directory('bikes')->maxSize(2048)
+                        ->panelLayout('integrated')->panelAspectRatio('4:3')->imagePreviewHeight('280'),
+                ]),
+                Section::make('Fasilitas yang didapat')->columnSpanFull()->components([
+                    CheckboxList::make('facilities')->label('Termasuk saat sewa')
+                        ->options([
+                            'helm' => 'Helm',
+                            'stnk' => 'STNK',
+                            'kunci_ganda' => 'Kunci ganda',
+                            'jas_hujan' => 'Jas hujan',
+                            'phone_holder' => 'Phone holder',
+                            'charger' => 'Charger USB',
+                        ])->columns(3),
+                ]),
             ]),
         ]);
     }
@@ -135,7 +140,7 @@ class BikeResource extends Resource
                     ->toggleable(),
                 TextColumn::make('daily_rate')->label('Tarif/24 jam')->sortable()
                     ->formatStateUsing(fn ($state) => Format::rupiah($state)),
-                TextColumn::make('hourly_rate')->label('Denda/jam')
+                TextColumn::make('hourly_rate')->label('Denda/jam (otomatis)')
                     ->formatStateUsing(fn ($state) => Format::rupiah($state)),
                 TextColumn::make('status')->label('Status')->badge()
                     ->formatStateUsing(fn (string $state) => self::STATUS_LABELS[$state] ?? $state)

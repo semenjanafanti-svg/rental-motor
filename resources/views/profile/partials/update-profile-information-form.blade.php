@@ -4,10 +4,6 @@
         <p class="hint">Perbarui nama dan alamat email akunmu.</p>
     </header>
 
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-    </form>
-
     <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-4">
         @csrf
         @method('patch')
@@ -23,16 +19,6 @@
             <x-text-input id="email" name="email" type="email" :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-1.5" :messages="$errors->get('email')" />
 
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div class="notice mt-3">
-                    Email kamu belum diverifikasi.
-                    <button form="send-verification" class="link">Kirim ulang email verifikasi</button>
-                </div>
-
-                @if (session('status') === 'verification-link-sent')
-                    <p class="hint mt-2 text-moss">Tautan verifikasi baru sudah dikirim ke emailmu.</p>
-                @endif
-            @endif
         </div>
 
         <div>

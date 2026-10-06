@@ -9,7 +9,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class OwnerOverview extends StatsOverviewWidget
 {
-    protected ?string $heading = 'Ringkasan Mitra Jalan';
+    protected ?string $heading = 'Ringkasan Operasional';
 
     protected function getStats(): array
     {
@@ -27,6 +27,6 @@ class OwnerOverview extends StatsOverviewWidget
 
     public static function canView(): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        return auth()->user()?->isStaff() ?? false;
     }
 }

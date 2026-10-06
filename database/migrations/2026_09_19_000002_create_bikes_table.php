@@ -16,13 +16,18 @@ return new class extends Migration
             $table->enum('category', ['matic', 'manual', 'sport']);
             $table->unsignedSmallInteger('cc')->nullable();
             $table->unsignedSmallInteger('year')->nullable();
+            $table->string('color', 50)->nullable();
             $table->decimal('daily_rate', 12, 2);
             $table->decimal('hourly_rate', 12, 2);
             // Hanya kondisi fisik. Ketersediaan per tanggal dihitung dari tabel rentals.
             $table->enum('status', ['available', 'maintenance', 'inactive'])->default('available');
             $table->string('photo')->nullable();
+            $table->json('facilities')->nullable();
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index(['status', 'category', 'daily_rate'], 'bikes_catalog_filter_index');
+            $table->index(['status', 'name'], 'bikes_catalog_name_index');
         });
     }
 

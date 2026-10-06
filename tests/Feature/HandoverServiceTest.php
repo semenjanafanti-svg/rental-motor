@@ -43,7 +43,7 @@ class HandoverServiceTest extends TestCase
         return Bike::create([
             'name' => 'Vario 160', 'brand' => 'Honda', 'license_plate' => 'L 9999 ZZ',
             'category' => 'matic', 'cc' => 160, 'year' => 2023,
-            'daily_rate' => 100000, 'hourly_rate' => 12000, 'status' => 'available',
+            'daily_rate' => 100000, 'status' => 'available',
         ]);
     }
 
@@ -55,9 +55,7 @@ class HandoverServiceTest extends TestCase
             'bike_id' => $this->bike()->id,
             'start_time' => '2026-09-20 08:00',
             'end_time' => '2026-09-21 08:00',
-            'total_hours' => 24,
             'hourly_rate_applied' => 12000,
-            'daily_rate_applied' => 100000,
             'total_price' => 100000,
             'dp_amount' => 30000,
             'balance_amount' => 70000,

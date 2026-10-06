@@ -13,11 +13,11 @@ class CreateStaff extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
-        $user = new User();
+        $user = new User;
         $user->fill($data);
         $user->forceFill([
             'role' => 'admin',
-            'email_verified_at' => now(),
+            'is_active' => true,
         ])->save();
 
         return $user;

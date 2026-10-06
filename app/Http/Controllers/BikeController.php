@@ -6,15 +6,26 @@ use App\Exceptions\BookingException;
 use App\Models\Bike;
 use App\Services\AvailabilityService;
 use App\Services\BookingService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Carbon\Carbon;
 
 class BikeController extends Controller
 {
+    public function home(): View
+    {
+        return view('home', [
+            'featuredBikes' => Bike::query()
+                ->where('status', 'available')
+                ->latest('created_at')
+                ->limit(4)
+                ->get(),
+        ]);
+    }
+
     /** Katalog: hanya motor berstatus available, dengan filter kategori, harga, dan tanggal. */
     public function index(Request $request, AvailabilityService $availability): View
     {
@@ -32,8 +43,9 @@ class BikeController extends Controller
             ->when($filters['max_price'] ?? null, fn ($q, $max) => $q->where('daily_rate', '<=', $max));
 
         if (isset($filters['available_on'])) {
-            $from = Carbon::parse($filters['available_on'])->startOfDay();
-            $to = $from->copy()->addDay();
+            $from = Carbon::parse($filters['available_on'], config('app.timezone'))
+                ->setTime((int) config('rental.open_hour'), 0);
+            $to = $from->copy()->addDays(max(1, (int) config('rental.min_days')));
 
             $query->whereNotIn('id', $availability->busyBikeQuery($from, $to)->select('bike_id'));
         }
@@ -56,6 +68,7 @@ class BikeController extends Controller
             'minDays' => max(1, (int) config('rental.min_days')),
             'maxDays' => (int) config('rental.max_days'),
             'dpPercent' => config('rental.dp_percent'),
+            'today' => now()->toDateString(),
             // Jadwal yang sudah dipilih (dari checkout "Ubah jadwal" atau redirect login)
             'schedule' => $request->only(['start_date', 'start_time', 'end_date']),
         ]);

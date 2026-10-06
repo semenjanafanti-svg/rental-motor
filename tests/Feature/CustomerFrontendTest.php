@@ -6,7 +6,6 @@ use App\Models\Bike;
 use App\Models\Rental;
 use App\Models\RentalReturn;
 use App\Models\User;
-use App\Models\Verification;
 use App\Services\BookingService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -47,7 +46,6 @@ class CustomerFrontendTest extends TestCase
             'cc' => 160,
             'year' => 2023,
             'daily_rate' => 100000,
-            'hourly_rate' => 12000,
             'status' => 'available',
         ]);
     }
@@ -215,9 +213,8 @@ class CustomerFrontendTest extends TestCase
         $this->assertSame('2026-09-21 08:00', $rental->end_time->format('Y-m-d H:i'));
         $this->assertDatabaseHas('payments', ['rental_id' => $rental->id, 'type' => 'dp', 'payment_status' => 'pending']);
 
-        $verification = Verification::firstOrFail();
-        Storage::disk('local')->assertExists($verification->ktp_photo);
-        Storage::disk('local')->assertExists($verification->sim_photo);
+        Storage::disk('local')->assertExists($rental->ktp_photo);
+        Storage::disk('local')->assertExists($rental->sim_photo);
     }
 
     public function test_checkout_rejects_non_image_document(): void

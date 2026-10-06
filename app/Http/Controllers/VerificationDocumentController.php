@@ -13,11 +13,10 @@ class VerificationDocumentController extends Controller
     {
         abort_unless($rental->user_id === $request->user()->id, 404);
 
-        $verification = $rental->verification;
         abort_unless(
             $rental->status === 'pending_verification'
-            && $verification?->rejection_count === 1
-            && $verification->rejection_reason
+            && $rental->verification_rejection_count === 1
+            && $rental->verification_rejection_reason
             && $rental->resubmission_expires_at?->isFuture(),
             404,
         );
@@ -30,13 +29,13 @@ class VerificationDocumentController extends Controller
         $disk = Storage::disk('local');
         $ktp = $disk->putFile('verifications/ktp', $request->file('ktp_photo'));
         $sim = $disk->putFile('verifications/sim', $request->file('sim_photo'));
-        $old = [$verification->ktp_photo, $verification->sim_photo];
+        $old = [$rental->ktp_photo, $rental->sim_photo];
 
-        $verification->update([
+        $rental->update([
             'ktp_photo' => $ktp,
             'sim_photo' => $sim,
-            'status' => 'pending',
-            'rejection_reason' => null,
+            'verification_status' => 'pending',
+            'verification_rejection_reason' => null,
         ]);
         $rental->update(['resubmission_expires_at' => null]);
         $disk->delete(array_filter($old));

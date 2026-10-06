@@ -99,15 +99,21 @@ span.flatpickr-weekday {
 }
 
 /* Hari yang punya jadwal terisi. Harus sebelum .selected agar pilihan tetap terlihat */
-.flatpickr-day.has-booking {
+.flatpickr-day.partially-booked {
     background: var(--rust-bg);
     border-color: transparent;
     color: var(--rust);
     opacity: 1;
 }
-.flatpickr-day.has-booking:hover {
+.flatpickr-day.partially-booked:hover {
     background: var(--rust-bg);
     border-color: var(--rust);
+}
+.flatpickr-day.fully-booked {
+    background: var(--rust);
+    border-color: transparent;
+    color: #fff;
+    opacity: 1;
 }
 
 .flatpickr-day.selected,

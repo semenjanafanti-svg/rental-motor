@@ -53,7 +53,6 @@ class BookingServiceTest extends TestCase
             'cc' => 160,
             'year' => 2023,
             'daily_rate' => 100000,
-            'hourly_rate' => 12000,
             'status' => 'available',
         ]);
     }
@@ -87,9 +86,7 @@ class BookingServiceTest extends TestCase
             'bike_id' => $bike->id,
             'start_time' => $start,
             'end_time' => $end,
-            'total_hours' => 24,
             'hourly_rate_applied' => 12000,
-            'daily_rate_applied' => 100000,
             'total_price' => 100000,
             'dp_amount' => 30000,
             'balance_amount' => 70000,
@@ -116,7 +113,12 @@ class BookingServiceTest extends TestCase
         $this->assertEquals(70000, $rental->balance_amount);
         $this->assertTrue($rental->expires_at->equalTo(now()->addMinutes(10)));
 
-        $this->assertDatabaseHas('verifications', ['rental_id' => $rental->id, 'status' => 'pending']);
+        $this->assertDatabaseHas('rentals', [
+            'id' => $rental->id,
+            'ktp_photo' => 'ktp/contoh.jpg',
+            'sim_photo' => 'sim/contoh.jpg',
+            'verification_status' => 'pending',
+        ]);
         $this->assertDatabaseHas('payments', [
             'rental_id' => $rental->id,
             'order_id' => 'BK-20260919-0001-DP',
@@ -158,10 +160,10 @@ class BookingServiceTest extends TestCase
             $this->data($bike, '2026-09-20', '08:00', '2026-09-21')
         );
 
-        $bike->update(['daily_rate' => 999999, 'hourly_rate' => 99999]);
+        $bike->update(['daily_rate' => 999999]);
 
-        $this->assertEquals(100000, $rental->fresh()->daily_rate_applied);
-        $this->assertEquals(12000, $rental->fresh()->hourly_rate_applied);
+        $this->assertEquals(100000, $rental->fresh()->total_price);
+        $this->assertEquals(20000, $rental->fresh()->hourly_rate_applied);
     }
 
     public function test_rejects_same_day_return(): void
@@ -320,7 +322,6 @@ class BookingServiceTest extends TestCase
         }
 
         $this->assertDatabaseCount('rentals', 0);
-        $this->assertDatabaseCount('verifications', 0);
         $this->assertDatabaseCount('payments', 0);
     }
 }

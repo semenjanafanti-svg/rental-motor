@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Payment extends Model
 {
     protected $fillable = [
-        'rental_id', 'order_id', 'transaction_id', 'type', 'method', 'payment_type',
-        'gross_amount', 'payment_status', 'snap_token', 'paid_at',
-        'refunded_amount', 'received_by', 'raw_response',
+        'rental_id', 'order_id', 'type', 'method', 'payment_type',
+        'gross_amount', 'payment_status', 'paid_at',
+        'refunded_amount', 'received_by',
         'proof_photo', 'proof_uploaded_at', 'rejection_reason', 'rejection_count',
     ];
 
@@ -21,7 +21,6 @@ class Payment extends Model
             'refunded_amount' => 'decimal:2',
             'paid_at' => 'datetime',
             'proof_uploaded_at' => 'datetime',
-            'raw_response' => 'array',
         ];
     }
 

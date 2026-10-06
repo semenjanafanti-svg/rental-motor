@@ -10,11 +10,25 @@
 @endphp
 
 @section('content')
-    <h1 class="page-title">Katalog Motor</h1>
-    <p class="page-sub">Pilih motor, tentukan jadwal, lalu bayar DP lewat QRIS.</p>
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <p class="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-[#bf6810]">Cari teman perjalananmu</p>
+            <h1 class="font-display text-4xl font-bold leading-tight tracking-tight text-ink sm:text-5xl">Katalog Motor</h1>
+            <p class="mt-2 text-sm text-muted sm:text-base">Pilih unit yang pas, cek jadwalnya, lalu berangkat.</p>
+        </div>
+        <p class="rounded-full bg-[#fff2d0] px-3.5 py-2 text-sm font-semibold text-[#71420c]">{{ $bikes->total() }} unit ditemukan</p>
+    </div>
+
+    <nav class="mb-5 flex gap-2 overflow-x-auto pb-1" aria-label="Filter kategori motor">
+        @foreach ($categories as $value => $label)
+            <a href="{{ request()->fullUrlWithQuery(['category' => $value ?: null, 'page' => null]) }}"
+               class="shrink-0 rounded-full border px-5 py-2.5 text-sm font-semibold transition {{ $activeCategory === $value ? 'border-[#f2a20b] bg-gradient-to-r from-[#ffc928] to-[#ff941f] text-[#3b2108] shadow-md shadow-orange-100' : 'border-line bg-white text-muted hover:border-amber hover:bg-[#fffaf0] hover:text-ink' }}"
+               @if ($activeCategory === $value) aria-current="page" @endif>{{ $label }}</a>
+        @endforeach
+    </nav>
 
     <form method="GET" action="{{ route('bikes.index') }}"
-          class="card mb-4 grid items-end gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
+          class="mb-6 grid items-end gap-4 rounded-2xl border border-line bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
         @if ($activeCategory)
             <input type="hidden" name="category" value="{{ $activeCategory }}">
         @endif
@@ -47,14 +61,6 @@
         </div>
     </form>
 
-    <div class="mb-5 flex flex-wrap gap-2" role="group" aria-label="Kategori motor">
-        @foreach ($categories as $value => $label)
-            <a href="{{ request()->fullUrlWithQuery(['category' => $value ?: null, 'page' => null]) }}"
-               class="btn btn-sm {{ $activeCategory === $value ? '' : 'btn-outline' }}"
-               @if ($activeCategory === $value) aria-current="true" @endif>{{ $label }}</a>
-        @endforeach
-    </div>
-
     @if ($availableLabel)
         <p class="hint mb-4">Menampilkan motor yang bebas pada {{ $availableLabel }}.</p>
     @endif
@@ -68,23 +74,39 @@
             </div>
         </div>
     @else
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($bikes as $bike)
-                <a href="{{ route('bikes.show', $bike) }}" class="bike-card">
-                    <div class="h-32">
+                <a href="{{ route('bikes.show', $bike) }}" class="group overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_24px_-16px_rgba(28,29,26,.35)] transition duration-300 hover:-translate-y-1.5 hover:border-amber/60 hover:shadow-[0_20px_38px_-18px_rgba(163,93,17,.28)] motion-reduce:transform-none motion-reduce:transition-none">
+                    <div class="relative h-52 overflow-hidden bg-gradient-to-br from-[#d9f2e9] via-[#f8f0d9] to-[#ffe1c5]">
                         @if ($bike->hasPhoto())
-                            <img src="{{ $bike->photoUrl() }}" alt="{{ $bike->name }}" loading="lazy" decoding="async" class="h-full w-full object-cover">
+                            <img src="{{ $bike->photoUrl() }}" alt="{{ $bike->name }}" loading="lazy" decoding="async" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
                         @else
-                            <x-bike-icon :category="$bike->category" />
+                            <div class="flex h-full items-center justify-center text-teal transition duration-500 group-hover:scale-105"><x-bike-icon :category="$bike->category" :size="108" /></div>
+                        @endif
+                        <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent"></div>
+                        <span class="absolute left-4 top-4 rounded-full border border-white/70 bg-white/90 px-3 py-1 text-xs font-bold capitalize text-ink shadow-sm">{{ $bike->category }}</span>
+                        @if ($availableLabel)
+                            <span class="absolute bottom-4 right-4 rounded-full bg-emerald-100/95 px-3 py-1 text-xs font-bold text-emerald-800">Tersedia · {{ $availableLabel }}</span>
+                        @else
+                            <span class="absolute bottom-4 right-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink">Siap disewa</span>
                         @endif
                     </div>
 
-                    <div class="p-4">
-                        <h2 class="text-base font-semibold">{{ $bike->name }}</h2>
+                    <div class="p-5">
+                        <h2 class="font-display text-2xl font-bold leading-tight text-ink">{{ $bike->name }}</h2>
                         <p class="mt-0.5 text-[12.5px] text-muted">
-                            {{ $bike->brand }} · {{ $bike->cc ? $bike->cc . 'cc · ' : '' }}{{ ucfirst($bike->category) }}
-                            @if ($bike->color) · {{ $bike->color }} @endif
+                            {{ $bike->brand }}@if ($bike->color) · {{ $bike->color }} @endif
                         </p>
+
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @if ($bike->cc)
+                                <span class="inline-flex items-center gap-1.5 rounded-lg bg-[#f4f5f2] px-2.5 py-1.5 text-xs font-semibold text-muted"><svg aria-hidden="true" viewBox="0 0 20 20" class="h-4 w-4 text-teal" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 6h10M4 10h12M6 14h8"/></svg>{{ $bike->cc }} cc</span>
+                            @endif
+                            @if ($bike->year)
+                                <span class="rounded-lg bg-[#fff4d9] px-2.5 py-1.5 text-xs font-semibold text-[#8a5700]">Tahun {{ $bike->year }}</span>
+                            @endif
+                            <span class="inline-flex items-center gap-1.5 rounded-lg bg-[#f4f5f2] px-2.5 py-1.5 text-xs font-semibold text-muted"><svg aria-hidden="true" viewBox="0 0 20 20" class="h-4 w-4 text-[#16865e]" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M7 17V4h6v13M7 7h6m2-1 2 2v5h-2"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 17h8"/></svg>BBM penuh</span>
+                        </div>
                         <p class="mt-2.5 text-[14.5px] font-semibold">
                             {{ \App\Support\Format::rupiah($bike->daily_rate) }}
                             <span class="text-[12.5px] font-normal text-muted">/ 24 jam</span>
@@ -94,7 +116,7 @@
                             <span class="badge badge-teal badge-dot mt-2">Bebas {{ $availableLabel }}</span>
                         @endif
                         @if ($bike->facilities)
-                            <p class="mt-2 text-[12px] text-muted">Termasuk: {{ implode(' · ', array_slice($bike->facilities, 0, 3)) }}</p>
+                            <p class="mt-3 line-clamp-1 text-xs text-muted">Termasuk: {{ implode(' · ', array_map(fn ($facility) => ucwords(str_replace('_', ' ', $facility)), array_slice($bike->facilities, 0, 3))) }}</p>
                         @endif
                     </div>
                 </a>

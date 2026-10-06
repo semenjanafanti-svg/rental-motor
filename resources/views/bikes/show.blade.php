@@ -44,12 +44,17 @@
             <div class="card p-4">
                 {{-- Input disembunyikan; Flatpickr menampilkan kalender inline di sebelahnya --}}
                 <input type="text" id="availability-calendar" style="display:none"
+                       data-today="{{ $today }}"
                        data-url="{{ route('bikes.availability', $bike, false) }}">
 
                 <p class="mt-3 flex items-center gap-2 text-xs text-muted">
                     <span class="inline-block h-3 w-3 rounded-[3px] bg-rust-bg"></span>
-                    Ada jadwal terisi pada tanggal ini (sebagian atau seluruh hari)
+                    Jadwal terisi
                 </p>
+                <div class="mt-2 flex flex-wrap gap-4 text-xs text-muted" aria-label="Keterangan kalender">
+                    <span class="flex items-center gap-2"><span class="inline-block h-3 w-3 rounded-[3px] bg-rust-bg"></span>Terisi sebagian</span>
+                    <span class="flex items-center gap-2"><span class="inline-block h-3 w-3 rounded-[3px] bg-rust"></span>Terisi penuh</span>
+                </div>
 
                 <h3 class="mb-2 mt-4 text-sm font-semibold">Jadwal terisi (90 hari ke depan)</h3>
                 <ul id="booked-list" class="list-disc space-y-1 pl-5 text-sm text-muted">
@@ -72,13 +77,14 @@
                       data-dates-url="{{ route('bikes.dates', $bike, false) }}"
                       data-quote-url="{{ route('bikes.quote', $bike, false) }}"
                       data-min-days="{{ $minDays }}" data-max-days="{{ $maxDays }}"
+                      data-today="{{ $today }}"
                       data-open-hour="{{ config('rental.open_hour') }}" data-close-hour="{{ config('rental.close_hour') }}"
                       class="summary space-y-4">
 
                     <div>
                         <label for="start_time" class="label">Jam mulai</label>
                         <input type="text" id="start_time" name="start_time"
-                               value="{{ $schedule['start_time'] ?? '08:00' }}"
+                               value="{{ $schedule['start_time'] ?? sprintf('%02d:00', config('rental.open_hour')) }}"
                                autocomplete="off" required class="input">
                         <p class="hint">Jam kembali otomatis sama dengan jam mulai.</p>
                     </div>
@@ -88,7 +94,7 @@
                         <input type="text" id="start_date" name="start_date"
                                value="{{ $schedule['start_date'] ?? '' }}"
                                autocomplete="off" required placeholder="Pilih tanggal yang tersedia" class="input">
-                        <p class="hint">Hanya tanggal yang tersedia pada jam mulai tersebut yang bisa dipilih.</p>
+                        <p id="availability-loading" class="hint" role="status">Memuat tanggal tersedia...</p>
                     </div>
 
                     <div>

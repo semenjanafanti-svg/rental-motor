@@ -27,25 +27,24 @@
 :root {
     color-scheme: light;
     --ink: #1c1d1a;
-    --paper: #eef0e7;
-    --surface: #fdfdf9;
-    --line: #d7dacb;
-    --muted: #5f6354;
-    --amber: #f0b429;
-    --amber-ink: #5c3d05;
-    --teal: #2f6f5e;
-    --teal-bg: #e2efe9;
+    --paper: #f6f7fb;
+    --surface: #ffffff;
+    --line: #e5e8ef;
+    --muted: #687184;
+    --amber: #f5a623;
+    --amber-ink: #512b08;
+    --teal: #16866e;
+    --teal-bg: #e3f7ef;
     --on-teal: #ffffff;
     --rust: #c0392b;
     --rust-bg: #f8e6e3;
     --on-rust: #ffffff;
     --shadow: 0 1px 2px rgba(28, 29, 26, .05), 0 10px 24px -18px rgba(28, 29, 26, .35);
 
-    /* Topbar mengikuti .topbar di frontend: latar --ink, teks --paper */
-    --bar-bg: var(--ink);
-    --bar-fg: var(--paper);
-    --bar-muted: color-mix(in srgb, var(--paper) 70%, transparent);
-    --bar-soft: color-mix(in srgb, var(--paper) 12%, transparent);
+    --bar-bg: #ffffff;
+    --bar-fg: #20232d;
+    --bar-muted: #71798a;
+    --bar-soft: #fff4dc;
 
     --font-display: 'Oswald', 'Arial Narrow', ui-sans-serif, system-ui, sans-serif;
 }
@@ -53,18 +52,22 @@
 :root.dark {
     color-scheme: dark;
     --ink: #f1f0e8;
-    --paper: #171813;
-    --surface: #202119;
-    --line: #34362b;
-    --muted: #a3a596;
+    --paper: #171a21;
+    --surface: #20242d;
+    --line: #343a47;
+    --muted: #a6adbc;
     --amber-ink: #2a1c02;
-    --teal: #4fae91;
+    --teal: #54c5a4;
     --teal-bg: #173c31;
     --on-teal: #0f2a22;
     --rust: #e07362;
     --rust-bg: #3b1f1a;
     --on-rust: #2a0f0b;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 24px -18px rgba(0, 0, 0, .6);
+    --bar-bg: #20242d;
+    --bar-fg: #f4f5f8;
+    --bar-muted: #b0b6c2;
+    --bar-soft: #303641;
 }
 
 /* Skala abu-abu Filament diganti. :root:root (spesifisitas 0,2,0) mengalahkan
@@ -559,14 +562,158 @@
     font-size: 1.625rem;
 }
 
-/* Bar tab disembunyikan: navigasi antrean sudah ada di sidebar.
-   Filter tetap jalan lewat ?tab= dari getTabs() */
-.fi-resource-list-records-page .fi-sc-tabs,
-.fi-resource-list-records-page .fi-tabs {
-    display: none;
-}
-
 /* Reminder overdue: baris merah muda seperti prototipe */
 .fi-ta-row.fi-row-overdue {
     background-color: var(--rust-bg);
+}
+
+/* =========================================================
+   PENYEGARAN PANEL — Owner dan Operasional
+========================================================= */
+.fi-body {
+    background-image: radial-gradient(ellipse at 92% 0%, color-mix(in srgb, var(--amber) 9%, transparent), transparent 30rem);
+    background-attachment: fixed;
+}
+
+.fi-topbar,
+.fi-sidebar-header {
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-image: none;
+    box-shadow: 0 4px 18px -16px rgba(25, 31, 45, .35);
+}
+
+.fi-topbar .fi-logo,
+.fi-sidebar-header .fi-logo { color: var(--bar-fg); }
+
+.fi-logo .brand-plate {
+    border-radius: .5rem;
+    padding: .25rem .45rem;
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--amber) 24%, transparent);
+}
+
+.fi-sidebar {
+    background: color-mix(in srgb, var(--surface) 94%, var(--paper));
+}
+
+.fi-sidebar-group-label { font-weight: 700; }
+
+.fi-sidebar-item-btn {
+    border: 1px solid transparent;
+    border-radius: .75rem;
+    transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.fi-sidebar-item-btn:hover { transform: translateX(2px); }
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    border-color: color-mix(in srgb, var(--amber) 24%, var(--line));
+    background: linear-gradient(100deg, color-mix(in srgb, var(--amber) 17%, var(--surface)), var(--surface));
+    box-shadow: inset 3px 0 0 var(--amber);
+}
+
+.fi-main { padding-block: 1.5rem 3rem; }
+
+.fi-header { margin-bottom: 1.25rem; }
+
+.fi-header-heading {
+    font-size: clamp(1.65rem, 2.4vw, 2.15rem);
+    letter-spacing: -.025em;
+}
+
+.fi-header-subheading { max-width: 48rem; line-height: 1.65; }
+
+.fi-section:not(.fi-section-not-contained):not(.fi-aside),
+.fi-section:not(.fi-section-not-contained).fi-aside > .fi-section-content-ctn,
+.fi-ta-ctn,
+.fi-wi-stats-overview-stat,
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window,
+.fi-dropdown-panel,
+.fi-global-search-results-ctn,
+.fi-fo-date-time-picker-panel,
+.fi-simple-main,
+.fi-fo-repeater-item,
+.fi-fo-builder-item,
+.fi-in-key-value {
+    border-radius: 1rem;
+    box-shadow: 0 10px 28px -22px rgba(28, 35, 50, .45), 0 2px 6px -4px rgba(28, 35, 50, .12);
+}
+
+.fi-section-header { padding: 1.15rem 1.25rem; }
+.fi-section-content-ctn { padding: 1.25rem; }
+
+.fi-wi-stats-overview-stat {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(145deg, var(--surface) 56%, color-mix(in srgb, var(--amber) 10%, var(--surface)));
+}
+
+.fi-wi-stats-overview-stat::after {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(90deg, var(--amber), #f47b38, #ed5e6b);
+    content: "";
+}
+
+.fi-wi-stats-overview-stat-value { font-size: 2rem; }
+
+.fi-ta-ctn { overflow: hidden; }
+.fi-ta-header-ctn { padding: .75rem 1rem; }
+.fi-ta-header-cell { padding-block: .85rem; }
+.fi-ta-row { transition: background-color .14s ease; }
+.fi-ta-row.fi-clickable:hover { background-color: color-mix(in srgb, var(--amber) 7%, var(--surface)); }
+.fi-ta-cell { padding-block: .85rem; }
+
+.fi-tabs:not(.fi-contained) {
+    display: flex;
+    width: fit-content;
+    max-width: 100%;
+    gap: .35rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    padding: .35rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow: 0 4px 16px -14px rgba(28, 35, 50, .4);
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item,
+.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active {
+    border: 0;
+    border-radius: 999px;
+    padding: .6rem .95rem;
+    box-shadow: none;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active {
+    background: linear-gradient(100deg, #ffd76b, #ffb246);
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active .fi-tabs-item-label { color: #392309; }
+.fi-tabs-item .fi-badge { margin-inline-start: .35rem; }
+
+.fi-input-wrp { min-height: 2.75rem; border-radius: .65rem; }
+.fi-btn { border-radius: .7rem; padding-inline: 1rem; }
+.fi-btn.fi-color-primary,
+.fi-btn.fi-color-warning {
+    background-image: linear-gradient(100deg, #ffc83d, #f5a623);
+}
+
+.fi-empty-state { padding-block: 3rem; }
+.fi-empty-state-icon { color: color-mix(in srgb, var(--amber) 75%, var(--muted)); }
+
+@media (max-width: 48rem) {
+    .fi-main { padding-inline: 1rem; }
+    .fi-header { gap: .75rem; }
+    .fi-section-header,
+    .fi-section-content-ctn { padding: 1rem; }
+    .fi-tabs:not(.fi-contained) { width: 100%; border-radius: .9rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fi-sidebar-item-btn,
+    .fi-ta-row { transition: none; }
+    .fi-sidebar-item-btn:hover { transform: none; }
 }

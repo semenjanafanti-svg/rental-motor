@@ -25,7 +25,7 @@ class UserSeeder extends Seeder
                 'phone_number' => $data['phone_number'],
                 'role' => $data['role'],
                 'password' => Hash::make('password'),
-                'email_verified_at' => now(),
+                'is_active' => true,
             ])->save();
         }
     }

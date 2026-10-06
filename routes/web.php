@@ -10,7 +10,13 @@ use App\Http\Controllers\RentalReceiptController;
 use App\Http\Controllers\VerificationDocumentController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/motor');
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return app(BikeController::class)->home();
+})->name('home');
 
 // Publik
 Route::get('/motor', [BikeController::class, 'index'])->name('bikes.index');
@@ -33,7 +39,7 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
 
 // Berkas privat (KTP, SIM, bukti bayar): otorisasi dicek di controller
 Route::middleware('auth')->group(function () {
-    Route::get('/berkas/verifikasi/{verification}/{type}', [PrivateFileController::class, 'verification'])
+    Route::get('/berkas/verifikasi/{rental}/{type}', [PrivateFileController::class, 'verification'])
         ->whereIn('type', ['ktp', 'sim'])
         ->name('files.verification');
     Route::get('/berkas/pembayaran/{payment}', [PrivateFileController::class, 'payment'])

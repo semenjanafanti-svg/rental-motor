@@ -15,6 +15,7 @@ return new class extends Migration
             $table->unsignedInteger('late_hours')->default(0); // jam keterlambatan setelah toleransi
             $table->decimal('late_fee', 12, 2)->default(0);
             $table->decimal('damage_fee', 12, 2)->default(0);
+            $table->decimal('fuel_fee', 12, 2)->default(0);
             $table->text('condition_notes')->nullable();
             $table->foreignId('checked_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();

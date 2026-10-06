@@ -7,7 +7,7 @@
         'rental' => [
             'pending_payment' => ['Menunggu pembayaran DP', 'badge-amber'],
             'pending_verification' => ['Menunggu verifikasi admin', 'badge-amber'],
-            'approved' => ['Disetujui, menunggu pengambilan', 'badge-teal'],
+            'approved' => ['Disetujui, Siap Diambil', 'badge-teal'],
             'active' => ['Sedang disewa', 'badge-teal'],
             'completed' => ['Selesai', 'badge-neutral'],
             'cancelled' => ['Dibatalkan', 'badge-rust'],
@@ -30,7 +30,7 @@
             'deny' => ['Ditolak', 'badge-rust'],
             'refund' => ['Refund', 'badge-neutral'],
         ],
-        // verifications.status
+        // rentals.verification_status
         'verification' => [
             'pending' => ['Menunggu verifikasi', 'badge-amber'],
             'approved' => ['Disetujui', 'badge-teal'],

@@ -9,7 +9,6 @@ use App\Models\Bike;
 use App\Models\Payment;
 use App\Models\Rental;
 use App\Models\User;
-use App\Models\Verification;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -21,8 +20,7 @@ class BookingService
     public function __construct(
         private readonly PricingService $pricing,
         private readonly AvailabilityService $availability,
-    ) {
-    }
+    ) {}
 
     /**
      * Simulasi tanpa menyimpan apa pun: susun periode sewa, cek status motor dan bentrok
@@ -73,11 +71,11 @@ class BookingService
                 'bike_id' => $bike->id,
                 'start_time' => $start,
                 'end_time' => $end,
-                'total_hours' => $price['total_hours'],
+                'ktp_photo' => $data['ktp_photo'],
+                'sim_photo' => $data['sim_photo'],
                 // Snapshot tarif: perubahan tarif motor tidak memengaruhi transaksi ini.
                 // Tarif per jam dipakai untuk menghitung denda keterlambatan.
                 'hourly_rate_applied' => $bike->hourly_rate,
-                'daily_rate_applied' => $bike->daily_rate,
                 'total_price' => $price['total_price'],
                 'dp_amount' => $price['dp_amount'],
                 'balance_amount' => $price['balance_amount'],
@@ -86,16 +84,9 @@ class BookingService
                 'expires_at' => now()->addMinutes((int) config('rental.lock_minutes')),
             ]);
 
-            Verification::create([
-                'rental_id' => $rental->id,
-                'ktp_photo' => $data['ktp_photo'],
-                'sim_photo' => $data['sim_photo'],
-                'status' => 'pending',
-            ]);
-
             Payment::create([
                 'rental_id' => $rental->id,
-                'order_id' => $rental->booking_code . '-DP',
+                'order_id' => $rental->booking_code.'-DP',
                 'type' => 'dp',
                 'method' => 'manual_transfer', // QRIS statis + bukti transfer, diverifikasi admin
                 'gross_amount' => $price['dp_amount'],
@@ -109,11 +100,11 @@ class BookingService
     private function priceIfBookable(Bike $bike, Carbon $start, Carbon $end): array
     {
         if ($bike->status !== 'available') {
-            throw new BikeNotAvailableException();
+            throw new BikeNotAvailableException;
         }
 
         if ($this->availability->hasConflict($bike->id, $start, $end)) {
-            throw new SlotNotAvailableException();
+            throw new SlotNotAvailableException;
         }
 
         return $this->pricing->calculate(
@@ -141,14 +132,14 @@ class BookingService
 
         if ($days < $minDays) {
             throw new InvalidBookingPeriodException(
-                "Sewa minimal {$minDays} hari (" . ($minDays * 24) . ' jam). Pilih tanggal pengembalian yang lebih akhir.'
+                "Sewa minimal {$minDays} hari (".($minDays * 24).' jam). Pilih tanggal pengembalian yang lebih akhir.'
             );
         }
 
         if ($days > $maxDays) {
             throw new InvalidBookingPeriodException("Durasi sewa maksimal {$maxDays} hari.");
         }
-        
+
         $open = (int) config('rental.open_hour');
         $close = (int) config('rental.close_hour');
 
@@ -190,11 +181,11 @@ class BookingService
      */
     private function createRentalWithUniqueCode(array $attributes): Rental
     {
-        $prefix = 'BK-' . now()->format('Ymd') . '-';
-        $base = Rental::where('booking_code', 'like', $prefix . '%')->count();
+        $prefix = 'BK-'.now()->format('Ymd').'-';
+        $base = Rental::where('booking_code', 'like', $prefix.'%')->count();
 
         for ($attempt = 1; $attempt <= 5; $attempt++) {
-            $code = $prefix . str_pad((string) ($base + $attempt), 4, '0', STR_PAD_LEFT);
+            $code = $prefix.str_pad((string) ($base + $attempt), 4, '0', STR_PAD_LEFT);
 
             try {
                 return Rental::create($attributes + ['booking_code' => $code]);

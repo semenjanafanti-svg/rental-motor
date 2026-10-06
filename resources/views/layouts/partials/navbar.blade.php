@@ -4,7 +4,7 @@
 
 <header>
     <div class="topbar">
-        <a href="{{ route('bikes.index') }}" class="brand">
+        <a href="{{ route('home') }}" class="brand">
             <span class="brand-plate">MJ</span> {{ config('rental.business_name') }}
         </a>
 

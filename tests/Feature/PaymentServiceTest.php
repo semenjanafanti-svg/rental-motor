@@ -37,7 +37,6 @@ class PaymentServiceTest extends TestCase
             'cc' => 160,
             'year' => 2024,
             'daily_rate' => 100000,
-            'hourly_rate' => 12000,
             'status' => 'available',
         ]);
 
@@ -77,7 +76,8 @@ class PaymentServiceTest extends TestCase
     {
         [$rental] = $this->booking();
         $this->submitProof($rental);
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create();
+        $admin->forceFill(['role' => 'admin'])->save();
 
         app(PaymentService::class)->rejectDocuments($rental, $admin, 'Foto KTP tidak terbaca.');
         $rental->refresh();

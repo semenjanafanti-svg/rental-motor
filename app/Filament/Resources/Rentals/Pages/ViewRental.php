@@ -81,7 +81,7 @@ class ViewRental extends ViewRecord
                 ->icon('heroicon-o-identification')
                 ->color('danger')
                 ->modalHeading('Tolak dokumen identitas')
-                ->modalDescription(fn () => $this->record->verification?->rejection_count >= 1
+                ->modalDescription(fn () => $this->record->verification_rejection_count >= 1
                     ? 'Kesempatan unggah ulang dokumen sudah digunakan. Pesanan akan dibatalkan dan DP wajib direfund.'
                     : 'Penyewa mendapat satu kesempatan untuk mengunggah ulang KTP dan SIM C dalam 3 jam.')
                 ->schema([
@@ -108,7 +108,7 @@ class ViewRental extends ViewRecord
                         ->default('cash')
                         ->required(),
                 ])
-                ->visible(fn () => $this->record->status === 'approved')
+                ->visible(fn () => $this->record->status === 'approved' && $this->record->isPickupPeriodOpen())
                 ->action(fn (array $data) => $this->run(
                     HandoverService::class,
                     fn (HandoverService $s) => $s->checkIn($this->record, auth()->user(), $data['method']),

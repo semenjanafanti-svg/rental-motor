@@ -9,11 +9,11 @@
     :root {
         color-scheme: light;
         --ink: #1c1d1a;
-        --paper: #eef0e7;
-        --surface: #fdfdf9;
-        --line: #d7dacb;
-        --muted: #5f6354;
-        --amber: #f0b429;
+        --paper: #fffefa;
+        --surface: #ffffff;
+        --line: #e8e3d8;
+        --muted: #666258;
+        --amber: #f4a900;
         --amber-ink: #5c3d05;   /* teks di atas isian amber */
         --sun-soft: #f6e2ae;    /* latar lembut kategori manual */
         --sun-text: #5c3d05;
@@ -22,25 +22,6 @@
         --rust: #c0392b;
         --rust-bg: #f8e6e3;
         --shadow: 0 1px 2px rgba(28, 29, 26, .05), 0 10px 24px -18px rgba(28, 29, 26, .35);
-    }
-
-    @media (prefers-color-scheme: dark) {
-        :root {
-            color-scheme: dark;
-            --ink: #f1f0e8;
-            --paper: #171813;
-            --surface: #202119;
-            --line: #34362b;
-            --muted: #a3a596;
-            --amber: #f0b429;
-            --amber-ink: #2a1c02;
-            --sun-soft: #3a2d0e;
-            --sun-text: #f0b429;
-            --teal: #4fae91;
-            --teal-bg: #173c31;
-            --rust: #e07362;
-            --rust-bg: #3b1f1a;
-        }
     }
 
     html {
@@ -72,9 +53,9 @@
 @layer components {
     /* ---- rangka halaman ---- */
     .topbar {
-        @apply sticky top-0 z-40 flex items-center gap-2 overflow-x-auto bg-ink pl-4 pr-3 text-paper;
-        border-bottom: 3px solid transparent;
-        border-image: repeating-linear-gradient(90deg, var(--amber) 0 22px, transparent 22px 38px) 3;
+        @apply sticky top-0 z-40 flex items-center gap-2 overflow-x-auto bg-white/95 pl-4 pr-3 text-ink shadow-sm backdrop-blur;
+        border-bottom: 1px solid var(--line);
+        
     }
     .brand {
         @apply flex items-center gap-2 whitespace-nowrap py-3.5 pr-4 font-display text-base font-bold tracking-wide;
@@ -97,7 +78,7 @@
     }
 
     .page {
-        @apply mx-auto w-full max-w-5xl px-4 pb-16 pt-7 sm:px-8;
+        @apply mx-auto w-full max-w-6xl px-4 pb-16 pt-7 sm:px-8;
     }
 
     .page-title { @apply text-[26px] font-semibold leading-tight; }
