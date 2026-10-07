@@ -69,13 +69,13 @@
     </section>
 
     <section class="grid gap-7 rounded-[1.75rem] border border-line bg-white p-5 shadow-sm sm:p-8 lg:grid-cols-[0.75fr_1.25fr]">
-        <div class="flex flex-col justify-between gap-4">
+        <div class="flex flex-col justify-center gap-6">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-teal">Pilih sesuai perjalanan</p>
-                <h2 class="mt-2 text-3xl font-bold">Armada yang ada sekarang</h2>
-                <p class="mt-2 max-w-sm text-sm leading-6 text-muted">Buat keliling kota, antar jemput, atau perjalanan agak jauh. Cek detail tiap motor untuk lihat perlengkapan dan jadwal kosongnya.</p>
+                <p class="text-sm font-semibold uppercase tracking-[0.16em] text-teal">Pilih sesuai perjalanan</p>
+                <h2 class="mt-3 text-4xl font-bold leading-tight lg:text-5xl">Armada yang ada sekarang</h2>
+                <p class="mt-4 max-w-md text-lg leading-8 text-muted">Buat keliling kota, antar jemput, atau perjalanan agak jauh. Cek detail tiap motor untuk lihat perlengkapan dan jadwal kosongnya.</p>
             </div>
-            <a href="{{ route('bikes.index') }}" class="link inline-flex items-center gap-2 font-semibold">Buka katalog <span aria-hidden="true">→</span></a>
+            <a href="{{ route('bikes.index') }}" class="link inline-flex items-center gap-2 text-lg font-semibold">Buka katalog <span aria-hidden="true">→</span></a>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
@@ -102,22 +102,22 @@
     <section class="grid gap-8 py-14 lg:grid-cols-[1fr_0.8fr]">
         <div>
             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-teal">Biar sama-sama enak</p>
-            <h2 class="mt-2 text-3xl font-bold">Sebelum kunci dibawa, perhatikan ketentuan berikut</h2>
-            <div class="mt-5 rounded-xl border border-line bg-surface p-5 sm:p-7">
-                <x-rental-policy />
+            <h2 class="mt-2 text-4xl font-bold leading-tight">Sebelum kunci dibawa, perhatikan ketentuan berikut</h2>
+            <div class="mt-5 rounded-xl border border-line bg-surface p-6 sm:p-8">
+                <x-rental-policy class="!text-base leading-7 space-y-3" />
             </div>
         </div>
 
-        <aside class="flex flex-col justify-between gap-8 rounded-2xl bg-[#e2efe9] p-6 sm:p-8">
+        <aside class="flex flex-col justify-center gap-8 rounded-2xl bg-[#e2efe9] p-6 sm:p-8">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-teal">Mampir langsung</p>
-                <h2 class="mt-2 text-2xl font-bold">Ada yang mau ditanyakan?</h2>
-                <p class="mt-2 text-sm leading-6 text-muted">Hubungi kami untuk tanya jadwal, titik pengambilan, atau rekomendasi motor buat rute kamu.</p>
+                <p class="text-sm font-semibold uppercase tracking-[0.16em] text-teal">Mampir langsung</p>
+                <h2 class="mt-3 text-3xl font-bold leading-tight">Ada yang mau ditanyakan?</h2>
+                <p class="mt-3 text-lg leading-8 text-muted">Hubungi kami untuk tanya jadwal, titik pengambilan, atau rekomendasi motor buat rute kamu.</p>
             </div>
-            <div class="space-y-4 border-t border-teal/20 pt-5 text-sm">
-                <p><span class="block text-xs font-semibold uppercase tracking-wider text-muted">Kontak <span class="normal-case tracking-normal text-orange-700"></span></span><span class="mt-1 block font-semibold">0812-3456-7890</span></p>
-                <p><span class="block text-xs font-semibold uppercase tracking-wider text-muted">Jam layanan</span><span class="mt-1 block font-semibold">{{ config('rental.operating_hours') ?: sprintf('Serah terima motor %02d.00–%02d.00 WIB', config('rental.open_hour'), config('rental.close_hour')) }}</span></p>
-                <p><span class="block text-xs font-semibold uppercase tracking-wider text-muted">Alamat</span><span class="mt-1 block font-semibold">{{ config('rental.address') ?: (config('rental.whatsapp') ? 'Tanyakan titik pengambilan lewat WhatsApp.' : 'Jl. Pemuda Kelompok C No. A2, Airlangga, Kec. Mulyorejo, Kota Surabaya, Jawa Timur 60115') }}</span></p>
+            <div class="space-y-5 border-t border-teal/20 pt-6 text-base">
+                <p><span class="block text-sm font-semibold uppercase tracking-wider text-muted">Kontak <span class="normal-case tracking-normal text-orange-700"></span></span><span class="mt-1.5 block text-lg font-semibold">0812-3456-7890</span></p>
+                <p><span class="block text-sm font-semibold uppercase tracking-wider text-muted">Jam layanan</span><span class="mt-1.5 block text-lg font-semibold">{{ config('rental.operating_hours') ?: sprintf('Serah terima motor %02d.00–%02d.00 WIB', config('rental.open_hour'), config('rental.close_hour')) }}</span></p>
+                <p><span class="block text-sm font-semibold uppercase tracking-wider text-muted">Alamat</span><span class="mt-1.5 block text-lg font-semibold leading-7">{{ config('rental.address') ?: (config('rental.whatsapp') ? 'Tanyakan titik pengambilan lewat WhatsApp.' : 'Jl. Pemuda Kelompok C No. A2, Airlangga, Kec. Mulyorejo, Kota Surabaya, Jawa Timur 60115') }}</span></p>
                 @if (config('rental.whatsapp'))
                     <a href="https://wa.me/{{ config('rental.whatsapp') }}?text={{ rawurlencode('Halo Mitra Jalan, saya mau tanya soal sewa motor.') }}" class="btn inline-flex items-center gap-2 bg-teal text-white hover:bg-teal/90" target="_blank" rel="noopener">
                         <svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 11.5a8.4 8.4 0 0 1-12.4 7.4L4 20l1.2-3.4A8.4 8.4 0 1 1 20 11.5Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8.7 8.3c.2-.5.4-.5.7-.5h.4c.2 0 .4.1.5.4l.6 1.5c.1.2 0 .4-.1.6l-.5.6c-.2.2-.1.4 0 .6.5.8 1.2 1.5 2.1 1.9.2.1.4.1.6-.1l.7-.8c.2-.2.4-.2.6-.1l1.4.7c.2.1.3.3.3.5 0 .4-.2 1.1-.7 1.4-.4.3-1 .5-1.7.4-1-.1-2.3-.7-3.5-1.8-1-.9-1.7-2.1-1.9-3-.2-.9 0-1.7.5-2.3Z"/></svg>

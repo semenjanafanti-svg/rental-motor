@@ -24,7 +24,9 @@ class HandoverService
      */
     public function checkIn(Rental $rental, User $admin, string $method = 'cash'): Rental
     {
-        return DB::transaction(function () use ($rental, $admin, $method) {
+        $markedNoShow = false;
+
+        $checkedInRental = DB::transaction(function () use ($rental, $admin, $method, &$markedNoShow) {
             $locked = Rental::lockForUpdate()->findOrFail($rental->id);
 
             if ($locked->status !== 'approved') {
@@ -33,6 +35,20 @@ class HandoverService
 
             if (! $locked->isPickupPeriodOpen()) {
                 throw new PaymentException('Pelunasan dan check-in baru bisa dilakukan saat waktu pengambilan dimulai.');
+            }
+
+            $pickupDeadline = $locked->start_time
+                ->copy()
+                ->addMinutes((int) config('rental.no_show_tolerance_minutes'));
+
+            if ($pickupDeadline->lessThanOrEqualTo(now())) {
+                $locked->update([
+                    'status' => 'no_show',
+                    'cancelled_reason' => 'Penyewa tidak datang mengambil motor sampai batas toleransi.',
+                ]);
+                $markedNoShow = true;
+
+                return $locked;
             }
 
             if ((float) $locked->balance_amount > 0) {
@@ -61,6 +77,12 @@ class HandoverService
 
             return $locked;
         });
+
+        if ($markedNoShow) {
+            throw new PaymentException('Batas pengambilan sudah lewat. Pesanan ditandai tidak hadir dan check-in tidak dapat dilakukan.');
+        }
+
+        return $checkedInRental;
     }
 
     /**

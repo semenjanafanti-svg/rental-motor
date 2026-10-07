@@ -18,36 +18,9 @@ Artisan::command('inspire', function () {
 Schedule::call(fn() => app(RentalExpirationService::class)->expireOverdue())
     ->everyMinute()->name('expire-pending-rentals');
 
-// Rental approved yang tidak diambil melewati toleransi no-show -> no_show, DP hangus, slot lepas.
-Schedule::call(function () {
-    $toleranceMinutes = (int) config('rental.no_show_tolerance_minutes');
-
-    Rental::where('status', 'approved')
-        ->where('start_time', '<=', now()->subMinutes($toleranceMinutes))
-        ->select('id')
-        ->chunkById(100, function ($rentals) use ($toleranceMinutes) {
-            foreach ($rentals as $rental) {
-                $id = $rental->id;
-                DB::transaction(function () use ($id, $toleranceMinutes) {
-                    $rental = Rental::lockForUpdate()->find($id);
-
-                    if (! $rental || $rental->status !== 'approved') {
-                        return;
-                    }
-
-                    // Cek ulang di dalam transaksi: bisa jadi baru saja di-check-in
-                    if ($rental->start_time->copy()->addMinutes($toleranceMinutes)->isFuture()) {
-                        return;
-                    }
-
-                    $rental->update([
-                        'status' => 'no_show',
-                        'cancelled_reason' => 'Penyewa tidak datang mengambil motor sampai batas toleransi.',
-                    ]);
-                });
-            }
-        });
-})->everyFiveMinutes()->name('mark-no-show-rentals');
+// Rental approved yang melewati toleransi no-show menjadi no_show dan slot dilepas.
+Schedule::call(fn () => app(RentalExpirationService::class)->expireNoShows())
+    ->everyMinute()->name('mark-no-show-rentals');
 
 // Rental active yang melewati end_time dan belum punya reminder 'overdue' -> buatkan satu,
 // supaya muncul di halaman "Reminder Hari Ini" tanpa duplikat.

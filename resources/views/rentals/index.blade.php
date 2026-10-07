@@ -3,6 +3,15 @@
 @section('title', 'Pesanan Saya')
 
 @section('content')
+    @php
+        $noShowRefreshAt = $rentals->getCollection()
+            ->filter(fn ($rental) => $rental->status === 'approved')
+            ->map(fn ($rental) => $rental->start_time->copy()->addMinutes((int) config('rental.no_show_tolerance_minutes')))
+            ->filter(fn ($deadline) => $deadline->isFuture())
+            ->sortBy(fn ($deadline) => $deadline->timestamp)
+            ->first();
+    @endphp
+
     <div class="mx-auto max-w-6xl">
         <header class="mb-7 flex flex-col justify-between gap-4 border-b border-line pb-6 sm:flex-row sm:items-end">
             <div>
@@ -100,4 +109,10 @@
             @endif
         @endif
     </div>
+
+    @if ($noShowRefreshAt)
+        <script>
+            window.setTimeout(() => window.location.reload(), Math.max(1000, {{ ($noShowRefreshAt->timestamp - now()->timestamp) * 1000 }}));
+        </script>
+    @endif
 @endsection

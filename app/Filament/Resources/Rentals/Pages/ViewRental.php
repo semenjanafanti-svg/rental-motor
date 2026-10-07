@@ -6,6 +6,7 @@ use App\Exceptions\PaymentException;
 use App\Filament\Resources\Rentals\RentalResource;
 use App\Services\HandoverService;
 use App\Services\PaymentService;
+use App\Services\RentalExpirationService;
 use App\Support\Format;
 use App\Support\VerificationMessage;
 use Carbon\Carbon;
@@ -20,6 +21,22 @@ use Filament\Resources\Pages\ViewRecord;
 class ViewRental extends ViewRecord
 {
     protected static string $resource = RentalResource::class;
+
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+
+        app(RentalExpirationService::class)->expireNoShows();
+        $this->record->refresh();
+    }
+
+    public function hydrate(): void
+    {
+        parent::hydrate();
+
+        app(RentalExpirationService::class)->expireNoShows();
+        $this->record->refresh();
+    }
 
     public function getTitle(): string
     {

@@ -13,6 +13,7 @@ class RentalController extends Controller
     public function index(Request $request, RentalExpirationService $expiration): View
     {
         $expiration->expireOverdue($request->user()->id);
+        $expiration->expireNoShows($request->user()->id);
 
         $rentals = $request->user()
             ->rentals()
@@ -29,6 +30,7 @@ class RentalController extends Controller
         abort_unless($rental->user_id === $request->user()->id, 404);
 
         $expiration->expireOverdue($request->user()->id);
+        $expiration->expireNoShows($request->user()->id);
         $rental->refresh();
 
         $rental->load(['bike', 'payments']);

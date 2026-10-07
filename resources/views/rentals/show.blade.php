@@ -14,6 +14,7 @@
     $fees = $return ? (float) $return->late_fee + (float) $return->damage_fee + (float) $return->fuel_fee : 0;
 
     $noShowLimit = $rental->start_time->copy()->addMinutes((int) config('rental.no_show_tolerance_minutes'));
+    $refreshAtNoShowLimit = $rental->status === 'approved' && $noShowLimit->isFuture();
     $cancelDays = (int) config('rental.cancellation.min_days_before');
     $lateTolerance = (int) config('rental.late_tolerance_minutes');
 @endphp
@@ -265,4 +266,10 @@
             </table>
         </div>
     </div>
+
+    @if ($refreshAtNoShowLimit)
+        <script>
+            window.setTimeout(() => window.location.reload(), Math.max(1000, {{ ($noShowLimit->timestamp - now()->timestamp) * 1000 }}));
+        </script>
+    @endif
 @endsection

@@ -43,8 +43,20 @@ class ListRentals extends ListRecords
 
     public function mount(): void
     {
-        app(\App\Services\RentalExpirationService::class)->expireOverdue();
-
         parent::mount();
+
+        $expiration = app(\App\Services\RentalExpirationService::class);
+        $expiration->expireOverdue();
+        $expiration->expireNoShows();
+    }
+
+    public function hydrate(): void
+    {
+        app(\App\Services\RentalExpirationService::class)->expireNoShows();
+    }
+
+    protected function getTablePollingInterval(): ?string
+    {
+        return Rental::query()->where('status', 'approved')->exists() ? '60s' : null;
     }
 }
