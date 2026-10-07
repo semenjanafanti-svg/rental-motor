@@ -95,63 +95,37 @@ class PaymentService
             $locked->update([
                 'status' => 'approved',
                 'payment_status' => 'dp_paid',
-                'resubmission_expires_at' => null,
             ]);
         });
     }
 
-    /** Bukti bayar ditolak (buram, nominal salah, dsb.): penyewa boleh unggah ulang. */
-    public function rejectDpProof(Rental $rental, string $reason): void
+    /** Bukti bayar ditolak: pesanan langsung dibatalkan dan DP dicatat telah direfund. */
+    public function rejectDpProof(Rental $rental, User $admin, string $reason): void
     {
-        $oldPath = null;
-
-        DB::transaction(function () use ($rental, $reason, &$oldPath) {
+        DB::transaction(function () use ($rental, $admin, $reason) {
             [$locked, $payment] = $this->lockForVerification($rental);
 
-            $oldPath = $payment->proof_photo;
-
-            // Bukti hanya dapat diperbaiki satu kali. Setelah itu transaksi dibatalkan
-            // agar slot tidak terus terkunci dan DP masuk alur refund admin.
-            if ($payment->rejection_count >= 1) {
-                $payment->update([
-                    'payment_status' => 'settlement',
-                    'payment_type' => 'qris',
-                    'paid_at' => now(),
-                    'rejection_reason' => $reason,
-                    'rejection_count' => $payment->rejection_count + 1,
-                ]);
-                $locked->update([
-                    'status' => 'cancelled',
-                    'payment_status' => 'dp_paid',
-                    'cancelled_reason' => 'Bukti pembayaran ditolak dua kali: '.$reason,
-                    'notes' => 'DP perlu dikembalikan penuh oleh admin.',
-                ]);
-
-                return;
-            }
-
             $payment->update([
-                'proof_photo' => null,
-                'proof_uploaded_at' => null,
+                'payment_status' => 'refund',
+                'payment_type' => 'qris',
+                'paid_at' => now(),
+                'received_by' => $admin->id,
                 'rejection_reason' => $reason,
                 'rejection_count' => $payment->rejection_count + 1,
+                'refunded_amount' => $payment->gross_amount,
             ]);
 
             $locked->update([
-                'status' => 'pending_payment',
-                'expires_at' => now()->addMinutes((int) config('rental.resubmission_minutes')),
+                'status' => 'cancelled',
+                'payment_status' => 'refunded',
+                'cancelled_reason' => 'Bukti pembayaran DP ditolak: '.$reason,
+                'notes' => trim(($locked->notes ? $locked->notes."\n" : '')
+                    .'Refund DP '.Format::rupiah($payment->gross_amount).' dicatat oleh admin.'),
             ]);
         });
-
-        if ($oldPath) {
-            Storage::disk('local')->delete($oldPath);
-        }
     }
 
-    /**
-     * KTP/SIM ditolak: pesanan dibatalkan. DP sudah masuk, jadi dicatat sebagai diterima
-     * dan wajib dikembalikan penuh (refund manual, lalu catat lewat recordDpRefund).
-     */
+    /** KTP/SIM ditolak: pesanan dibatalkan dan refund DP dicatat dalam transaksi yang sama. */
     public function rejectDocuments(Rental $rental, User $admin, string $reason): void
     {
         DB::transaction(function () use ($rental, $admin, $reason) {
@@ -159,27 +133,12 @@ class PaymentService
 
             $verification = $locked;
 
-            if ($verification->verification_rejection_count === 0) {
-                $verification->update([
-                    'verification_status' => 'pending',
-                    'verification_rejection_reason' => $reason,
-                    'verification_rejection_count' => 1,
-                    'verified_by' => $admin->id,
-                    'verified_at' => now(),
-                ]);
-
-                $locked->update([
-                    'resubmission_expires_at' => now()->addMinutes((int) config('rental.resubmission_minutes')),
-                ]);
-
-                return;
-            }
-
             $payment->update([
-                'payment_status' => 'settlement',
+                'payment_status' => 'refund',
                 'payment_type' => 'qris',
                 'paid_at' => now(),
                 'received_by' => $admin->id,
+                'refunded_amount' => $payment->gross_amount,
             ]);
 
             $verification->update([
@@ -189,13 +148,13 @@ class PaymentService
                 'verified_at' => now(),
             ]);
 
-            $note = 'Dokumen ditolak; DP '.Format::rupiah($payment->gross_amount).' perlu dikembalikan penuh (refund manual).';
+            $note = 'Dokumen ditolak; DP '.Format::rupiah($payment->gross_amount).' direfund penuh.';
 
             $locked->update([
                 'status' => 'cancelled',
-                'payment_status' => 'dp_paid',
+                'payment_status' => 'refunded',
                 'cancelled_reason' => 'Dokumen ditolak: '.$reason,
-                'notes' => trim(($locked->notes ? $locked->notes."\n" : '').$note),
+                'notes' => trim(($locked->notes ? $locked->notes."\n" : '').$note.' Refund DP dicatat oleh admin.'),
             ]);
         });
     }

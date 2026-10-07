@@ -23,11 +23,11 @@ class PhoneNumber
 
         if (str_starts_with($digits, '62')) {
             // sudah 62xxx; rapikan kasus salah ketik "620812..."
-            $digits = '62' . ltrim(substr($digits, 2), '0');
+            $digits = '62'.ltrim(substr($digits, 2), '0');
         } elseif (str_starts_with($digits, '0')) {
-            $digits = '62' . substr($digits, 1);
+            $digits = '62'.substr($digits, 1);
         } elseif (str_starts_with($digits, '8')) {
-            $digits = '62' . $digits;
+            $digits = '62'.$digits;
         }
 
         // Nomor seluler Indonesia: 628 + 8 sampai 11 digit

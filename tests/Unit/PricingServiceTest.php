@@ -30,11 +30,11 @@ class PricingServiceTest extends TestCase
         // [hourly, daily, jam, total, dp, balance]
         return [
             '12 jam: tarif jam melebihi harian, dibatasi harian' => [12000, 100000, 12, 100000, 30000, 70000],
-            '13 jam: DP dibulatkan ke atas ke Rp1.000'          => [9000, 75000, 13, 75000, 23000, 52000],
-            '24 jam tepat'                                       => [30000, 250000, 24, 250000, 75000, 175000],
-            '30 jam: 1 hari + 6 jam'                             => [9000, 75000, 30, 129000, 39000, 90000],
-            '36 jam: sisa 12 jam dibatasi tarif harian'          => [18000, 150000, 36, 300000, 90000, 210000],
-            '50 jam: 2 hari + 2 jam'                             => [10000, 85000, 50, 190000, 57000, 133000],
+            '13 jam: DP dibulatkan ke atas ke Rp1.000' => [9000, 75000, 13, 75000, 23000, 52000],
+            '24 jam tepat' => [30000, 250000, 24, 250000, 75000, 175000],
+            '30 jam: 1 hari + 6 jam' => [9000, 75000, 30, 129000, 39000, 90000],
+            '36 jam: sisa 12 jam dibatasi tarif harian' => [18000, 150000, 36, 300000, 90000, 210000],
+            '50 jam: 2 hari + 2 jam' => [10000, 85000, 50, 190000, 57000, 133000],
         ];
     }
 

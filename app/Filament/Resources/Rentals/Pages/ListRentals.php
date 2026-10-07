@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Rentals\Pages;
 
 use App\Filament\Resources\Rentals\RentalResource;
 use App\Models\Rental;
+use App\Services\RentalExpirationService;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,6 +39,7 @@ class ListRentals extends ListRecords
             'verif' => $tab('Verifikasi', 'pending_verification'),
             'pickup' => $tab('Siap Diambil', 'approved'),
             'active' => $tab('Sedang Disewa', 'active'),
+            'cancelled' => $tab('Dibatalkan', 'cancelled'),
         ];
     }
 
@@ -45,14 +47,14 @@ class ListRentals extends ListRecords
     {
         parent::mount();
 
-        $expiration = app(\App\Services\RentalExpirationService::class);
+        $expiration = app(RentalExpirationService::class);
         $expiration->expireOverdue();
         $expiration->expireNoShows();
     }
 
     public function hydrate(): void
     {
-        app(\App\Services\RentalExpirationService::class)->expireNoShows();
+        app(RentalExpirationService::class)->expireNoShows();
     }
 
     protected function getTablePollingInterval(): ?string

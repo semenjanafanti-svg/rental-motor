@@ -20,7 +20,7 @@ class AvailabilityServiceTest extends TestCase
         if (config('database.default') !== 'sqlite') {
             throw new \RuntimeException(
                 'AvailabilityServiceTest hanya boleh berjalan di SQLite in-memory. '
-                . 'Aktifkan DB_CONNECTION=sqlite dan DB_DATABASE=:memory: di phpunit.xml.'
+                .'Aktifkan DB_CONNECTION=sqlite dan DB_DATABASE=:memory: di phpunit.xml.'
             );
         }
     }
@@ -44,7 +44,7 @@ class AvailabilityServiceTest extends TestCase
     private function rental(Bike $bike, string $start, string $end, string $status, ?Carbon $expiresAt = null): Rental
     {
         return Rental::create([
-            'booking_code' => 'BK-TEST-' . uniqid(),
+            'booking_code' => 'BK-TEST-'.uniqid(),
             'user_id' => User::factory()->create()->id,
             'bike_id' => $bike->id,
             'start_time' => $start,

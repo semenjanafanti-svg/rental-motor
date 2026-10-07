@@ -6,8 +6,7 @@ use App\Models\Bike;
 use App\Models\User;
 use App\Services\BookingService;
 use App\Services\PaymentService;
-use App\Services\RentalExpirationService;
-use App\Support\VerificationMessage;
+use App\Services\WhatsAppTemplateService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -57,22 +56,31 @@ class PaymentServiceTest extends TestCase
         app(PaymentService::class)->submitDpProof($rental, UploadedFile::fake()->image('proof.jpg'));
     }
 
-    public function test_rejected_payment_proof_gets_three_hours_and_a_whatsapp_message(): void
+    public function test_rejected_payment_proof_immediately_cancels_and_refunds_with_a_whatsapp_template(): void
     {
         [$rental] = $this->booking();
         $this->submitProof($rental);
+        $admin = User::factory()->create(['role' => 'admin']);
 
-        app(PaymentService::class)->rejectDpProof($rental, 'Nominal pada bukti tidak sesuai.');
+        app(PaymentService::class)->rejectDpProof($rental, $admin, 'Nominal pada bukti tidak sesuai.');
         $rental->refresh();
+        $payment = $rental->payments()->where('type', 'dp')->firstOrFail();
 
-        $this->assertSame('pending_payment', $rental->status);
-        $this->assertTrue($rental->expires_at->equalTo(now()->addHours(3)));
-        $this->assertTrue(VerificationMessage::hasResubmissionRequest($rental));
-        $this->assertStringContainsString('wa.me/628123456789', VerificationMessage::waLink($rental));
-        $this->assertStringContainsString(rawurlencode('3 jam'), VerificationMessage::waLink($rental));
+        $this->assertSame('cancelled', $rental->status);
+        $this->assertSame('refunded', $rental->payment_status);
+        $this->assertSame('refund', $payment->payment_status);
+        $this->assertSame((string) $payment->gross_amount, (string) $payment->refunded_amount);
+        $this->assertSame('Nominal pada bukti tidak sesuai.', $payment->rejection_reason);
+        $this->assertArrayNotHasKey('resubmission_expires_at', $rental->getAttributes());
+
+        $link = app(WhatsAppTemplateService::class)->rejectedProofLink($rental);
+        $this->assertStringContainsString('wa.me/628123456789', $link);
+        $this->assertStringContainsString(rawurlencode('bukti pembayaran DP ditolak'), $link);
+        $this->assertStringContainsString(rawurlencode('Nominal pada bukti tidak sesuai.'), $link);
+        $this->assertStringNotContainsString(rawurlencode(url('/motor')), $link);
     }
 
-    public function test_rejected_documents_get_three_hours_and_expire_when_the_deadline_passes(): void
+    public function test_rejected_documents_immediately_cancels_and_refunds_with_a_whatsapp_template(): void
     {
         [$rental] = $this->booking();
         $this->submitProof($rental);
@@ -81,14 +89,20 @@ class PaymentServiceTest extends TestCase
 
         app(PaymentService::class)->rejectDocuments($rental, $admin, 'Foto KTP tidak terbaca.');
         $rental->refresh();
+        $payment = $rental->payments()->where('type', 'dp')->firstOrFail();
 
-        $this->assertSame('pending_verification', $rental->status);
-        $this->assertTrue($rental->resubmission_expires_at->equalTo(now()->addHours(3)));
-        $this->assertTrue(VerificationMessage::hasResubmissionRequest($rental));
+        $this->assertSame('cancelled', $rental->status);
+        $this->assertSame('refunded', $rental->payment_status);
+        $this->assertSame('rejected', $rental->verification_status);
+        $this->assertSame('Foto KTP tidak terbaca.', $rental->verification_rejection_reason);
+        $this->assertSame('refund', $payment->payment_status);
+        $this->assertSame((string) $payment->gross_amount, (string) $payment->refunded_amount);
+        $this->assertArrayNotHasKey('resubmission_expires_at', $rental->getAttributes());
 
-        $this->travel(181)->minutes();
-        $this->assertSame(1, app(RentalExpirationService::class)->expireOverdue());
-
-        $this->assertSame('expired', $rental->fresh()->status);
+        $link = app(WhatsAppTemplateService::class)->rejectedDocumentLink($rental);
+        $this->assertStringContainsString('wa.me/628123456789', $link);
+        $this->assertStringContainsString(rawurlencode('dokumen (KTP/SIM) ditolak'), $link);
+        $this->assertStringContainsString(rawurlencode('Foto KTP tidak terbaca.'), $link);
+        $this->assertStringNotContainsString(rawurlencode(url('/motor')), $link);
     }
 }

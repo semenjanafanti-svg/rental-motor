@@ -8,6 +8,4 @@ use RuntimeException;
  * Induk semua kesalahan bisnis saat pemesanan.
  * Pesannya aman ditampilkan ke customer.
  */
-class BookingException extends RuntimeException
-{
-}
+class BookingException extends RuntimeException {}

@@ -54,7 +54,7 @@ class HandoverService
             if ((float) $locked->balance_amount > 0) {
                 Payment::create([
                     'rental_id' => $locked->id,
-                    'order_id' => $locked->booking_code . '-BAL',
+                    'order_id' => $locked->booking_code.'-BAL',
                     'type' => 'balance',
                     'method' => $method,
                     'payment_type' => $method === 'manual_transfer' ? 'qris' : $method,
@@ -130,7 +130,7 @@ class HandoverService
             if ($totalFee > 0) {
                 Payment::create([
                     'rental_id' => $locked->id,
-                    'order_id' => $locked->booking_code . '-FINE',
+                    'order_id' => $locked->booking_code.'-FINE',
                     'type' => 'fine',
                     'method' => $method,
                     'payment_type' => $method === 'manual_transfer' ? 'qris' : $method,

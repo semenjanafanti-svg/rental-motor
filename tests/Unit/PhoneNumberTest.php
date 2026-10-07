@@ -17,16 +17,16 @@ class PhoneNumberTest extends TestCase
     public static function cases(): array
     {
         return [
-            'awalan 0'           => ['081234567890', '6281234567890'],
-            'format +62 spasi'   => ['+62 812-3456-7890', '6281234567890'],
-            'sudah 62'           => ['6281234567890', '6281234567890'],
-            'tanpa awalan'       => ['81234567890', '6281234567890'],
-            'salah ketik 620'    => ['620812 3456 7890', '6281234567890'],
-            'terlalu pendek'     => ['0812', null],
-            'bukan angka'        => ['abc', null],
-            'telepon rumah'      => ['021555555', null],
-            'kosong'             => ['', null],
-            'null'               => [null, null],
+            'awalan 0' => ['081234567890', '6281234567890'],
+            'format +62 spasi' => ['+62 812-3456-7890', '6281234567890'],
+            'sudah 62' => ['6281234567890', '6281234567890'],
+            'tanpa awalan' => ['81234567890', '6281234567890'],
+            'salah ketik 620' => ['620812 3456 7890', '6281234567890'],
+            'terlalu pendek' => ['0812', null],
+            'bukan angka' => ['abc', null],
+            'telepon rumah' => ['021555555', null],
+            'kosong' => ['', null],
+            'null' => [null, null],
         ];
     }
 }

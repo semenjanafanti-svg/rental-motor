@@ -21,7 +21,7 @@ class HandoverServiceTest extends TestCase
         if (config('database.default') !== 'sqlite') {
             throw new \RuntimeException(
                 'HandoverServiceTest hanya boleh berjalan di SQLite in-memory. '
-                . 'Aktifkan DB_CONNECTION=sqlite dan DB_DATABASE=:memory: di phpunit.xml.'
+                .'Aktifkan DB_CONNECTION=sqlite dan DB_DATABASE=:memory: di phpunit.xml.'
             );
         }
     }
@@ -50,7 +50,7 @@ class HandoverServiceTest extends TestCase
     private function rental(string $status, array $override = []): Rental
     {
         return Rental::create($override + [
-            'booking_code' => 'BK-TEST-' . uniqid(),
+            'booking_code' => 'BK-TEST-'.uniqid(),
             'user_id' => User::factory()->create()->id,
             'bike_id' => $this->bike()->id,
             'start_time' => '2026-09-20 08:00',
@@ -79,7 +79,7 @@ class HandoverServiceTest extends TestCase
 
         $this->assertDatabaseHas('payments', [
             'rental_id' => $rental->id,
-            'order_id' => $rental->booking_code . '-BAL',
+            'order_id' => $rental->booking_code.'-BAL',
             'type' => 'balance',
             'gross_amount' => 70000,
             'payment_status' => 'settlement',
@@ -169,7 +169,7 @@ class HandoverServiceTest extends TestCase
         ]);
         $this->assertDatabaseHas('payments', [
             'rental_id' => $rental->id,
-            'order_id' => $rental->booking_code . '-FINE',
+            'order_id' => $rental->booking_code.'-FINE',
             'type' => 'fine',
             'gross_amount' => $expectedLateFee + 50000 + 10000,
             'payment_status' => 'settlement',

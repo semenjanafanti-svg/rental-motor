@@ -23,7 +23,7 @@ class CustomerFrontendTest extends TestCase
         if (config('database.default') !== 'sqlite') {
             throw new \RuntimeException(
                 'CustomerFrontendTest hanya boleh berjalan di SQLite in-memory. '
-                . 'Aktifkan DB_CONNECTION=sqlite dan DB_DATABASE=:memory: di phpunit.xml.'
+                .'Aktifkan DB_CONNECTION=sqlite dan DB_DATABASE=:memory: di phpunit.xml.'
             );
         }
     }

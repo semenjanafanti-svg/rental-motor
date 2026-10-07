@@ -26,7 +26,7 @@ class BookingServiceTest extends TestCase
         if (config('database.default') !== 'sqlite') {
             throw new \RuntimeException(
                 'BookingServiceTest hanya boleh berjalan di SQLite in-memory. '
-                . 'Aktifkan DB_CONNECTION=sqlite dan DB_DATABASE=:memory: di phpunit.xml.'
+                .'Aktifkan DB_CONNECTION=sqlite dan DB_DATABASE=:memory: di phpunit.xml.'
             );
         }
     }
@@ -81,7 +81,7 @@ class BookingServiceTest extends TestCase
         $n++;
 
         return Rental::create([
-            'booking_code' => 'BK-TEST-' . $n,
+            'booking_code' => 'BK-TEST-'.$n,
             'user_id' => $user->id,
             'bike_id' => $bike->id,
             'start_time' => $start,

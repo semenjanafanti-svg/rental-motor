@@ -15,7 +15,7 @@ class OwnerOverview extends StatsOverviewWidget
     {
         return [
             Stat::make('Motor siap disewa', Bike::where('status', 'available')->count())
-                ->description('dari ' . Bike::count() . ' unit terdaftar')->color('success'),
+                ->description('dari '.Bike::count().' unit terdaftar')->color('success'),
             Stat::make('Menunggu verifikasi', Rental::where('status', 'pending_verification')->count())
                 ->description('Perlu tindakan admin')->color('warning'),
             Stat::make('Sedang disewa', Rental::where('status', 'active')->count())

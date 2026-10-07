@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Auth\Pages\ActiveLogin;
 use App\Http\Middleware\FilamentAuthenticate;
+use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -30,6 +31,10 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(ActiveLogin::class)
+            // Panel admin selalu memakai tampilan terang tanpa pilihan tema.
+            ->darkMode(false)
+            ->themeSwitcher(false)
+            ->defaultThemeMode(ThemeMode::Light)
             ->globalSearch(false)
             ->sidebarWidth('15rem')
             ->maxContentWidth(Width::Full)

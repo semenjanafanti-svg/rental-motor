@@ -25,7 +25,7 @@ class ReminderMessage
     /** Nomor sudah dinormalisasi ke 62xxx saat registrasi. */
     public static function waLink(RentalReminder $reminder): string
     {
-        return 'https://wa.me/' . $reminder->rental->user->phone_number
-            . '?text=' . rawurlencode(self::build($reminder));
+        return 'https://wa.me/'.$reminder->rental->user->phone_number
+            .'?text='.rawurlencode(self::build($reminder));
     }
 }

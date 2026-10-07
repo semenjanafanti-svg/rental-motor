@@ -2,6 +2,4 @@
 
 namespace App\Exceptions;
 
-class InvalidBookingPeriodException extends BookingException
-{
-}
+class InvalidBookingPeriodException extends BookingException {}

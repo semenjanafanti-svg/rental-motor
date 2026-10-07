@@ -2,11 +2,11 @@
 
 use App\Models\Rental;
 use App\Models\RentalReminder;
+use App\Services\RentalExpirationService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
-use App\Services\RentalExpirationService;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -15,7 +15,7 @@ Artisan::command('inspire', function () {
 // Pesanan yang DP-nya tidak dibayar sampai expires_at -> expired.
 // Logikanya ada di RentalExpirationService (juga dipanggil saat halaman pesanan dibuka).
 // Lokal: php artisan schedule:work | Server: cron * * * * * php artisan schedule:run
-Schedule::call(fn() => app(RentalExpirationService::class)->expireOverdue())
+Schedule::call(fn () => app(RentalExpirationService::class)->expireOverdue())
     ->everyMinute()->name('expire-pending-rentals');
 
 // Rental approved yang melewati toleransi no-show menjadi no_show dan slot dilepas.
@@ -27,7 +27,7 @@ Schedule::call(fn () => app(RentalExpirationService::class)->expireNoShows())
 Schedule::call(function () {
     Rental::where('status', 'active')
         ->where('end_time', '<=', now())
-        ->whereDoesntHave('reminders', fn($q) => $q->where('type', 'overdue'))
+        ->whereDoesntHave('reminders', fn ($q) => $q->where('type', 'overdue'))
         ->select('id')
         ->chunkById(100, function ($rentals) {
             foreach ($rentals as $rental) {

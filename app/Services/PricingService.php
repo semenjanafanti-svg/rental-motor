@@ -13,8 +13,7 @@ class PricingService
     public function __construct(
         private readonly ?float $dpPercent = null,
         private readonly ?int $dpRounding = null,
-    ) {
-    }
+    ) {}
 
     /** Jumlah jam sewa, dibulatkan ke atas ke jam penuh. */
     public function totalHours(CarbonInterface $start, CarbonInterface $end): int

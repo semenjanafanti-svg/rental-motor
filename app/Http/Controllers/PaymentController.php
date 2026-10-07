@@ -34,7 +34,7 @@ class PaymentController extends Controller
             ->route('rentals.show', $rental)
             ->with('status', 'Bukti pembayaran terkirim. Admin akan memverifikasinya.');
     }
-    
+
     /** Penyewa membatalkan pesanan (H-3 atau lebih awal). */
     public function cancel(Request $request, Rental $rental, PaymentService $payments): RedirectResponse
     {

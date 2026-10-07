@@ -16,6 +16,7 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -121,14 +122,14 @@ class UserResource extends Resource
     {
         return $schema->components([
             Section::make('Ringkasan customer')->columnSpanFull()->columns(4)->components([
-                \Filament\Infolists\Components\TextEntry::make('rentals_count')->label('Jumlah pesanan')->numeric(),
-                \Filament\Infolists\Components\TextEntry::make('cancelled_rentals_count')->label('Pesanan batal')->numeric(),
-                \Filament\Infolists\Components\TextEntry::make('no_show_rentals_count')->label('No-show')->numeric(),
-                \Filament\Infolists\Components\TextEntry::make('created_at')->label('Tanggal daftar')->dateTime('d M Y'),
-                \Filament\Infolists\Components\TextEntry::make('name')->label('Nama'),
-                \Filament\Infolists\Components\TextEntry::make('email')->label('Email'),
-                \Filament\Infolists\Components\TextEntry::make('phone_number')->label('No. HP'),
-                \Filament\Infolists\Components\TextEntry::make('is_active')->label('Status')->badge()
+                TextEntry::make('rentals_count')->label('Jumlah pesanan')->numeric(),
+                TextEntry::make('cancelled_rentals_count')->label('Pesanan batal')->numeric(),
+                TextEntry::make('no_show_rentals_count')->label('No-show')->numeric(),
+                TextEntry::make('created_at')->label('Tanggal daftar')->dateTime('d M Y'),
+                TextEntry::make('name')->label('Nama'),
+                TextEntry::make('email')->label('Email'),
+                TextEntry::make('phone_number')->label('No. HP'),
+                TextEntry::make('is_active')->label('Status')->badge()
                     ->formatStateUsing(fn (bool $state): string => $state ? 'Aktif' : 'Nonaktif')
                     ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
             ]),

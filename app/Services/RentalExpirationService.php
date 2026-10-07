@@ -47,8 +47,7 @@ class RentalExpirationService
     }
 
     /**
-     * Pembayaran atau unggah ulang dokumen yang melewati batas menjadi expired,
-     * dan payment DP yang masih pending menjadi expire.
+     * Pembayaran yang melewati batas menjadi expired dan payment DP yang masih pending menjadi expire.
      * $userId dipakai untuk membatasi ke pesanan satu penyewa (saat halamannya dibuka).
      */
     public function expireOverdue(?int $userId = null): int
@@ -72,33 +71,6 @@ class RentalExpirationService
 
                     $rental->update(['status' => 'expired']);
                     $rental->payments()
-                        ->where('type', 'dp')
-                        ->where('payment_status', 'pending')
-                        ->update(['payment_status' => 'expire']);
-
-                    $count++;
-                });
-            }
-        });
-
-        $documentQuery = Rental::where('status', 'pending_verification')
-            ->whereNotNull('resubmission_expires_at')
-            ->where('resubmission_expires_at', '<=', now())
-            ->when($userId, fn ($query) => $query->where('user_id', $userId));
-
-        $documentQuery->select('id')->chunkById(100, function ($rentals) use (&$count) {
-            foreach ($rentals as $rental) {
-                DB::transaction(function () use ($rental, &$count) {
-                    $locked = Rental::lockForUpdate()->find($rental->id);
-
-                    if (! $locked
-                        || $locked->status !== 'pending_verification'
-                        || $locked->resubmission_expires_at?->isFuture()) {
-                        return;
-                    }
-
-                    $locked->update(['status' => 'expired']);
-                    $locked->payments()
                         ->where('type', 'dp')
                         ->where('payment_status', 'pending')
                         ->update(['payment_status' => 'expire']);

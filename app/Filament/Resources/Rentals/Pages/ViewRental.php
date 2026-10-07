@@ -7,8 +7,8 @@ use App\Filament\Resources\Rentals\RentalResource;
 use App\Services\HandoverService;
 use App\Services\PaymentService;
 use App\Services\RentalExpirationService;
+use App\Services\WhatsAppTemplateService;
 use App\Support\Format;
-use App\Support\VerificationMessage;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
@@ -51,17 +51,6 @@ class ViewRental extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('sendVerificationResult')
-                ->label(fn () => VerificationMessage::hasResubmissionRequest($this->record)
-                    ? 'Kirim instruksi unggah ulang via WhatsApp'
-                    : 'Kirim hasil verifikasi via WhatsApp')
-                ->icon('heroicon-o-chat-bubble-left-right')
-                ->color('success')
-                ->visible(fn () => filled($this->record->user?->phone_number)
-                    && (in_array($this->record->status, ['approved', 'cancelled'], true)
-                        || VerificationMessage::hasResubmissionRequest($this->record)))
-                ->url(fn () => VerificationMessage::waLink($this->record), shouldOpenInNewTab: true),
-
             Action::make('approve')
                 ->label('Setujui DP & dokumen')
                 ->icon('heroicon-o-check-circle')
@@ -80,36 +69,24 @@ class ViewRental extends ViewRecord
                 ->icon('heroicon-o-banknotes')
                 ->color('warning')
                 ->modalHeading('Tolak bukti pembayaran')
-                ->modalDescription(fn () => $this->record->payments()->where('type', 'dp')->value('rejection_count') >= 1
-                    ? 'Kesempatan unggah ulang sudah digunakan. Pesanan akan dibatalkan dan DP masuk proses refund.'
-                    : 'Penyewa mendapat satu kesempatan untuk mengunggah ulang bukti bayar dalam 3 jam.')
+                ->modalDescription('Pesanan akan langsung dibatalkan dan refund DP dicatat.')
                 ->schema([
                     Textarea::make('reason')->label('Alasan (dilihat penyewa)')->required()->maxLength(255),
                 ])
                 ->visible(fn () => $this->record->status === 'pending_verification')
-                ->action(fn (array $data) => $this->run(
-                    PaymentService::class,
-                    fn (PaymentService $s) => $s->rejectDpProof($this->record, $data['reason']),
-                    'Bukti pembayaran ditolak. Klik “Kirim instruksi unggah ulang via WhatsApp” untuk menghubungi penyewa.'
-                )),
+                ->action(fn (array $data) => $this->rejectAndNotify('proof', $data['reason'])),
 
             Action::make('rejectDocuments')
                 ->label('Tolak dokumen')
                 ->icon('heroicon-o-identification')
                 ->color('danger')
                 ->modalHeading('Tolak dokumen identitas')
-                ->modalDescription(fn () => $this->record->verification_rejection_count >= 1
-                    ? 'Kesempatan unggah ulang dokumen sudah digunakan. Pesanan akan dibatalkan dan DP wajib direfund.'
-                    : 'Penyewa mendapat satu kesempatan untuk mengunggah ulang KTP dan SIM C dalam 3 jam.')
+                ->modalDescription('Pesanan akan langsung dibatalkan dan refund DP dicatat.')
                 ->schema([
                     Textarea::make('reason')->label('Alasan (dilihat penyewa)')->required()->maxLength(255),
                 ])
                 ->visible(fn () => $this->record->status === 'pending_verification')
-                ->action(fn (array $data) => $this->run(
-                    PaymentService::class,
-                    fn (PaymentService $s) => $s->rejectDocuments($this->record, auth()->user(), $data['reason']),
-                    'Dokumen ditolak. Klik “Kirim instruksi unggah ulang via WhatsApp” untuk menghubungi penyewa.'
-                )),
+                ->action(fn (array $data) => $this->rejectAndNotify('documents', $data['reason'])),
 
             Action::make('checkIn')
                 ->label('Pelunasan & Check-in')
@@ -210,5 +187,39 @@ class ViewRental extends ViewRecord
         $this->record->refresh();
 
         Notification::make()->title($successMessage)->success()->send();
+    }
+
+    private function rejectAndNotify(string $rejectionType, string $reason): void
+    {
+        try {
+            $paymentService = app(PaymentService::class);
+
+            if ($rejectionType === 'proof') {
+                $paymentService->rejectDpProof($this->record, auth()->user(), $reason);
+            } else {
+                $paymentService->rejectDocuments($this->record, auth()->user(), $reason);
+            }
+        } catch (PaymentException $e) {
+            Notification::make()->title($e->getMessage())->danger()->send();
+            $this->record->refresh();
+
+            return;
+        }
+
+        $this->record->refresh();
+        $whatsApp = app(WhatsAppTemplateService::class);
+        $url = $rejectionType === 'proof'
+            ? $whatsApp->rejectedProofLink($this->record)
+            : $whatsApp->rejectedDocumentLink($this->record);
+
+        Notification::make()
+            ->title('Pesanan dibatalkan dan refund DP dicatat.')
+            ->success()
+            ->actions([
+                Action::make('sendWhatsApp')
+                    ->label('Kirim WhatsApp ke Customer')
+                    ->url($url, shouldOpenInNewTab: true),
+            ])
+            ->send();
     }
 }

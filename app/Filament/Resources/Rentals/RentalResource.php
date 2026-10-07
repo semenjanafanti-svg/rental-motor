@@ -138,8 +138,6 @@ class RentalResource extends Resource
                     ->formatStateUsing(fn ($state) => Format::rupiah($state)),
                 TextEntry::make('expires_at')->label('Batas bayar DP')->dateTime('d M Y, H:i')
                     ->visible(fn (Rental $record) => $record->status === 'pending_payment'),
-                TextEntry::make('resubmission_expires_at')->label('Batas unggah ulang dokumen')->dateTime('d M Y, H:i')
-                    ->visible(fn (Rental $record) => filled($record->resubmission_expires_at)),
                 TextEntry::make('dp_rejection')->label('Bukti sebelumnya ditolak karena')
                     ->getStateUsing(fn (Rental $record) => $record->payments->firstWhere('type', 'dp')?->rejection_reason)
                     ->visible(fn (Rental $record) => filled($record->payments->firstWhere('type', 'dp')?->rejection_reason)),

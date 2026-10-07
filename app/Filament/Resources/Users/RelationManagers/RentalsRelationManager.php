@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\RelationManagers;
 
+use App\Models\User;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -16,7 +17,7 @@ class RentalsRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return $ownerRecord instanceof \App\Models\User
+        return $ownerRecord instanceof User
             && $ownerRecord->role === 'customer'
             && parent::canViewForRecord($ownerRecord, $pageClass);
     }

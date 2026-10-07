@@ -142,13 +142,10 @@ class AvailabilityService
             ->where($this->activeBlockingDeadlineQuery(...));
     }
 
-    /** Pending pembayaran dan unggah ulang hanya mengunci slot sebelum tenggatnya. */
+    /** Pending pembayaran hanya mengunci slot sebelum tenggatnya. */
     private function activeBlockingDeadlineQuery(Builder $query): void
     {
-        $query->whereNotIn('status', ['pending_payment', 'pending_verification'])
-            ->orWhere(fn (Builder $query) => $query->where('status', 'pending_payment')->where('expires_at', '>', now()))
-            ->orWhere(fn (Builder $query) => $query->where('status', 'pending_verification')->where(function (Builder $query) {
-                $query->whereNull('resubmission_expires_at')->orWhere('resubmission_expires_at', '>', now());
-            }));
+        $query->where('status', '!=', 'pending_payment')
+            ->orWhere(fn (Builder $query) => $query->where('status', 'pending_payment')->where('expires_at', '>', now()));
     }
 }
