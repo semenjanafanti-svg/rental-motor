@@ -115,9 +115,6 @@
                         @if ($availableLabel)
                             <span class="badge badge-teal badge-dot mt-2">Bebas {{ $availableLabel }}</span>
                         @endif
-                        @if ($bike->facilities)
-                            <p class="mt-3 line-clamp-1 text-xs text-muted">Termasuk: {{ implode(' · ', array_map(fn ($facility) => ucwords(str_replace('_', ' ', $facility)), array_slice($bike->facilities, 0, 3))) }}</p>
-                        @endif
                     </div>
                 </a>
             @endforeach

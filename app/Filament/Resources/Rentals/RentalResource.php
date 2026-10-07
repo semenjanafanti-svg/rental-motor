@@ -42,7 +42,7 @@ class RentalResource extends Resource
         'completed' => 'Selesai',
         'cancelled' => 'Dibatalkan',
         'expired' => 'Kedaluwarsa',
-        'no_show' => 'Tidak hadir',
+        'no_show' => 'Tidak diambil',
     ];
 
     public const PAYMENT_LABELS = [

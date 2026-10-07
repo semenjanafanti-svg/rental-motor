@@ -12,6 +12,10 @@ class Bike extends Model
 {
     use SoftDeletes;
 
+    public const IMAGE_DISK = 'catalog_images';
+
+    public const STANDARD_FACILITIES = ['helm', 'stnk', 'jas_hujan', 'phone_holder'];
+
     protected $fillable = [
         'name', 'brand', 'license_plate', 'category', 'cc', 'year', 'color',
         'daily_rate', 'status', 'photo', 'facilities',
@@ -30,6 +34,7 @@ class Bike extends Model
     {
         static::saving(function (Bike $bike): void {
             $bike->setAttribute('hourly_rate', self::calculateHourlyRate($bike->daily_rate));
+            $bike->setAttribute('facilities', self::STANDARD_FACILITIES);
         });
     }
 
@@ -45,6 +50,12 @@ class Bike extends Model
         return Attribute::get(fn () => self::calculateHourlyRate($this->daily_rate));
     }
 
+    /** The rental package is fixed for every bike, including legacy database rows. */
+    protected function facilities(): Attribute
+    {
+        return Attribute::get(fn () => self::STANDARD_FACILITIES);
+    }
+
     public function rentals(): HasMany
     {
         return $this->hasMany(Rental::class);
@@ -56,11 +67,11 @@ class Bike extends Model
      */
     public function hasPhoto(): bool
     {
-        return filled($this->photo) && Storage::disk('public')->exists($this->photo);
+        return filled($this->photo) && Storage::disk(self::IMAGE_DISK)->exists($this->photo);
     }
 
     public function photoUrl(): ?string
     {
-        return $this->hasPhoto() ? Storage::disk('public')->url($this->photo) : null;
+        return $this->hasPhoto() ? Storage::disk(self::IMAGE_DISK)->url($this->photo) : null;
     }
 }

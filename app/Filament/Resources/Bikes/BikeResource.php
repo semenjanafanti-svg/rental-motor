@@ -10,7 +10,6 @@ use App\Support\Format;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -94,19 +93,8 @@ class BikeResource extends Resource
                         ->options(self::STATUS_LABELS)->default('available')->required()
                         ->helperText('Hanya kondisi fisik. Ketersediaan per tanggal dihitung dari data pesanan.'),
                     FileUpload::make('photo')->label('Foto')
-                        ->image()->disk('public')->directory('bikes')->maxSize(2048)
+                        ->image()->disk(Bike::IMAGE_DISK)->directory('bikes')->maxSize(2048)
                         ->panelLayout('integrated')->panelAspectRatio('4:3')->imagePreviewHeight('280'),
-                ]),
-                Section::make('Fasilitas yang didapat')->columnSpanFull()->components([
-                    CheckboxList::make('facilities')->label('Termasuk saat sewa')
-                        ->options([
-                            'helm' => 'Helm',
-                            'stnk' => 'STNK',
-                            'kunci_ganda' => 'Kunci ganda',
-                            'jas_hujan' => 'Jas hujan',
-                            'phone_holder' => 'Phone holder',
-                            'charger' => 'Charger USB',
-                        ])->columns(3),
                 ]),
             ]),
         ]);
@@ -117,7 +105,7 @@ class BikeResource extends Resource
         return $table
             ->defaultSort('name')
             ->columns([
-                ImageColumn::make('photo')->label('')->disk('public')->square()->imageSize(40),
+                ImageColumn::make('photo')->label('')->disk(Bike::IMAGE_DISK)->square()->imageSize(40),
                 TextColumn::make('name')->label('Motor')
                     ->description(fn (Bike $record) => $record->brand)
                     ->searchable(['name', 'brand'])->sortable(),
@@ -133,7 +121,13 @@ class BikeResource extends Resource
                         }
 
                         return is_array($state) && count($state)
-                            ? implode(', ', $state)
+                            ? implode(', ', array_map(fn (string $facility) => match ($facility) {
+                                'helm' => 'Helm',
+                                'stnk' => 'STNK',
+                                'jas_hujan' => 'Jas hujan',
+                                'phone_holder' => 'Phone holder',
+                                default => ucwords(str_replace('_', ' ', $facility)),
+                            }, $state))
                             : '-';
                     })
                     ->limit(30)

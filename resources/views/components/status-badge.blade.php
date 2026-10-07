@@ -12,7 +12,7 @@
             'completed' => ['Selesai', 'badge-neutral'],
             'cancelled' => ['Dibatalkan', 'badge-rust'],
             'expired' => ['Kedaluwarsa', 'badge-neutral'],
-            'no_show' => ['Tidak hadir', 'badge-rust'],
+            'no_show' => ['Tidak diambil', 'badge-rust'],
         ],
         // rentals.payment_status
         'payment' => [

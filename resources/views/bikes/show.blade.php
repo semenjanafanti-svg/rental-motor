@@ -140,7 +140,7 @@
             <h2 class="section-title">Fasilitas termasuk</h2>
             <div class="card flex flex-wrap gap-2 p-4">
                 @foreach ($bike->facilities as $facility)
-                    <span class="badge badge-teal">{{ str_replace('_', ' ', $facility) }}</span>
+                    <span class="badge badge-teal">{{ ['helm' => 'Helm', 'stnk' => 'STNK', 'jas_hujan' => 'Jas hujan', 'phone_holder' => 'Phone holder'][$facility] ?? ucwords(str_replace('_', ' ', $facility)) }}</span>
                 @endforeach
             </div>
         @endif

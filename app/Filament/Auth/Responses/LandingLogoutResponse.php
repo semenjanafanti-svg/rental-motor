@@ -10,6 +10,6 @@ class LandingLogoutResponse implements LogoutResponse
 {
     public function toResponse($request): RedirectResponse|Redirector
     {
-        return redirect()->route('home');
+        return redirect()->route('login');
     }
 }

@@ -47,6 +47,16 @@ return [
             'report' => false,
         ],
 
+        'catalog_images' => [
+            'driver' => 'local',
+            'root' => public_path('images'),
+            // Keep catalog URLs host-relative so they work on local and production domains.
+            'url' => '/images',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
