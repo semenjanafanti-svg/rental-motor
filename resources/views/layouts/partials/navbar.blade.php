@@ -22,7 +22,7 @@
                 </form>
             @else
                 <a href="{{ route('login') }}" class="topbar-link">Masuk</a>
-                <a href="{{ route('register') }}" class="btn btn-amber btn-sm ml-1">Daftar</a>
+            <a href="{{ route('register') }}" class="btn btn-amber ml-1 px-4 py-2.5 text-sm font-bold sm:px-5 sm:text-base">Daftar</a>
             @endauth
         </div>
     </div>

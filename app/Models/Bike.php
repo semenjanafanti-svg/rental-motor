@@ -18,24 +18,14 @@ class Bike extends Model
 
     protected $fillable = [
         'name', 'brand', 'license_plate', 'category', 'cc', 'year', 'color',
-        'daily_rate', 'status', 'photo', 'facilities',
+        'daily_rate', 'status', 'photo',
     ];
 
     protected function casts(): array
     {
         return [
             'daily_rate' => 'decimal:2',
-            'hourly_rate' => 'decimal:2',
-            'facilities' => 'array',
         ];
-    }
-
-    protected static function booted(): void
-    {
-        static::saving(function (Bike $bike): void {
-            $bike->setAttribute('hourly_rate', self::calculateHourlyRate($bike->daily_rate));
-            $bike->setAttribute('facilities', self::STANDARD_FACILITIES);
-        });
     }
 
     /** Denda per jam = 20% tarif harian, dibulatkan ke Rp1.000 terdekat. */

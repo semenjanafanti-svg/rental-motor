@@ -114,27 +114,7 @@ class BikeResource extends Resource
                 TextColumn::make('category')->label('Kategori')
                     ->formatStateUsing(fn (string $state) => self::CATEGORY_LABELS[$state] ?? $state),
                 TextColumn::make('color')->label('Warna')->placeholder('-')->toggleable(),
-                TextColumn::make('facilities')->label('Fasilitas')
-                    ->formatStateUsing(function ($state) {
-                        if (is_string($state)) {
-                            $state = json_decode($state, true);
-                        }
-
-                        return is_array($state) && count($state)
-                            ? implode(', ', array_map(fn (string $facility) => match ($facility) {
-                                'helm' => 'Helm',
-                                'stnk' => 'STNK',
-                                'jas_hujan' => 'Jas hujan',
-                                'phone_holder' => 'Phone holder',
-                                default => ucwords(str_replace('_', ' ', $facility)),
-                            }, $state))
-                            : '-';
-                    })
-                    ->limit(30)
-                    ->toggleable(),
                 TextColumn::make('daily_rate')->label('Tarif/24 jam')->sortable()
-                    ->formatStateUsing(fn ($state) => Format::rupiah($state)),
-                TextColumn::make('hourly_rate')->label('Denda/jam (otomatis)')
                     ->formatStateUsing(fn ($state) => Format::rupiah($state)),
                 TextColumn::make('status')->label('Status')->badge()
                     ->formatStateUsing(fn (string $state) => self::STATUS_LABELS[$state] ?? $state)

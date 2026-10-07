@@ -53,16 +53,16 @@
 @layer components {
     /* ---- rangka halaman ---- */
     .topbar {
-        @apply sticky top-0 z-40 flex min-h-16 items-center justify-between gap-2 border-b border-line bg-white/95 px-4 text-ink shadow-sm backdrop-blur sm:px-8;
+        @apply sticky top-0 z-40 flex min-h-[4.5rem] items-center justify-between gap-2 border-b border-line bg-white/95 px-4 text-ink shadow-sm backdrop-blur sm:min-h-20 sm:px-8;
     }
     .brand {
-        @apply flex items-center gap-3 whitespace-nowrap py-3 font-display text-lg font-bold tracking-wide;
+        @apply flex items-center gap-3 whitespace-nowrap py-3 font-display text-xl font-bold tracking-wide sm:text-2xl;
     }
     .brand-plate {
-        @apply rounded-lg bg-gradient-to-br from-[#ffc928] to-[#f39812] px-2.5 py-1.5 font-display text-xs font-bold tracking-widest text-sun-ink shadow-sm;
+        @apply rounded-xl bg-gradient-to-br from-[#ffc928] to-[#f39812] px-3 py-2 font-display text-sm font-bold tracking-widest text-sun-ink shadow-sm;
     }
     .topbar-link {
-        @apply inline-block max-w-[10rem] truncate whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-amber-50 hover:text-ink;
+        @apply inline-block max-w-[10rem] truncate whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold text-muted transition-colors hover:bg-amber-50 hover:text-ink sm:px-4 sm:text-base;
     }
 
     .page {

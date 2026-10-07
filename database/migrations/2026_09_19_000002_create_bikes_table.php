@@ -18,11 +18,9 @@ return new class extends Migration
             $table->unsignedSmallInteger('year')->nullable();
             $table->string('color', 50)->nullable();
             $table->decimal('daily_rate', 12, 2);
-            $table->decimal('hourly_rate', 12, 2);
             // Hanya kondisi fisik. Ketersediaan per tanggal dihitung dari tabel rentals.
             $table->enum('status', ['available', 'maintenance', 'inactive'])->default('available');
             $table->string('photo')->nullable();
-            $table->json('facilities')->nullable();
             $table->softDeletes();
             $table->timestamps();
 

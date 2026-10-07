@@ -27,7 +27,6 @@
             'settlement' => ['Berhasil', 'badge-teal'],
             'expire' => ['Kedaluwarsa', 'badge-neutral'],
             'cancel' => ['Dibatalkan', 'badge-rust'],
-            'deny' => ['Ditolak', 'badge-rust'],
             'refund' => ['Refund', 'badge-neutral'],
         ],
         // rentals.verification_status

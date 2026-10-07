@@ -81,7 +81,6 @@ class PaymentService
 
             $payment->update([
                 'payment_status' => 'settlement',
-                'payment_type' => 'qris',
                 'paid_at' => now(),
                 'received_by' => $admin->id,
             ]);
@@ -107,7 +106,6 @@ class PaymentService
 
             $payment->update([
                 'payment_status' => 'refund',
-                'payment_type' => 'qris',
                 'paid_at' => now(),
                 'received_by' => $admin->id,
                 'rejection_reason' => $reason,
@@ -135,7 +133,6 @@ class PaymentService
 
             $payment->update([
                 'payment_status' => 'refund',
-                'payment_type' => 'qris',
                 'paid_at' => now(),
                 'received_by' => $admin->id,
                 'refunded_amount' => $payment->gross_amount,
@@ -216,7 +213,6 @@ class PaymentService
             if ($payment->payment_status === 'pending') {
                 $payment->update([
                     'payment_status' => 'settlement',
-                    'payment_type' => 'qris',
                     'paid_at' => now(),
                 ]);
             }

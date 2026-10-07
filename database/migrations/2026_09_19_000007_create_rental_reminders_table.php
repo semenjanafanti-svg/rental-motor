@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('rental_reminders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('rental_id')->constrained('rentals')->restrictOnDelete();
-            $table->enum('type', ['pickup_confirmation', 'return_2h', 'return_30m', 'overdue']);
+            $table->enum('type', ['pickup_confirmation', 'return_30m', 'overdue']);
             $table->dateTime('scheduled_at');
             $table->enum('status', ['pending', 'sent', 'skipped'])->default('pending');
             $table->foreignId('sent_by')->nullable()->constrained('users')->restrictOnDelete();

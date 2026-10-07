@@ -37,7 +37,7 @@ class BikeController extends Controller
         ]);
 
         $query = Bike::query()
-            ->select(['id', 'name', 'brand', 'category', 'cc', 'color', 'daily_rate', 'photo', 'facilities'])
+            ->select(['id', 'name', 'brand', 'category', 'cc', 'color', 'daily_rate', 'photo'])
             ->where('status', 'available')
             ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
             ->when($filters['max_price'] ?? null, fn ($q, $max) => $q->where('daily_rate', '<=', $max));

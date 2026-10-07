@@ -1,11 +1,9 @@
 <?php
 
-use App\Models\Rental;
-use App\Models\RentalReminder;
+use App\Services\OverdueReminderService;
 use App\Services\RentalExpirationService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -24,32 +22,5 @@ Schedule::call(fn () => app(RentalExpirationService::class)->expireNoShows())
 
 // Rental active yang melewati end_time dan belum punya reminder 'overdue' -> buatkan satu,
 // supaya muncul di halaman "Reminder Hari Ini" tanpa duplikat.
-Schedule::call(function () {
-    Rental::where('status', 'active')
-        ->where('end_time', '<=', now())
-        ->whereDoesntHave('reminders', fn ($q) => $q->where('type', 'overdue'))
-        ->select('id')
-        ->chunkById(100, function ($rentals) {
-            foreach ($rentals as $rental) {
-                $id = $rental->id;
-                DB::transaction(function () use ($id) {
-                    $rental = Rental::lockForUpdate()->find($id);
-
-                    if (! $rental || $rental->status !== 'active') {
-                        return;
-                    }
-
-                    if ($rental->reminders()->where('type', 'overdue')->exists()) {
-                        return;
-                    }
-
-                    RentalReminder::create([
-                        'rental_id' => $rental->id,
-                        'type' => 'overdue',
-                        'scheduled_at' => now(),
-                        'status' => 'pending',
-                    ]);
-                });
-            }
-        });
-})->everyFiveMinutes()->name('create-overdue-reminders');
+Schedule::call(fn () => app(OverdueReminderService::class)->createMissing())
+    ->everyFiveMinutes()->name('create-overdue-reminders');

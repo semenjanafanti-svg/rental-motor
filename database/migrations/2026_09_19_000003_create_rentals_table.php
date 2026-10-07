@@ -37,12 +37,10 @@ return new class extends Migration
             ])->default('pending_payment');
 
             $table->dateTime('expires_at')->nullable();
-            $table->dateTime('resubmission_expires_at')->nullable()->index();
             $table->string('ktp_photo')->nullable();
             $table->string('sim_photo')->nullable();
             $table->enum('verification_status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->text('verification_rejection_reason')->nullable();
-            $table->unsignedTinyInteger('verification_rejection_count')->default(0);
             $table->foreignId('verified_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->dateTime('verified_at')->nullable();
             $table->dateTime('picked_up_at')->nullable();

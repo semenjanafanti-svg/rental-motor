@@ -4,6 +4,7 @@ namespace App\Filament\Resources\RentalReminders;
 
 use App\Filament\Resources\RentalReminders\Pages\ListRentalReminders;
 use App\Models\RentalReminder;
+use App\Services\OverdueReminderService;
 use App\Support\ReminderMessage;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -30,7 +31,6 @@ class RentalReminderResource extends Resource
 
     public const TYPE_LABELS = [
         'pickup_confirmation' => 'Konfirmasi pengambilan',
-        'return_2h' => 'Pengingat 2 jam sebelum kembali',
         'return_30m' => 'Pengingat 30 menit sebelum kembali',
         'overdue' => 'Terlambat kembali',
     ];
@@ -46,12 +46,15 @@ class RentalReminderResource extends Resource
         return parent::getEloquentQuery()
             ->with(['rental.user', 'rental.bike'])
             ->where('status', 'pending')
+            ->where('type', '!=', 'return_2h')
             ->where('scheduled_at', '<=', now())
             ->whereHas('rental', fn (Builder $query) => $query->where('status', 'active'));
     }
 
     public static function getNavigationBadge(): ?string
     {
+        app(OverdueReminderService::class)->createMissing();
+
         $count = static::getEloquentQuery()->count();
 
         return $count > 0 ? (string) $count : null;

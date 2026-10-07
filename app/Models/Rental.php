@@ -17,7 +17,7 @@ class Rental extends Model
         'payment_status', 'status',
         'expires_at', 'picked_up_at', 'handed_over_by',
         'cancelled_reason', 'notes', 'ktp_photo', 'sim_photo', 'verification_status',
-        'verification_rejection_reason', 'verification_rejection_count', 'verified_by', 'verified_at',
+        'verification_rejection_reason', 'verified_by', 'verified_at',
     ];
 
     protected function casts(): array

@@ -57,7 +57,6 @@ class HandoverService
                     'order_id' => $locked->booking_code.'-BAL',
                     'type' => 'balance',
                     'method' => $method,
-                    'payment_type' => $method === 'manual_transfer' ? 'qris' : $method,
                     'gross_amount' => $locked->balance_amount,
                     'payment_status' => 'settlement',
                     'paid_at' => now(),
@@ -133,7 +132,6 @@ class HandoverService
                     'order_id' => $locked->booking_code.'-FINE',
                     'type' => 'fine',
                     'method' => $method,
-                    'payment_type' => $method === 'manual_transfer' ? 'qris' : $method,
                     'gross_amount' => $totalFee,
                     'payment_status' => 'settlement',
                     'paid_at' => now(),
@@ -143,7 +141,7 @@ class HandoverService
 
             $locked->update(['status' => 'completed']);
 
-            // Reminder yang belum terkirim (return_2h/return_30m/overdue) sudah tidak relevan.
+            // Reminder yang belum terkirim (return_30m/overdue) sudah tidak relevan.
             $locked->reminders()->where('status', 'pending')->update(['status' => 'skipped']);
 
             return $locked;
@@ -176,7 +174,6 @@ class HandoverService
     {
         $reminders = [
             'pickup_confirmation' => now(),
-            'return_2h' => $rental->end_time->copy()->subHours(2),
             'return_30m' => $rental->end_time->copy()->subMinutes(30),
         ];
 

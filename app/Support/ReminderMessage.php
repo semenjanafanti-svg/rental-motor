@@ -16,7 +16,6 @@ class ReminderMessage
 
         return match ($reminder->type) {
             'pickup_confirmation' => "Halo {$name}, motor {$bike} sudah diserahkan. Mohon dikembalikan paling lambat {$due}. Terima kasih.",
-            'return_2h' => "Halo {$name}, pengingat: motor {$bike} harus dikembalikan pukul {$due}. Keterlambatan dikenai denda {$fee} per jam.",
             'return_30m' => "Halo {$name}, pengingat: 30 menit lagi motor {$bike} harus dikembalikan (pukul {$due}). Keterlambatan dikenai denda {$fee} per jam.",
             default => "Halo {$name}, batas pengembalian motor {$bike} sudah terlewat. Mohon segera dikembalikan. Denda berjalan {$fee} per jam.",
         };
