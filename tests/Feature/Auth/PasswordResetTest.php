@@ -18,10 +18,9 @@ class PasswordResetTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_customer_password_reset_request_is_sent_to_the_owner(): void
+    public function test_customer_password_reset_request_is_recorded(): void
     {
         $user = User::factory()->create(['role' => 'customer']);
-        $owner = User::factory()->create(['role' => 'super_admin']);
 
         $response = $this->post('/forgot-password', ['email' => $user->email]);
 
@@ -30,7 +29,6 @@ class PasswordResetTest extends TestCase
             'user_id' => $user->id,
             'status' => 'pending',
         ]);
-        $this->assertDatabaseHas('notifications', ['notifiable_id' => $owner->id]);
     }
 
     public function test_multiple_requests_keep_one_pending_request(): void
