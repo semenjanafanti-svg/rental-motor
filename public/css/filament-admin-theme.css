@@ -121,7 +121,7 @@
 }
 
 /* =========================================================
-   BRAND — pelat "SM" amber + SEWAMOTOR, seperti .brand di frontend
+   BRAND — logo + Mitra Jalan, seperti .brand di frontend
    (diisi lewat ->brandName(HtmlString) di AdminPanelProvider)
 ========================================================= */
 .fi-logo {
@@ -135,14 +135,11 @@
     white-space: nowrap;
 }
 
-.fi-logo .brand-plate {
-    background: var(--amber);
-    color: var(--amber-ink);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    padding: 2px 6px;
-    border-radius: 3px;
+.fi-logo .brand-logo {
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 auto;
+    object-fit: contain;
 }
 
 .fi-topbar .fi-logo,
@@ -558,12 +555,6 @@
 
 .fi-topbar .fi-logo,
 .fi-sidebar-header .fi-logo { color: var(--bar-fg); }
-
-.fi-logo .brand-plate {
-    border-radius: .5rem;
-    padding: .25rem .45rem;
-    box-shadow: 0 3px 10px color-mix(in srgb, var(--amber) 24%, transparent);
-}
 
 .fi-sidebar {
     background: color-mix(in srgb, var(--surface) 94%, var(--paper));

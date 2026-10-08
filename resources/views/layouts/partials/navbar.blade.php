@@ -5,7 +5,8 @@
 <header class="site-header">
     <div class="topbar">
         <a href="{{ route('home') }}" class="brand">
-            <span class="brand-plate">MJ</span> {{ config('rental.business_name') }}
+            <img src="{{ asset('images/logo.png') }}" alt="Logo {{ config('rental.business_name') }}" class="brand-logo">
+            {{ config('rental.business_name') }}
         </a>
 
         <div class="ml-auto flex items-center gap-1">
