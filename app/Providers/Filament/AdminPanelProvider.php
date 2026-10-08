@@ -67,6 +67,7 @@ class AdminPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->databaseNotifications()
             // FilamentInfoWidget dihapus: isinya tautan dokumentasi dan logo Filament.
             ->widgets([])
             ->middleware([

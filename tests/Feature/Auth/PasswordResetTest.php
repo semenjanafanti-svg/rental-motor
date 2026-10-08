@@ -2,10 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\PasswordResetRequest;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
@@ -19,55 +18,28 @@ class PasswordResetTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_reset_password_link_can_be_requested(): void
+    public function test_customer_password_reset_request_is_sent_to_the_owner(): void
     {
-        Notification::fake();
+        $user = User::factory()->create(['role' => 'customer']);
+        $owner = User::factory()->create(['role' => 'super_admin']);
 
-        $user = User::factory()->create();
+        $response = $this->post('/forgot-password', ['email' => $user->email]);
 
-        $this->post('/forgot-password', ['email' => $user->email]);
-
-        Notification::assertSentTo($user, ResetPassword::class);
+        $response->assertSessionHas('status', 'Permintaan reset password sudah dikirim ke owner. Password baru akan dikirim melalui WhatsApp setelah diproses.');
+        $this->assertDatabaseHas('password_reset_requests', [
+            'user_id' => $user->id,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $owner->id]);
     }
 
-    public function test_reset_password_screen_can_be_rendered(): void
+    public function test_multiple_requests_keep_one_pending_request(): void
     {
-        Notification::fake();
-
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'customer']);
 
         $this->post('/forgot-password', ['email' => $user->email]);
-
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
-            $response = $this->get('/reset-password/'.$notification->token);
-
-            $response->assertStatus(200);
-
-            return true;
-        });
-    }
-
-    public function test_password_can_be_reset_with_valid_token(): void
-    {
-        Notification::fake();
-
-        $user = User::factory()->create();
-
         $this->post('/forgot-password', ['email' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
-            $response = $this->post('/reset-password', [
-                'token' => $notification->token,
-                'email' => $user->email,
-                'password' => 'password',
-                'password_confirmation' => 'password',
-            ]);
-
-            $response
-                ->assertSessionHasNoErrors()
-                ->assertRedirect(route('login'));
-
-            return true;
-        });
+        $this->assertSame(1, PasswordResetRequest::where('user_id', $user->id)->count());
     }
 }

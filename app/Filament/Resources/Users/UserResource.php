@@ -8,6 +8,7 @@ use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\Pages\ViewUser;
 use App\Filament\Resources\Users\RelationManagers\RentalsRelationManager;
 use App\Models\User;
+use App\Services\WhatsAppTemplateService;
 use App\Support\PhoneNumber;
 use Closure;
 use Filament\Actions\Action;
@@ -25,7 +26,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 class UserResource extends Resource
@@ -74,6 +74,7 @@ class UserResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with('passwordResetRequest')
             ->withCount('rentals')
             ->withCount([
                 'rentals as cancelled_rentals_count' => fn (Builder $query) => $query->where('status', 'cancelled'),
@@ -161,6 +162,9 @@ class UserResource extends Resource
             TextColumn::make('is_active')->label('Status')->badge()
                 ->formatStateUsing(fn (bool $state): string => $state ? 'Aktif' : 'Nonaktif')
                 ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
+            TextColumn::make('passwordResetRequest.status')->label('Reset password')->badge()
+                ->formatStateUsing(fn (?string $state): string => $state === 'pending' ? 'Perlu tindakan' : '-')
+                ->color(fn (?string $state): string => $state === 'pending' ? 'warning' : 'gray'),
             TextColumn::make('rentals_count')->label('Jumlah pesanan')->sortable(),
             TextColumn::make('created_at')->label('Tanggal daftar')->dateTime('d M Y')->sortable(),
         ])->filters([
@@ -186,19 +190,30 @@ class UserResource extends Resource
                         ->title($record->is_active ? 'Akun diaktifkan.' : 'Akun dinonaktifkan.')
                         ->success()->send();
                 }),
-            Action::make('sendPasswordReset')
-                ->label('Kirim link reset')
-                ->icon('heroicon-o-envelope')
+            Action::make('resetPassword')
+                ->label('Reset password')
+                ->icon('heroicon-o-key')
                 ->requiresConfirmation()
-                ->visible(fn (User $record): bool => ! $record->isSuperAdmin() && $record->getKey() !== auth()->id())
+                ->modalDescription('Password sementara acak akan dibuat. Kirimkan password tersebut kepada customer melalui WhatsApp setelah reset selesai.')
+                ->visible(fn (User $record): bool => $record->role === 'customer' && $record->passwordResetRequest?->status === 'pending')
                 ->action(function (User $record): void {
-                    $status = Password::sendResetLink(['email' => $record->email]);
+                    $temporaryPassword = Str::password(12, letters: true, numbers: true, symbols: false);
+                    $record->forceFill(['password' => $temporaryPassword])->save();
+                    $record->passwordResetRequest()->update([
+                        'status' => 'completed',
+                        'processed_by' => auth()->id(),
+                        'processed_at' => now(),
+                    ]);
 
                     Notification::make()
-                        ->title($status === Password::RESET_LINK_SENT
-                            ? 'Link reset password dikirim ke email user.'
-                            : 'Link reset password gagal dikirim.')
-                        ->color($status === Password::RESET_LINK_SENT ? 'success' : 'danger')
+                        ->title('Password sementara sudah dibuat.')
+                        ->body('Kirimkan password sementara kepada customer lewat WhatsApp.')
+                        ->success()
+                        ->actions([
+                            Action::make('sendWhatsApp')
+                                ->label('Kirim lewat WhatsApp')
+                                ->url(app(WhatsAppTemplateService::class)->passwordResetLink($record, $temporaryPassword), shouldOpenInNewTab: true),
+                        ])
                         ->send();
                 }),
         ]);

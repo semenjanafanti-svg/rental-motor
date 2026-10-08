@@ -1,6 +1,6 @@
 <x-guest-layout>
     <h1 class="page-title">Lupa password</h1>
-    <p class="page-sub">Masukkan email akunmu. Kami kirim tautan untuk membuat password baru.</p>
+    <p class="page-sub">Masukkan email akunmu. Owner akan memproses permintaan ini dan mengirim password sementara melalui WhatsApp.</p>
 
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
@@ -13,7 +13,7 @@
             <x-input-error :messages="$errors->get('email')" class="mt-1.5" />
         </div>
 
-        <button type="submit" class="btn btn-amber btn-block">Kirim tautan reset</button>
+        <button type="submit" class="btn btn-amber btn-block">Kirim permintaan reset</button>
     </form>
 
     <p class="mt-5 text-center text-sm text-muted">

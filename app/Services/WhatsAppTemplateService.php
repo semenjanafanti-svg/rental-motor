@@ -3,9 +3,18 @@
 namespace App\Services;
 
 use App\Models\Rental;
+use App\Models\User;
 
 class WhatsAppTemplateService
 {
+    public function passwordResetLink(User $user, string $temporaryPassword): string
+    {
+        $message = "Halo {$user->name}, owner Mitra Jalan telah mengatur ulang password akun Anda. "
+            ."Password sementara: {$temporaryPassword}. Silakan masuk lalu ganti password Anda dari halaman profil.";
+
+        return 'https://wa.me/'.$user->phone_number.'?text='.rawurlencode($message);
+    }
+
     public function rejectedDocumentLink(Rental $rental): string
     {
         return $this->link($rental, 'documents');
