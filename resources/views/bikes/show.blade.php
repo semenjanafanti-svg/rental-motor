@@ -28,7 +28,9 @@
                 @if ($bike->color)<span>Warna <b class="text-ink">{{ $bike->color }}</b></span>@endif
                 <span><b class="text-ink">{{ \App\Support\Format::rupiah($bike->daily_rate) }}</b> / 24 jam</span>
                 <span>Denda telat <b class="text-ink">{{ \App\Support\Format::rupiah($bike->hourly_rate) }}</b> / jam</span>
-                @if ($bike->status === 'available')
+                @if ($isActivelyRented)
+                    <span class="badge badge-rust badge-dot">Sedang disewa</span>
+                @elseif ($bike->status === 'available')
                     <span class="badge badge-teal badge-dot">Tersedia</span>
                 @else
                     <span class="badge badge-rust badge-dot">Tidak tersedia</span>
@@ -67,7 +69,9 @@
         <div>
             <h2 class="section-title mt-0">Atur jadwal sewa</h2>
 
-            @if ($bike->status !== 'available')
+            @if ($isActivelyRented)
+                <div class="notice">Motor masih disewa dan belum dikembalikan, jadi belum bisa dipesan.</div>
+            @elseif ($bike->status !== 'available')
                 <div class="notice">Motor ini sedang tidak tersedia untuk disewa.</div>
             @elseif (auth()->check() && auth()->user()->role !== 'customer')
                 <div class="notice">Akun staf tidak dapat membuat pemesanan.</div>

@@ -10,7 +10,7 @@
 <body>
     <div class="topbar">
         <a href="{{ route('home') }}" class="brand">
-            <img src="{{ asset('images/logo.png') }}" alt="Logo {{ config('rental.business_name') }}" class="brand-logo">
+            <img src="{{ asset('images/logo.png') }}" alt="Logo {{ config('rental.business_name') }}" width="40" height="40" class="brand-logo" style="display:block;width:40px;height:40px;max-width:40px;max-height:40px;object-fit:contain">
             {{ config('rental.business_name') }}
         </a>
     </div>

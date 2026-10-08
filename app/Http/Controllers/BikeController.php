@@ -48,6 +48,10 @@ class BikeController extends Controller
             $to = $from->copy()->addDays(max(1, (int) config('rental.min_days')));
 
             $query->whereNotIn('id', $availability->busyBikeQuery($from, $to)->select('bike_id'));
+        } else {
+            // Tanpa filter tanggal, katalog hanya menampilkan unit yang benar-benar
+            // bisa disewa sekarang; unit yang belum dikembalikan tidak ditawarkan.
+            $query->whereNotIn('id', $availability->activeRentalBikeQuery());
         }
 
         match ($filters['sort'] ?? null) {
@@ -61,10 +65,11 @@ class BikeController extends Controller
         ]);
     }
 
-    public function show(Request $request, Bike $bike): View
+    public function show(Request $request, Bike $bike, AvailabilityService $availability): View
     {
         return view('bikes.show', [
             'bike' => $bike,
+            'isActivelyRented' => $availability->isActivelyRented($bike->id),
             'minDays' => max(1, (int) config('rental.min_days')),
             'maxDays' => (int) config('rental.max_days'),
             'dpPercent' => config('rental.dp_percent'),
