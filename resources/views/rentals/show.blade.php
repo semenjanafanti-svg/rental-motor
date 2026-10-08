@@ -16,7 +16,6 @@
     $noShowLimit = $rental->start_time->copy()->addMinutes((int) config('rental.no_show_tolerance_minutes'));
     $refreshAtNoShowLimit = $rental->status === 'approved' && $noShowLimit->isFuture();
     $cancelDays = (int) config('rental.cancellation.min_days_before');
-    $lateTolerance = (int) config('rental.late_tolerance_minutes');
 @endphp
 
 @section('content')
@@ -112,11 +111,11 @@
             @if ($rental->isOverdue())
                 <div class="notice notice-rust">
                     <b>Batas kembali sudah lewat.</b>
-                    <p class="hint mb-0">Segera kembalikan motor. Setelah toleransi {{ $lateTolerance }} menit, denda {{ $rp($rental->hourly_rate_applied) }} per jam.</p>
+                    <p class="hint mb-0">Segera kembalikan motor. Denda {{ $rp($rental->hourly_rate_applied) }} per jam sudah berjalan.</p>
                 </div>
             @else
                 <x-status-panel icon="key" title="Motor sedang disewa">
-                    Wajib kembali paling lambat {{ $fmt($rental->end_time) }}. Terlambat lewat {{ $lateTolerance }} menit dikenai denda {{ $rp($rental->hourly_rate_applied) }} per jam.
+                    Wajib kembali paling lambat {{ $fmt($rental->end_time) }}. Setiap keterlambatan langsung dikenai denda {{ $rp($rental->hourly_rate_applied) }} per jam.
                 </x-status-panel>
             @endif
         @endif

@@ -7,8 +7,6 @@
     $dpPercent = config('rental.dp_percent');
     $lockMinutes = (int) config('rental.lock_minutes');
     $cancelDays = (int) config('rental.cancellation.min_days_before');
-    $lateTolerance = (int) config('rental.late_tolerance_minutes');
-
     $noShowMinutes = (int) config('rental.no_show_tolerance_minutes');
     $noShow = $noShowMinutes % 60 === 0 ? ($noShowMinutes / 60) . ' jam' : $noShowMinutes . ' menit';
 @endphp
@@ -19,7 +17,7 @@
     <li>Motor tidak diambil dalam <b class="text-ink">{{ $noShow }}</b> setelah jam mulai: penyewaan hangus dan DP tidak dikembalikan.</li>
     <li>Pembatalan hanya bisa dilakukan <b class="text-ink">H-{{ $cancelDays }}</b> atau lebih awal dengan refund DP 100%.</li>
     <li>
-        Terlambat kembali (lewat toleransi {{ $lateTolerance }} menit): denda
+        Terlambat kembali: langsung dikenai denda
         {{ $bike ? \App\Support\Format::rupiah($bike->hourly_rate) . ' per jam' : 'per jam sesuai jenis motor' }}.
     </li>
     <li>Motor diserahkan dengan bensin penuh dan harus dikembalikan dalam kondisi yang sama.</li>

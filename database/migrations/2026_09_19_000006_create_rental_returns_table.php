@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('rental_id')->unique()->constrained('rentals')->restrictOnDelete();
             $table->dateTime('actual_return_time');
-            $table->unsignedInteger('late_hours')->default(0); // jam keterlambatan setelah toleransi
+            $table->unsignedInteger('late_hours')->default(0); // jam keterlambatan, dibulatkan ke atas
             $table->decimal('late_fee', 12, 2)->default(0);
             $table->decimal('damage_fee', 12, 2)->default(0);
             $table->decimal('fuel_fee', 12, 2)->default(0);

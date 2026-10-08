@@ -26,10 +26,7 @@ return [
     // Toleransi no-show setelah start_time (menit).
     'no_show_tolerance_minutes' => 180,
 
-    // Toleransi keterlambatan sebelum denda dihitung (menit).
     // Denda = jam keterlambatan (dibulatkan ke atas) x tarif per jam yang di-snapshot.
-    'late_tolerance_minutes' => 30,
-
     // Aturan refund saat customer membatalkan.
     // Jam mulai sewa (jam bulat). Jam kembali otomatis sama dengan jam mulai.
     'open_hour' => 6,

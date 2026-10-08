@@ -86,7 +86,6 @@ class HandoverServiceTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('rental_reminders', ['rental_id' => $rental->id, 'type' => 'pickup_confirmation']);
-        $this->assertDatabaseHas('rental_reminders', ['rental_id' => $rental->id, 'type' => 'return_2h']);
         $this->assertDatabaseHas('rental_reminders', ['rental_id' => $rental->id, 'type' => 'return_30m']);
     }
 
@@ -122,35 +121,31 @@ class HandoverServiceTest extends TestCase
         $this->assertDatabaseMissing('payments', ['rental_id' => $rental->id, 'type' => 'fine']);
     }
 
-    public function test_check_out_within_tolerance_has_no_late_fee(): void
+    public function test_check_out_late_by_any_amount_charges_one_hour_fee(): void
     {
         $rental = $this->rental('active'); // end_time 2026-09-21 08:00
 
-        $toleranceMinutes = (int) config('rental.late_tolerance_minutes');
-        $returnTime = Carbon::parse('2026-09-21 08:00')->addMinutes(max(0, $toleranceMinutes - 5));
+        $returnTime = Carbon::parse('2026-09-21 08:05');
 
         $result = $this->service()->checkOut(
             $rental, User::factory()->create(), $returnTime, 0, 0, null
         );
 
         $this->assertDatabaseHas('rental_returns', [
-            'rental_id' => $rental->id, 'late_hours' => 0, 'late_fee' => 0,
+            'rental_id' => $rental->id, 'late_hours' => 1, 'late_fee' => 12000,
         ]);
-        $this->assertDatabaseMissing('payments', ['rental_id' => $rental->id, 'type' => 'fine']);
+        $this->assertDatabaseHas('payments', ['rental_id' => $rental->id, 'type' => 'fine', 'gross_amount' => 12000]);
     }
 
-    public function test_check_out_after_tolerance_charges_late_fee_per_rounded_hour(): void
+    public function test_check_out_late_charges_fee_per_rounded_hour(): void
     {
         $rental = $this->rental('active'); // hourly_rate_applied = 12000, end_time 08:00
         $admin = User::factory()->create();
 
-        // Lewat toleransi + 1 jam 10 menit, apa pun nilai toleransi di config, supaya
-        // test ini tidak bergantung pada angka toleransi tertentu.
-        $toleranceMinutes = (int) config('rental.late_tolerance_minutes');
-        $returnTime = Carbon::parse('2026-09-21 08:00')->addMinutes($toleranceMinutes + 70);
+        $returnTime = Carbon::parse('2026-09-21 08:00')->addMinutes(70);
 
-        // Dibulatkan ke atas ke jam penuh dari total keterlambatan (bukan hanya kelebihan toleransi)
-        $expectedLateHours = (int) ceil(($toleranceMinutes + 70) * 60 / 3600);
+        // Dibulatkan ke atas ke jam penuh dari total keterlambatan.
+        $expectedLateHours = (int) ceil(70 * 60 / 3600);
         $expectedLateFee = $expectedLateHours * 12000;
 
         $result = $this->service()->checkOut(
@@ -180,13 +175,13 @@ class HandoverServiceTest extends TestCase
     {
         $rental = $this->rental('active');
         $rental->reminders()->create([
-            'type' => 'return_2h', 'scheduled_at' => now(), 'status' => 'pending',
+            'type' => 'return_30m', 'scheduled_at' => now(), 'status' => 'pending',
         ]);
 
         $this->service()->checkOut($rental, User::factory()->create(), now(), 0, 0, null);
 
         $this->assertDatabaseHas('rental_reminders', [
-            'rental_id' => $rental->id, 'type' => 'return_2h', 'status' => 'skipped',
+            'rental_id' => $rental->id, 'type' => 'return_30m', 'status' => 'skipped',
         ]);
     }
 

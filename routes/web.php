@@ -10,10 +10,6 @@ use App\Http\Controllers\RentalReceiptController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-
     return app(BikeController::class)->home();
 })->name('home');
 

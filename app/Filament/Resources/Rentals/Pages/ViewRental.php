@@ -116,9 +116,7 @@ class ViewRental extends ViewRecord
                 ->icon('heroicon-o-arrow-uturn-left')
                 ->color('primary')
                 ->modalHeading('Catat pengembalian motor')
-                ->modalDescription('Denda telat dihitung otomatis dari batas kembali ('
-                    .(int) config('rental.late_tolerance_minutes')
-                    .' menit toleransi). Isi denda kerusakan/bensin bila ada.')
+                ->modalDescription('Denda telat dihitung otomatis sejak batas waktu kembali terlewati. Isi denda kerusakan/bensin bila ada.')
                 ->schema([
                     DateTimePicker::make('actual_return_time')
                         ->label('Waktu aktual kembali')
