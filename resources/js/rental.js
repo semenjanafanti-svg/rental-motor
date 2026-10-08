@@ -8,17 +8,15 @@ flatpickr.localize(Indonesian);
 // API rental memakai waktu Asia/Jakarta. Offset eksplisit mencegah tanggal bergeser di browser zona lain.
 const toDate = (value) => new Date(`${value.replace(' ', 'T')}+07:00`);
 const rupiah = (n) => 'Rp' + new Intl.NumberFormat('id-ID').format(n);
-const formatDateTime = (date) => date.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' });
 
 /* ---------------------------------------------------------------
  * Halaman detail motor: kalender ketersediaan
- * Menandai hari yang punya jadwal terisi + daftar rentang waktunya.
+ * Menandai hari yang tidak tersedia.
  * ------------------------------------------------------------- */
 function initAvailabilityCalendar() {
     const input = document.getElementById('availability-calendar');
     if (!input) return;
 
-    const list = document.getElementById('booked-list');
     let booked = [];
 
     const dayCoverage = (day) => {
@@ -31,14 +29,7 @@ function initAvailabilityCalendar() {
 
         if (intervals.length === 0) return null;
 
-        let coveredUntil = dayStart;
-        for (const [start, end] of intervals) {
-            if (start > coveredUntil) break;
-            coveredUntil = Math.max(coveredUntil, end);
-            if (coveredUntil >= dayEnd) return 'fully-booked';
-        }
-
-        return 'partially-booked';
+        return 'booked';
     };
 
     const calendar = flatpickr(input, {
@@ -52,31 +43,13 @@ function initAvailabilityCalendar() {
         },
     });
 
-    const renderList = (message = null) => {
-        list.innerHTML = '';
-
-        if (message || booked.length === 0) {
-            const li = document.createElement('li');
-            li.textContent = message ?? 'Belum ada jadwal terisi dalam 90 hari ke depan.';
-            list.appendChild(li);
-            return;
-        }
-
-        booked.forEach((range) => {
-            const li = document.createElement('li');
-            li.textContent = `${formatDateTime(range.start)} \u2013 ${formatDateTime(range.end)}`;
-            list.appendChild(li);
-        });
-    };
-
     fetch(input.dataset.url, { headers: { Accept: 'application/json' } })
         .then((response) => response.json())
         .then(({ ranges }) => {
             booked = ranges.map((range) => ({ start: toDate(range.start), end: toDate(range.end) }));
             calendar.redraw();
-            renderList();
         })
-        .catch(() => renderList('Gagal memuat jadwal.'));
+        .catch(() => {});
 }
 
 /* ---------------------------------------------------------------

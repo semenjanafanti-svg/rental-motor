@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Bike;
 use App\Models\Rental;
+use App\Models\RentalReturn;
 use App\Models\User;
 use App\Services\AvailabilityService;
 use Carbon\Carbon;
@@ -119,5 +120,26 @@ class AvailabilityServiceTest extends TestCase
         $this->rental($bike, '2026-09-22 08:00', '2026-09-24 08:00', 'cancelled');
 
         $this->assertArrayHasKey('2026-09-23', $this->dates($bike, '08:00'));
+    }
+
+    public function test_bike_returned_today_can_only_be_booked_starting_tomorrow(): void
+    {
+        $bike = $this->bike();
+        $rental = $this->rental($bike, '2026-09-18 08:00', '2026-09-19 08:00', 'completed');
+
+        RentalReturn::create([
+            'rental_id' => $rental->id,
+            'actual_return_time' => '2026-09-19 10:00',
+            'checked_by' => User::factory()->create()->id,
+        ]);
+
+        $dates = $this->dates($bike, '10:00');
+
+        $this->assertArrayNotHasKey('2026-09-19', $dates);
+        $this->assertArrayHasKey('2026-09-20', $dates);
+        $this->assertContains($bike->id, app(AvailabilityService::class)->busyBikeIds(
+            Carbon::parse('2026-09-19 06:00'),
+            Carbon::parse('2026-09-20 06:00'),
+        ));
     }
 }

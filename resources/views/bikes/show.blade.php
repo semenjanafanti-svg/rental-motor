@@ -51,17 +51,8 @@
 
                 <p class="mt-3 flex items-center gap-2 text-xs text-muted">
                     <span class="inline-block h-3 w-3 rounded-[3px] bg-rust-bg"></span>
-                    Jadwal terisi
+                    Tanggal berwarna memiliki jadwal sewa.
                 </p>
-                <div class="mt-2 flex flex-wrap gap-4 text-xs text-muted" aria-label="Keterangan kalender">
-                    <span class="flex items-center gap-2"><span class="inline-block h-3 w-3 rounded-[3px] bg-rust-bg"></span>Terisi sebagian</span>
-                    <span class="flex items-center gap-2"><span class="inline-block h-3 w-3 rounded-[3px] bg-rust"></span>Terisi penuh</span>
-                </div>
-
-                <h3 class="mb-2 mt-4 text-sm font-semibold">Jadwal terisi (90 hari ke depan)</h3>
-                <ul id="booked-list" class="list-disc space-y-1 pl-5 text-sm text-muted">
-                    <li>Memuat jadwal...</li>
-                </ul>
             </div>
         </div>
 

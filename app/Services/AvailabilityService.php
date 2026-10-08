@@ -22,6 +22,10 @@ class AvailabilityService
      */
     public function hasConflict(int $bikeId, CarbonInterface $start, CarbonInterface $end): bool
     {
+        if ($this->hasCompletedReturnOnDate($bikeId, $start)) {
+            return true;
+        }
+
         return $this->blockingQuery($bikeId)
             ->where(fn (Builder $query) => $query
                 ->where('status', 'active')
@@ -39,7 +43,7 @@ class AvailabilityService
      */
     public function bookedRanges(int $bikeId, CarbonInterface $from, CarbonInterface $to): array
     {
-        return $this->blockingQuery($bikeId)
+        $blockingRanges = $this->blockingQuery($bikeId)
             ->where(fn (Builder $query) => $query
                 ->where('status', 'active')
                 ->orWhere(fn (Builder $query) => $query
@@ -51,8 +55,22 @@ class AvailabilityService
                 'start' => ($rental->status === 'active' ? $from : $rental->start_time)->format('Y-m-d H:i'),
                 // Rental aktif tetap mengunci unit hingga statusnya berubah saat pengembalian.
                 'end' => ($rental->status === 'active' ? $to : $rental->end_time)->format('Y-m-d H:i'),
-            ])
-            ->all();
+            ]);
+
+        $returnedTodayRanges = Rental::query()
+            ->where('bike_id', $bikeId)
+            ->where('status', 'completed')
+            ->whereHas('rentalReturn', fn (Builder $query) => $query
+                ->where('actual_return_time', '>=', $from->copy()->startOfDay())
+                ->where('actual_return_time', '<', $to->copy()->startOfDay()))
+            ->with('rentalReturn:id,rental_id,actual_return_time')
+            ->get()
+            ->map(fn (Rental $rental) => [
+                'start' => $rental->rentalReturn->actual_return_time->copy()->startOfDay()->format('Y-m-d H:i'),
+                'end' => $rental->rentalReturn->actual_return_time->copy()->addDay()->startOfDay()->format('Y-m-d H:i'),
+            ]);
+
+        return $blockingRanges->concat($returnedTodayRanges)->sortBy('start')->values()->all();
     }
 
     /**
@@ -89,6 +107,17 @@ class AvailabilityService
             ->where('start_time', '<', $windowEnd)
             ->get(['start_time', 'end_time']);
 
+        $returnDates = Rental::query()
+            ->where('bike_id', $bikeId)
+            ->where('status', 'completed')
+            ->whereHas('rentalReturn', fn (Builder $query) => $query
+                ->where('actual_return_time', '>=', $firstDay)
+                ->where('actual_return_time', '<', $windowEnd))
+            ->with('rentalReturn:id,rental_id,actual_return_time')
+            ->get()
+            ->map(fn (Rental $rental) => $rental->rentalReturn->actual_return_time->toDateString())
+            ->all();
+
         $dates = [];
 
         for ($i = 0; $i < $windowDays; $i++) {
@@ -96,6 +125,10 @@ class AvailabilityService
 
             if ($start->lessThan(now())) {
                 continue; // jam mulai sudah lewat
+            }
+
+            if (in_array($start->toDateString(), $returnDates, true)) {
+                continue; // motor yang dikembalikan hari ini baru dapat disewa besok
             }
 
             $freeDays = $maxDays;
@@ -141,13 +174,20 @@ class AvailabilityService
     public function busyBikeQuery(CarbonInterface $from, CarbonInterface $to): Builder
     {
         return Rental::query()
-            ->whereIn('status', self::BLOCKING_STATUSES)
-            ->where($this->activeBlockingDeadlineQuery(...))
             ->where(fn (Builder $query) => $query
-                ->where('status', 'active')
+                ->where(fn (Builder $query) => $query
+                    ->whereIn('status', self::BLOCKING_STATUSES)
+                    ->where($this->activeBlockingDeadlineQuery(...))
+                    ->where(fn (Builder $query) => $query
+                        ->where('status', 'active')
+                        ->orWhere(fn (Builder $query) => $query
+                            ->where('start_time', '<', $to)
+                            ->where('end_time', '>', $from))))
                 ->orWhere(fn (Builder $query) => $query
-                    ->where('start_time', '<', $to)
-                    ->where('end_time', '>', $from)));
+                    ->where('status', 'completed')
+                    ->whereHas('rentalReturn', fn (Builder $query) => $query
+                        ->where('actual_return_time', '>=', $from->copy()->startOfDay())
+                        ->where('actual_return_time', '<', $from->copy()->addDay()->startOfDay()))));
     }
 
     /** Subquery unit yang sedang berada di tangan penyewa dan belum dikembalikan. */
@@ -169,6 +209,17 @@ class AvailabilityService
             ->where('bike_id', $bikeId)
             ->whereIn('status', self::BLOCKING_STATUSES)
             ->where($this->activeBlockingDeadlineQuery(...));
+    }
+
+    private function hasCompletedReturnOnDate(int $bikeId, CarbonInterface $start): bool
+    {
+        return Rental::query()
+            ->where('bike_id', $bikeId)
+            ->where('status', 'completed')
+            ->whereHas('rentalReturn', fn (Builder $query) => $query
+                ->where('actual_return_time', '>=', $start->copy()->startOfDay())
+                ->where('actual_return_time', '<', $start->copy()->addDay()->startOfDay()))
+            ->exists();
     }
 
     /** Pending pembayaran hanya mengunci slot sebelum tenggatnya. */
