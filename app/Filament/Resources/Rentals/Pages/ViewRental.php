@@ -12,9 +12,11 @@ use App\Support\Format;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -121,14 +123,36 @@ class ViewRental extends ViewRecord
                     DateTimePicker::make('actual_return_time')
                         ->label('Waktu aktual kembali')
                         ->seconds(false)
+                        ->live()
                         ->default(now())
                         ->required(),
                     TextInput::make('damage_fee')
                         ->label('Denda kerusakan (Rp)')
-                        ->numeric()->minValue(0)->default(0)->required(),
+                        ->numeric()->minValue(0)->default(0)->required()->live(onBlur: true),
                     TextInput::make('fuel_fee')
                         ->label('Denda bensin (Rp)')
-                        ->numeric()->minValue(0)->default(0)->required(),
+                        ->numeric()->minValue(0)->default(0)->required()->live(onBlur: true),
+                    Placeholder::make('return_fee_estimate')
+                        ->label('Total tagihan yang ditagih di tempat')
+                        ->content(function (Get $get): string {
+                            $actualReturnTime = $get('actual_return_time');
+
+                            if (! $actualReturnTime) {
+                                return 'Pilih waktu pengembalian untuk menghitung tagihan.';
+                            }
+
+                            $estimate = app(HandoverService::class)->estimateReturnFees(
+                                $this->record,
+                                $actualReturnTime instanceof Carbon ? $actualReturnTime : Carbon::parse($actualReturnTime),
+                                (float) ($get('damage_fee') ?: 0),
+                                (float) ($get('fuel_fee') ?: 0),
+                            );
+
+                            return 'Denda telat ('.$estimate['late_hours'].' jam): '.Format::rupiah($estimate['late_fee'])
+                                .' + kerusakan: '.Format::rupiah($estimate['damage_fee'])
+                                .' + bensin: '.Format::rupiah($estimate['fuel_fee'])
+                                .' = TOTAL TAGIHAN: '.Format::rupiah($estimate['total_fee']);
+                        }),
                     Textarea::make('condition_notes')
                         ->label('Catatan kondisi motor')
                         ->maxLength(1000),

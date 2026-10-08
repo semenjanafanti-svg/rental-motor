@@ -109,19 +109,16 @@ class HandoverService
                 throw new PaymentException('Pengembalian untuk pesanan ini sudah dicatat.');
             }
 
-            [$lateHours, $lateFee] = $this->calculateLateFee($locked, $actualReturnTime);
-
-            $damageFee = max(0, $damageFee);
-            $fuelFee = max(0, $fuelFee);
-            $totalFee = $lateFee + $damageFee + $fuelFee;
+            $fees = $this->estimateReturnFees($locked, $actualReturnTime, $damageFee, $fuelFee);
+            $totalFee = $fees['total_fee'];
 
             RentalReturn::create([
                 'rental_id' => $locked->id,
                 'actual_return_time' => $actualReturnTime,
-                'late_hours' => $lateHours,
-                'late_fee' => $lateFee,
-                'damage_fee' => $damageFee,
-                'fuel_fee' => $fuelFee,
+                'late_hours' => $fees['late_hours'],
+                'late_fee' => $fees['late_fee'],
+                'damage_fee' => $fees['damage_fee'],
+                'fuel_fee' => $fees['fuel_fee'],
                 'condition_notes' => $conditionNotes,
                 'checked_by' => $admin->id,
             ]);
@@ -146,6 +143,30 @@ class HandoverService
 
             return $locked;
         });
+    }
+
+    /**
+     * Hitung rincian yang sama untuk pratinjau admin dan pencatatan pengembalian.
+     *
+     * @return array{late_hours:int, late_fee:float, damage_fee:float, fuel_fee:float, total_fee:float}
+     */
+    public function estimateReturnFees(
+        Rental $rental,
+        Carbon $actualReturnTime,
+        float $damageFee = 0,
+        float $fuelFee = 0,
+    ): array {
+        [$lateHours, $lateFee] = $this->calculateLateFee($rental, $actualReturnTime);
+        $damageFee = max(0, $damageFee);
+        $fuelFee = max(0, $fuelFee);
+
+        return [
+            'late_hours' => $lateHours,
+            'late_fee' => $lateFee,
+            'damage_fee' => $damageFee,
+            'fuel_fee' => $fuelFee,
+            'total_fee' => $lateFee + $damageFee + $fuelFee,
+        ];
     }
 
     /** @return array{0:int, 1:float} [late_hours, late_fee] */

@@ -3,8 +3,6 @@
 @section('title', 'Sewa Motor')
 
 @section('content')
-    @php($heroBike = $featuredBikes->first(fn ($bike) => $bike->hasPhoto()) ?? $featuredBikes->first())
-
     <section class="relative isolate grid gap-7 overflow-hidden rounded-[1.75rem] border border-[#f1e5c9] bg-gradient-to-br from-[#fff8e8] via-[#fffefa] to-[#fff0df] px-5 py-8 shadow-sm sm:px-7 lg:min-h-[31rem] lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-9 lg:px-10 lg:py-9">
         <div class="pointer-events-none absolute -right-10 top-10 -z-10 h-56 w-56 rounded-full bg-gradient-to-br from-amber/30 to-orange-200/20 blur-3xl"></div>
         <div class="relative z-10 flex flex-col gap-5">
@@ -35,15 +33,8 @@
 
         <div class="relative mx-auto h-[21rem] w-full max-w-md overflow-visible sm:h-[25rem] lg:mt-5 lg:h-[27rem]">
             <div class="group absolute inset-0 overflow-hidden rounded-[1.75rem] border border-amber/50 bg-[#f2d59c] shadow-xl shadow-orange-950/10">
-                @if ($heroBike?->hasPhoto())
-                    <img src="{{ $heroBike->photoUrl() }}" alt="{{ $heroBike->name }} siap disewa" class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105">
-                @else
-                    <img src="https://images.unsplash.com/photo-1613395940782-4ff199e2770f?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=85&amp;w=1400" alt="Pengendara motor melintasi jalan yang rindang" class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105">
-                @endif
+                <img src="{{ asset('images/hero-rental.jpg') }}" alt="Dua pengendara menikmati perjalanan dengan motor" fetchpriority="high" class="absolute inset-0 h-full w-full object-cover object-[center_62%] transition duration-700 group-hover:scale-105">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
-                @if ($heroBike?->hasPhoto())
-                    <div class="absolute bottom-5 left-5 rounded-full bg-gradient-to-r from-[#ffc928] to-[#ff941f] px-4 py-2 text-sm font-bold text-[#321b08] shadow-lg sm:bottom-7 sm:left-7">★ Unit pilihan · {{ $heroBike->name }}</div>
-                @endif
             </div>
             <div class="absolute -right-1 top-4 flex items-center gap-2.5 rounded-xl border border-amber/50 bg-white/95 px-3 py-2.5 shadow-xl sm:-right-4 sm:top-6 sm:px-4">
                 <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ff9b20] text-white"><svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor"><path d="m13.2 2-8 11h5.6L9.9 22l8.9-12h-5.9L13.2 2Z"/></svg></span>
