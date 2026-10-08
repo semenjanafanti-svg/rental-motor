@@ -38,6 +38,7 @@ class BikeController extends Controller
 
         $query = Bike::query()
             ->select(['id', 'name', 'brand', 'category', 'cc', 'color', 'daily_rate', 'photo'])
+            ->withExists(['rentals as is_actively_rented' => fn ($query) => $query->where('status', 'active')])
             ->where('status', 'available')
             ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
             ->when($filters['max_price'] ?? null, fn ($q, $max) => $q->where('daily_rate', '<=', $max));
@@ -48,10 +49,6 @@ class BikeController extends Controller
             $to = $from->copy()->addDays(max(1, (int) config('rental.min_days')));
 
             $query->whereNotIn('id', $availability->busyBikeQuery($from, $to)->select('bike_id'));
-        } else {
-            // Tanpa filter tanggal, katalog hanya menampilkan unit yang benar-benar
-            // bisa disewa sekarang; unit yang belum dikembalikan tidak ditawarkan.
-            $query->whereNotIn('id', $availability->activeRentalBikeQuery());
         }
 
         match ($filters['sort'] ?? null) {

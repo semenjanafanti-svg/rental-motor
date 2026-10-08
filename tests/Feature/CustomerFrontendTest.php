@@ -108,6 +108,29 @@ class CustomerFrontendTest extends TestCase
             ->assertDontSee('Mahal');
     }
 
+    public function test_catalog_keeps_actively_rented_bike_visible(): void
+    {
+        $bike = $this->bike(['name' => 'Vario Disewa', 'license_plate' => 'L 8 A']);
+        Rental::create([
+            'booking_code' => 'BK-ACTIVE-1',
+            'user_id' => $this->customer()->id,
+            'bike_id' => $bike->id,
+            'start_time' => '2026-09-18 08:00',
+            'end_time' => '2026-09-19 08:00',
+            'hourly_rate_applied' => 20000,
+            'total_price' => 100000,
+            'dp_amount' => 30000,
+            'balance_amount' => 0,
+            'payment_status' => 'fully_paid',
+            'status' => 'active',
+        ]);
+
+        $this->get('/motor')
+            ->assertOk()
+            ->assertSee('Vario Disewa')
+            ->assertSee('Sedang disewa');
+    }
+
     public function test_catalog_uses_uploaded_photo_and_falls_back_to_the_bike_icon_when_missing(): void
     {
         Storage::fake('public');
