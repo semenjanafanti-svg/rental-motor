@@ -85,11 +85,9 @@
                         @endif
                         <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent"></div>
                         <span class="absolute left-4 top-4 rounded-full border border-white/70 bg-white/90 px-3 py-1 text-xs font-bold capitalize text-ink shadow-sm">{{ $bike->category }}</span>
-                        @if ($availableLabel)
-                            <span class="absolute bottom-4 right-4 rounded-full bg-emerald-100/95 px-3 py-1 text-xs font-bold text-emerald-800">Tersedia · {{ $availableLabel }}</span>
-                        @elseif ($bike->is_actively_rented)
+                        @if (! $availableLabel && $bike->is_actively_rented)
                             <span class="absolute bottom-4 right-4 rounded-full bg-rose-100/95 px-3 py-1 text-xs font-bold text-rose-800">Sedang disewa</span>
-                        @else
+                        @elseif (! $availableLabel)
                             <span class="absolute bottom-4 right-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink">Siap disewa</span>
                         @endif
                     </div>
@@ -114,9 +112,6 @@
                             <span class="text-[12.5px] font-normal text-muted">/ 24 jam</span>
                         </p>
 
-                        @if ($availableLabel)
-                            <span class="badge badge-teal badge-dot mt-2">Bebas {{ $availableLabel }}</span>
-                        @endif
                     </div>
                 </a>
             @endforeach
