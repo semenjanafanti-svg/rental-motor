@@ -15,6 +15,21 @@ return [
     // Hari libur nasional untuk atribut dim_waktu.is_hari_libur.
     // Tanggal hari raya keagamaan 2026 adalah perkiraan; sesuaikan dengan SKB 3 Menteri.
     'holidays' => [
+        '2025-01-01' => 'Tahun Baru Masehi',
+        '2025-01-27' => 'Isra Mikraj',
+        '2025-01-29' => 'Tahun Baru Imlek',
+        '2025-03-29' => 'Hari Suci Nyepi',
+        '2025-03-31' => 'Idulfitri',
+        '2025-04-01' => 'Idulfitri',
+        '2025-04-18' => 'Wafat Yesus Kristus',
+        '2025-05-01' => 'Hari Buruh',
+        '2025-05-12' => 'Hari Raya Waisak',
+        '2025-05-29' => 'Kenaikan Yesus Kristus',
+        '2025-06-01' => 'Hari Lahir Pancasila',
+        '2025-06-06' => 'Iduladha',
+        '2025-06-27' => 'Tahun Baru Islam',
+        '2025-08-17' => 'Hari Kemerdekaan RI',
+        '2025-09-05' => 'Maulid Nabi Muhammad',
         '2025-12-25' => 'Hari Raya Natal',
         '2025-12-26' => 'Cuti Bersama Natal',
         '2026-01-01' => 'Tahun Baru Masehi',

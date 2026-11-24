@@ -44,6 +44,16 @@ class WarehouseAnalytics
             ->map(fn ($year) => (int) $year)->all();
     }
 
+    /** Kategori motor yang ada di dim_motor (untuk filter grafik). @return array<int, string> */
+    public function categories(): array
+    {
+        if (! $this->isReady()) {
+            return [];
+        }
+
+        return $this->dw()->table('dim_motor')->distinct()->orderBy('kategori')->pluck('kategori')->all();
+    }
+
     /** @return object{mulai:string, selesai:?string, status:string}|null */
     public function lastEtl(): ?object
     {
@@ -157,10 +167,11 @@ class WarehouseAnalytics
         return [$from, $to->lt($from) ? $from->copy() : $to];
     }
 
-    /** Pendapatan bersih per bulan dipecah DP / Pelunasan / Denda (pertanyaan 6). */
-    public function revenueByMonth(?int $year): Collection
+    /** Pendapatan bersih per bulan dipecah DP / Pelunasan / Denda (pertanyaan 6). $method: cash / manual_transfer. */
+    public function revenueByMonth(?int $year, ?string $method = null): Collection
     {
         $rows = $this->payments($year)
+            ->when($method, fn (Builder $q) => $q->where('j.metode', $method))
             ->select('w.tahun', 'w.bulan', 'j.label_tipe')
             ->selectRaw('SUM(p.pendapatan_bersih) as nilai')
             ->groupBy('w.tahun', 'w.bulan', 'j.label_tipe')
@@ -176,11 +187,14 @@ class WarehouseAnalytics
             ])->values();
     }
 
-    /** Jumlah sewa berhasil per bulan (pertanyaan 3). */
-    public function rentalsByMonth(?int $year): Collection
+    /** Jumlah sewa berhasil per bulan (pertanyaan 3), bisa dipersempit ke satu kategori motor. */
+    public function rentalsByMonth(?int $year, ?string $category = null): Collection
     {
         return $this->rentals($year)
             ->where('s.kelompok_status', 'Berhasil')
+            ->when($category, fn (Builder $q) => $q
+                ->join('dim_motor as m', 'm.motor_key', '=', 'f.motor_key')
+                ->where('m.kategori', $category))
             ->select('w.tahun', 'w.bulan')
             ->selectRaw('SUM(f.jumlah_sewa) as jumlah')
             ->groupBy('w.tahun', 'w.bulan')
@@ -192,10 +206,11 @@ class WarehouseAnalytics
             ]);
     }
 
-    /** Pola permintaan per hari dalam seminggu, semua pesanan masuk (pertanyaan 3). */
-    public function demandByWeekday(?int $year): Collection
+    /** Pola permintaan per hari dalam seminggu (pertanyaan 3). $group: kelompok_status, null = semua pesanan masuk. */
+    public function demandByWeekday(?int $year, ?string $group = null): Collection
     {
         $rows = $this->rentals($year)
+            ->when($group, fn (Builder $q) => $q->where('s.kelompok_status', $group))
             ->select('w.hari_ke')
             ->selectRaw('COUNT(*) as jumlah')
             ->groupBy('w.hari_ke')
@@ -207,10 +222,11 @@ class WarehouseAnalytics
         ])->values();
     }
 
-    /** Denda per kategori motor (pertanyaan 9, 10). */
-    public function finesByCategory(?int $year): Collection
+    /** Denda per kategori motor (pertanyaan 9, 10), bisa dipersempit ke satu kuartal (Q1..Q4). */
+    public function finesByCategory(?int $year, ?string $quarter = null): Collection
     {
         return $this->returns($year)
+            ->when($quarter, fn (Builder $q) => $q->where('w.kuartal', $quarter))
             ->join('dim_motor as m', 'm.motor_key', '=', 'r.motor_key')
             ->select('m.kategori')
             ->selectRaw('SUM(r.jumlah_pengembalian) as pengembalian')
@@ -239,11 +255,12 @@ class WarehouseAnalytics
             ->get();
     }
 
-    /** Pelanggan paling bernilai (pertanyaan 5). */
-    public function topCustomers(?int $year, int $limit = 8): Collection
+    /** Pelanggan paling bernilai (pertanyaan 5). $segment: Baru / Berulang, null = semua. */
+    public function topCustomers(?int $year, int $limit = 8, ?string $segment = null): Collection
     {
         $revenue = $this->payments($year)
             ->join('dim_pelanggan as c', 'c.pelanggan_key', '=', 'p.pelanggan_key')
+            ->when($segment, fn (Builder $q) => $q->where('c.segmen', $segment))
             ->select('c.pelanggan_key', 'c.nama', 'c.segmen')
             ->selectRaw('SUM(p.pendapatan_bersih) as pendapatan')
             ->groupBy('c.pelanggan_key', 'c.nama', 'c.segmen')

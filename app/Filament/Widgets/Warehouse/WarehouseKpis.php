@@ -27,13 +27,13 @@ class WarehouseKpis extends StatsOverviewWidget
 
         return [
             Stat::make('Pendapatan bersih', $this->compact($k['pendapatan_bersih']))
-                ->description($a->rupiah($k['pendapatan_bersih']).' · DP + pelunasan + denda − refund'),
+                ->description($a->rupiah($k['pendapatan_bersih'])),
             Stat::make('Sewa berhasil', number_format($k['sewa_berhasil'], 0, ',', '.'))
                 ->description('dari '.$k['pesanan'].' pesanan masuk'),
             Stat::make('Pesanan gagal', $a->pct($k['rasio_gagal']))
                 ->description($k['pesanan_gagal'].' batal, kedaluwarsa, tidak datang'),
             Stat::make('Utilisasi armada', $a->pct($k['utilisasi']))
-                ->description('hari motor disewa ÷ hari tersedia'),
+                ->description('armada terpakai pada periode ini'),
             Stat::make('Rata-rata sewa', number_format($k['rata_durasi'], 1, ',', '.').' hari')
                 ->description($a->rupiah($k['rata_nilai_sewa']).' per sewa'),
             Stat::make('Pelanggan berulang', $k['pelanggan_berulang'].' / '.$k['pelanggan_aktif'])

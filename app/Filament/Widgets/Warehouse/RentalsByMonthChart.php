@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets\Warehouse;
 
+use Filament\Forms\Components\Select;
 use Filament\Support\RawJs;
 
 /** Pertanyaan 3: kapan permintaan tinggi dan rendah (tren bulanan). */
@@ -9,9 +10,18 @@ class RentalsByMonthChart extends WarehouseChart
 {
     protected ?string $heading = 'Sewa berhasil per bulan';
 
-    protected ?string $description = 'Fact_Penyewaan · status Selesai, menurut bulan mulai sewa';
-
     protected static ?int $sort = 4;
+
+    protected function extraFilters(): array
+    {
+        return [
+            Select::make('kategori')
+                ->label('Kategori motor')
+                ->placeholder('Semua kategori')
+                ->options(fn () => $this->categoryOptions())
+                ->native(false),
+        ];
+    }
 
     protected function getType(): string
     {
@@ -20,7 +30,7 @@ class RentalsByMonthChart extends WarehouseChart
 
     protected function getData(): array
     {
-        $rows = $this->analytics()->rentalsByMonth($this->year());
+        $rows = $this->analytics()->rentalsByMonth($this->year(), $this->filterValue('kategori'));
 
         return [
             'labels' => $rows->pluck('label')->all(),

@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\OlapExplorer;
+use App\Filament\Widgets\Warehouse\RentalsByMonthChart;
+use App\Filament\Widgets\Warehouse\RevenueByMonthChart;
 use App\Models\User;
 use App\Services\DataWarehouse\EtlService;
 use App\Services\DataWarehouse\OlapService;
@@ -160,5 +162,74 @@ class DataWarehouseTest extends TestCase
             ->assertOk()
             ->assertDontSee('Jalankan ETL');
         $this->actingAs($admin)->get('/admin/olap')->assertForbidden();
+    }
+
+    public function test_dummy_data_covers_every_month_of_2025(): void
+    {
+        $this->assertContains(2025, app(WarehouseAnalytics::class)->years());
+        $this->assertContains(2026, app(WarehouseAnalytics::class)->years());
+
+        $months = app(WarehouseAnalytics::class)->rentalsByMonth(2025)->pluck('label');
+        $this->assertCount(12, $months, 'Setiap bulan 2025 harus punya sewa berhasil.');
+    }
+
+    public function test_each_chart_has_its_own_filters(): void
+    {
+        $this->actingAs(User::where('role', 'super_admin')->firstOrFail());
+
+        // Filter tahun grafik tidak bergantung pada filter Periode halaman.
+        $chart = Livewire::test(RentalsByMonthChart::class, ['pageFilters' => ['tahun' => '2026']])
+            ->set('filters.tahun', '2025');
+        $labels = $this->chartLabels($chart->instance());
+        $this->assertNotEmpty($labels);
+        $this->assertTrue(collect($labels)->every(fn ($l) => str_ends_with($l, ' 25')));
+
+        // Kosong = ikut filter Periode halaman.
+        $labels = $this->chartLabels(Livewire::test(RentalsByMonthChart::class, ['pageFilters' => ['tahun' => '2026']])->instance());
+        $this->assertTrue(collect($labels)->every(fn ($l) => str_ends_with($l, ' 26')));
+
+        // Filter dimensi: hanya pembayaran tunai.
+        $cashOnly = app(WarehouseAnalytics::class)->revenueByMonth(2025, 'cash')->sum(fn ($r) => $r['DP'] + $r['Pelunasan'] + $r['Denda']);
+        $all = app(WarehouseAnalytics::class)->revenueByMonth(2025)->sum(fn ($r) => $r['DP'] + $r['Pelunasan'] + $r['Denda']);
+        $this->assertGreaterThan(0, $cashOnly);
+        $this->assertLessThan($all, $cashOnly);
+        Livewire::test(RevenueByMonthChart::class)->set('filters.metode', 'cash')->assertOk();
+    }
+
+    public function test_owner_dashboard_has_no_formula_text_under_titles(): void
+    {
+        $this->actingAs(User::where('role', 'super_admin')->firstOrFail())->get('/admin')
+            ->assertOk()
+            ->assertDontSee('Fact_')
+            ->assertDontSee('÷')
+            ->assertDontSee('DP + pelunasan');
+    }
+
+    public function test_customer_dashboard_shows_own_analytics(): void
+    {
+        $customer = User::where('role', 'customer')->where('is_active', true)->whereHas('rentals', fn ($q) => $q->where('status', 'completed'))->firstOrFail();
+
+        $this->actingAs($customer)->get('/dashboard')->assertRedirect(route('customer.dashboard'));
+
+        $response = $this->actingAs($customer)->get('/dashboard-saya')
+            ->assertOk()
+            ->assertSee('Dashboard saya')
+            ->assertSee('Pengeluaran per bulan')
+            ->assertSee('Ikuti periode');
+
+        $payload = json_decode(str($response->getContent())->betweenFirst('<script type="application/json" id="dash-data">', '</script>')->toString(), true);
+        $this->assertCount($customer->rentals()->count(), $payload['rentals']);
+        $this->assertLessThan(DB::table('rentals')->count(), count($payload['rentals']), 'Hanya sewa milik customer ini.');
+    }
+
+    /** @return array<int, string> */
+    private function chartLabels(object $chart): array
+    {
+        return (fn () => $this->getData()['labels'])->call($chart);
+    }
+
+    public function test_staff_cannot_open_customer_dashboard(): void
+    {
+        $this->actingAs(User::where('role', 'admin')->firstOrFail())->get('/dashboard-saya')->assertForbidden();
     }
 }

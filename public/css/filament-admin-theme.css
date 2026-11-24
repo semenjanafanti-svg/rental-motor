@@ -588,6 +588,9 @@
 .dw-filter-chip button:hover { background: rgba(0,0,0,.08); }
 .dw-filter-chip button:active { transform: scale(.9); }
 .dw-muted-sm { font-weight: 400; opacity: .75; }
+/* Filter milik satu widget (di pojok kanan atas judul) */
+.dw-header-filters { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
+.dw-header-filters .fi-input-wrp { min-width: 9.5rem; }
 .dw-clear { font-size: .8125rem; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
 .dw-clear:hover { color: var(--ink); }
 .dw-th-sub { font-weight: 500; text-transform: none; letter-spacing: 0; }

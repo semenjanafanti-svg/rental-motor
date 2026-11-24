@@ -15,6 +15,7 @@
                 @if ($user->isStaff())
                     <a href="{{ url('/admin') }}" class="topbar-link">Panel Admin</a>
                 @else
+                    <a href="{{ route('customer.dashboard') }}" @class(['topbar-link', 'topbar-link-active' => request()->routeIs('customer.dashboard')])>Dashboard</a>
                     <a href="{{ route('rentals.index') }}" @class(['topbar-link', 'topbar-link-active' => request()->routeIs('rentals.*')])>Pesanan</a>
                 @endif
                 <a href="{{ route('profile.edit') }}" @class(['topbar-link inline-flex items-center', 'topbar-link-active' => request()->routeIs('profile.*')]) title="Profil" aria-label="Profil">

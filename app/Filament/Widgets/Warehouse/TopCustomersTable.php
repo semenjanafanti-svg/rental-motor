@@ -19,13 +19,20 @@ class TopCustomersTable extends Widget
 
     protected string $view = 'filament.widgets.warehouse.top-customers';
 
+    /** Filter milik tabel ini. Tahun kosong = ikut filter Periode halaman, "semua" = semua tahun. */
+    public string $tahun = '';
+
+    public string $segmen = '';
+
     protected function getViewData(): array
     {
         $analytics = app(WarehouseAnalytics::class);
-        $year = filled($this->pageFilters['tahun'] ?? null) ? (int) $this->pageFilters['tahun'] : null;
+        $year = $this->tahun !== '' ? $this->tahun : ($this->pageFilters['tahun'] ?? null);
+        $year = filled($year) && $year !== 'semua' ? (int) $year : null;
 
         return [
-            'rows' => $analytics->topCustomers($year),
+            'rows' => $analytics->topCustomers($year, segment: $this->segmen !== '' ? $this->segmen : null),
+            'years' => $analytics->years(),
             'analytics' => $analytics,
         ];
     }

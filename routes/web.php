@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BikeController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PrivateFileController;
 use App\Http\Controllers\ProfileController;
@@ -24,6 +25,7 @@ Route::get('/motor/{bike}/quote', [BikeController::class, 'quote'])->name('bikes
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/motor/{bike}/checkout', [BookingController::class, 'create'])->name('bookings.create');
     Route::post('/motor/{bike}/checkout', [BookingController::class, 'store'])->name('bookings.store');
+    Route::get('/dashboard-saya', CustomerDashboardController::class)->name('customer.dashboard');
     Route::get('/riwayat', [RentalController::class, 'index'])->name('rentals.index');
     Route::get('/riwayat/{rental}', [RentalController::class, 'show'])->name('rentals.show');
     Route::get('/riwayat/{rental}/nota', [RentalReceiptController::class, 'download'])->name('rentals.receipt');
@@ -44,7 +46,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/dashboard', function () {
     return auth()->user()->isStaff()
         ? redirect('/admin') // panel Filament
-        : redirect()->route('bikes.index');
+        : redirect()->route('customer.dashboard');
 })->middleware('auth')->name('dashboard');
 
 Route::middleware('auth')->group(function () {

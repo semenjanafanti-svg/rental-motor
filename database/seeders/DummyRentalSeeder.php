@@ -14,8 +14,8 @@ use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
- * 100 transaksi sewa dummy (Desember 2025 sampai beberapa hari ke depan) untuk latihan
- * data warehouse, beserta customer, pembayaran, pengembalian, dan reminder-nya.
+ * 200 transaksi sewa dummy (Januari 2025 sampai beberapa hari ke depan) untuk latihan
+ * data warehouse. Rentang dua tahun (2025 & 2026) supaya dashboard bisa membandingkan antartahun, beserta customer, pembayaran, pengembalian, dan reminder-nya.
  *
  * Semua nilai mengikuti aturan aplikasi: tarif per 24 jam, DP 30% dibulatkan ke Rp1.000,
  * denda telat = jam telat x tarif per jam (20% tarif harian), jam mulai 06:00-21:00.
@@ -27,24 +27,27 @@ class DummyRentalSeeder extends Seeder
 {
     private const EMAIL_DOMAIN = 'dummy.test';
 
-    private const CUSTOMER_COUNT = 25;
+    private const CUSTOMER_COUNT = 40;
 
-    private const HISTORY_START = '2025-12-01';
+    private const HISTORY_START = '2025-01-01';
 
-    /** Jumlah rental per skenario, total 100. */
+    /** Customer pertama mendaftar sebelum periode data dimulai. */
+    private const EARLY_SIGNUP = ['2024-12-01', '2024-12-15'];
+
+    /** Jumlah rental per skenario, total 200. */
     private const PLAN = [
-        'completed' => 66,
-        'cancelled_by_customer' => 4,
-        'cancelled_document' => 3,
-        'cancelled_proof' => 3,
-        'expired' => 9,
-        'no_show' => 4,
+        'completed' => 141,
+        'cancelled_by_customer' => 8,
+        'cancelled_document' => 6,
+        'cancelled_proof' => 6,
+        'expired' => 20,
+        'no_show' => 8,
         'active' => 4,
         'approved' => 4,
         'pending_verification' => 3,
     ];
 
-    /** Musim ramai: libur akhir tahun, Lebaran (Maret 2026), libur sekolah Juni-Juli. */
+    /** Musim ramai: libur akhir tahun, Lebaran (akhir Maret 2025 & Maret 2026), libur sekolah Juni-Juli. */
     private const MONTH_WEIGHT = [1 => 1.1, 2 => 0.8, 3 => 1.5, 4 => 1.0, 5 => 0.9, 6 => 1.3, 7 => 1.4, 8 => 1.0, 9 => 0.8, 10 => 0.9, 11 => 1.0, 12 => 1.4];
 
     /** 0 = Minggu. Jumat & Sabtu paling ramai. */
@@ -157,12 +160,12 @@ class DummyRentalSeeder extends Seeder
     private function createCustomers(): void
     {
         $password = Hash::make('password');
-        $earlyEnd = Carbon::parse('2025-11-15');
+        [$earlyStart, $earlyEnd] = array_map(fn (string $date) => Carbon::parse($date), self::EARLY_SIGNUP);
 
         for ($i = 1; $i <= self::CUSTOMER_COUNT; $i++) {
             // 8 customer pertama sudah terdaftar sebelum periode data dimulai.
             $createdAt = $i <= 8
-                ? $this->randomMoment(Carbon::parse('2025-11-01'), $earlyEnd)
+                ? $this->randomMoment($earlyStart, $earlyEnd)
                 : $this->randomMoment(Carbon::parse(self::HISTORY_START), $this->now->copy()->subMonth());
 
             $name = $this->faker->firstName().' '.$this->faker->lastName();
@@ -292,7 +295,7 @@ class DummyRentalSeeder extends Seeder
         }
 
         if ($createdAt->gte($start->copy()->subHour())
-            || $createdAt->lt(Carbon::parse('2025-11-15'))
+            || $createdAt->lt(Carbon::parse(self::EARLY_SIGNUP[1]))
             || $createdAt->gte($this->now->copy()->subHour())) {
             return null;
         }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets\Warehouse;
 
+use Filament\Forms\Components\Select;
 use Filament\Support\RawJs;
 
 /** Pertanyaan 6: dari mana dan berapa pendapatan yang diperoleh. */
@@ -9,11 +10,20 @@ class RevenueByMonthChart extends WarehouseChart
 {
     protected ?string $heading = 'Pendapatan bersih per bulan';
 
-    protected ?string $description = 'Fact_Pembayaran · nominal bayar dikurangi refund, dipecah per tipe pembayaran';
-
     protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = 3;
+
+    protected function extraFilters(): array
+    {
+        return [
+            Select::make('metode')
+                ->label('Metode pembayaran')
+                ->placeholder('Semua metode')
+                ->options(collect(config('dw.payment_methods'))->map(fn ($m) => $m[0])->all())
+                ->native(false),
+        ];
+    }
 
     protected function getType(): string
     {
@@ -22,7 +32,7 @@ class RevenueByMonthChart extends WarehouseChart
 
     protected function getData(): array
     {
-        $rows = $this->analytics()->revenueByMonth($this->year());
+        $rows = $this->analytics()->revenueByMonth($this->year(), $this->filterValue('metode'));
 
         return [
             'labels' => $rows->pluck('label')->all(),
