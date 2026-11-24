@@ -28,3 +28,10 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# File AI/agen lokal (tidak ikut repo)
+/.claude
+CLAUDE.md
+AGENTS.md
+boost.json
+.mcp.json
