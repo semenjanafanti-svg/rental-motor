@@ -44,7 +44,7 @@ class RentalsByMonthChart extends WarehouseChart
                 'pointHoverRadius' => 6,
                 'pointBorderColor' => '#ffffff',
                 'pointBorderWidth' => 2,
-                'tension' => 0.25,
+                'cubicInterpolationMode' => 'monotone', // tidak melampaui titik data
                 'fill' => false,
             ]],
         ];

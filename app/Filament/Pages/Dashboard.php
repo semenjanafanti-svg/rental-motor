@@ -2,6 +2,10 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\Operational\FleetStatusChart;
+use App\Filament\Widgets\Operational\IncomingOrdersChart;
+use App\Filament\Widgets\Operational\ScheduleChart;
+use App\Filament\Widgets\Operational\TodayTasksTable;
 use App\Filament\Widgets\OwnerOverview;
 use App\Filament\Widgets\Warehouse\DemandByWeekdayChart;
 use App\Filament\Widgets\Warehouse\FinesByCategoryChart;
@@ -24,6 +28,8 @@ use Throwable;
 /**
  * Satu-satunya dashboard panel admin (/admin).
  * - Semua petugas: ringkasan operasional (tabel OLTP, real time).
+ * - Admin/petugas: ditambah tugas hari ini dan grafik operasional (jadwal, pesanan masuk, armada).
+ *   Tidak ada angka pendapatan; itu wewenang owner.
  * - Owner (super admin): ditambah analitik dari data warehouse, filter periode,
  *   tombol ETL dan OLAP. Query analitik membaca dw_mitra_jalan, bukan tabel
  *   operasional, sehingga tidak membebani proses booking.
@@ -82,13 +88,20 @@ class Dashboard extends BaseDashboard
 
     public function getColumns(): int|array
     {
-        return ['md' => 2];
+        // Dua kolom mulai lg, sama dengan breakpoint columnSpan 'full' milik Filament.
+        return ['lg' => 2];
     }
 
     public function getWidgets(): array
     {
         if (! self::isOwner()) {
-            return [OwnerOverview::class];
+            return [
+                OwnerOverview::class,
+                TodayTasksTable::class,
+                ScheduleChart::class,
+                IncomingOrdersChart::class,
+                FleetStatusChart::class,
+            ];
         }
 
         return [
