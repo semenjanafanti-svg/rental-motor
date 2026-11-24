@@ -9,7 +9,9 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class OwnerOverview extends StatsOverviewWidget
 {
-    protected ?string $heading = 'Ringkasan Operasional';
+    protected static ?int $sort = 0;
+
+    protected ?string $heading = 'Ringkasan operasional';
 
     protected function getStats(): array
     {

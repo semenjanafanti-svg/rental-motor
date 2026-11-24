@@ -1,200 +1,190 @@
 /* =========================================================
-   THEME PANEL ADMIN — Filament v4/v5 (CSS statis, tanpa Tailwind/Vite)
+   THEME PANEL ADMIN — Filament v5 (CSS statis, tanpa Tailwind/Vite)
 
    Dimuat lewat render hook di AdminPanelProvider, BUKAN lewat ->viteTheme(),
    supaya tidak bentrok dengan Tailwind v3 di frontend customer.
 
-   Kenapa tidak perlu !important:
-   CSS bawaan Filament ditulis di dalam @layer. Aturan di luar layer (seperti
-   file ini) selalu menang atas aturan di dalam layer, apa pun spesifisitasnya.
+   CSS bawaan Filament ada di dalam @layer, jadi aturan di luar layer
+   (file ini) selalu menang tanpa !important.
 
-   Dua strategi:
-   1. Skala abu-abu Filament (--gray-50 ... --gray-950) diganti dengan skala
-      hangat bernuansa zaitun dari palet prototipe. Hampir semua border, teks
-      sekunder, dan latar Filament otomatis ikut.
-   2. Komponen yang tampilannya khas prototipe (topbar, sidebar, tombol, badge,
-      tabel) ditimpa langsung dengan token di bawah.
-
-   Token disalin dari resources/css/app.css (frontend customer). Kalau warna
-   berubah, samakan di kedua file.
+   Bahasa desain sama dengan frontend (resources/css/app.css):
+   putih + kuning amber, font sistem, material tembus pandang di topbar,
+   sudut membulat 16px untuk kartu, pil untuk tombol/badge, umpan balik
+   tekan scale(.97). Kalau token berubah, samakan di kedua file.
 ========================================================= */
 
 /* =========================================================
-   TOKEN — panel ini hanya menggunakan mode terang.
+   TOKEN — identik dengan frontend
 ========================================================= */
 :root {
     color-scheme: light;
-    --ink: #1c1d1a;
-    --paper: #f6f7fb;
+
+    --paper: #f7f7f4;
     --surface: #ffffff;
-    --line: #e5e8ef;
-    --muted: #687184;
-    --amber: #f5a623;
-    --amber-ink: #512b08;
-    --teal: #16866e;
-    --teal-bg: #e3f7ef;
-    --on-teal: #ffffff;
+    --line: #e8e6df;
+    --muted: #6e6b63;
+    --ink: #1d1d1f;
+
+    --cream: #fff6db;          /* = --night di frontend */
+    --cream-2: #ffecb5;        /* = --night-2 */
+    --cream-line: #f2dc9a;     /* = --night-line */
+
+    --amber: #f5a623;          /* = --volt di frontend */
+    --amber-ink: #3b2600;      /* = --volt-ink */
+    --amber-soft: #fff1cf;     /* = --volt-soft */
+
+    --ok: #1f7a52;
+    --ok-bg: #e4f4eb;
+    --warn: #7a5200;
+    --warn-bg: #fff1cf;
     --rust: #c0392b;
     --rust-bg: #f8e6e3;
     --on-rust: #ffffff;
-    --shadow: 0 1px 2px rgba(28, 29, 26, .05), 0 10px 24px -18px rgba(28, 29, 26, .35);
 
-    --bar-bg: #ffffff;
-    --bar-fg: #20232d;
-    --bar-muted: #71798a;
-    --bar-soft: #fff4dc;
-
-    --font-display: 'Oswald', 'Arial Narrow', ui-sans-serif, system-ui, sans-serif;
+    --shadow: 0 1px 2px rgba(29, 29, 31, .04), 0 12px 28px -22px rgba(29, 29, 31, .3);
+    --ease-out: cubic-bezier(.2, .8, .2, 1);
+    --font-system: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Skala abu-abu Filament diganti. :root:root (spesifisitas 0,2,0) mengalahkan
-   :root milik Filament walau urutan pemuatannya berbeda. */
+/* Skala abu-abu Filament diganti abu netral yang sama dengan frontend.
+   :root:root (spesifisitas 0,2,0) mengalahkan :root milik Filament. */
 :root:root {
-    --gray-50: #f5f6ef;
-    --gray-100: #eceee3;
-    --gray-200: #d7dacb;
-    --gray-300: #c2c6b3;
-    --gray-400: #9a9e8c;
-    --gray-500: #6b6f5f;
-    --gray-600: #575b4c;
-    --gray-700: #42463a;
-    --gray-800: #2c2e26;
-    --gray-900: #202119;
-    --gray-950: #171813;
+    --font-family: var(--font-system);
+
+    --gray-50: #f7f7f4;
+    --gray-100: #efeee9;
+    --gray-200: #e8e6df;
+    --gray-300: #d3d1c9;
+    --gray-400: #a3a099;
+    --gray-500: #6e6b63;
+    --gray-600: #57554e;
+    --gray-700: #45433d;
+    --gray-800: #2e2d2a;
+    --gray-900: #1d1d1f;
+    --gray-950: #121213;
 }
 
 /* =========================================================
-   DASAR
+   DASAR & TIPOGRAFI
 ========================================================= */
 .fi-body {
     background-color: var(--paper);
     color: var(--ink);
+    font-family: var(--font-system);
+    letter-spacing: -.005em;
 }
+
+::selection { background: var(--amber); color: var(--amber-ink); }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
 
-/* =========================================================
-   TIPOGRAFI — Oswald untuk judul dan angka, Work Sans untuk isi
-   (Work Sans diset lewat ->font('Work Sans') di AdminPanelProvider)
-========================================================= */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Judul: semibold, tracking negatif menyesuaikan ukuran (sama dengan h1-h4 frontend) */
 .fi-header-heading,
-.fi-simple-header-heading,
+.fi-simple-header-heading {
+    font-size: clamp(1.75rem, 2.4vw, 2.125rem);
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -.022em;
+    color: var(--ink);
+}
+
 .fi-section-header-heading,
 .fi-modal-heading,
 .fi-ta-header-heading,
 .fi-empty-state-heading,
 .fi-ta-empty-state-heading,
-.fi-account-widget-heading,
-.fi-wi-stats-overview-stat-value {
-    font-family: var(--font-display);
-    letter-spacing: .2px;
-}
-
-.fi-header-heading,
-.fi-simple-header-heading {
-    font-size: 1.625rem;
+.fi-account-widget-heading {
     font-weight: 600;
-    line-height: 1.25;
-    color: var(--ink);
+    letter-spacing: -.012em;
 }
 
 .fi-header-subheading,
 .fi-simple-header-subheading {
-    font-size: .875rem;
+    max-width: 48rem;
+    font-size: .9375rem;
+    line-height: 1.6;
     color: var(--muted);
 }
 
-/* Label kolom info dan form: sama dengan .label di frontend */
+/* Label form & infolist: sama dengan .label frontend (kecil, semibold, muted) */
 .fi-in-entry-label,
 .fi-fo-field-label-content {
     font-size: .75rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .4px;
     color: var(--muted);
 }
 
+/* Tautan: teks ink bergaris bawah kuning, seperti .link frontend */
 .fi-link:not(.fi-color) {
-    color: var(--teal);
+    color: var(--ink);
     font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--amber);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
 }
 
 /* =========================================================
-   BRAND — logo + Mitra Jalan, seperti .brand di frontend
-   (diisi lewat ->brandName(HtmlString) di AdminPanelProvider)
+   BRAND
 ========================================================= */
 .fi-logo {
     display: flex;
     align-items: center;
-    gap: .5rem;
-    font-family: var(--font-display);
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: .5px;
+    gap: .625rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -.02em;
     white-space: nowrap;
+    color: var(--ink);
 }
 
 .fi-logo .brand-logo {
     width: 2rem;
     height: 2rem;
     flex: 0 0 auto;
+    padding: 2px;
+    border-radius: .5rem;
+    background: #fff;
     object-fit: contain;
 }
 
-.fi-topbar .fi-logo,
-.fi-sidebar-header .fi-logo {
-    color: var(--bar-fg);
-}
-
-.fi-simple-header .fi-logo {
-    font-size: 1.25rem;
-    color: var(--ink);
-}
+.fi-simple-header .fi-logo { font-size: 1.25rem; }
 
 /* =========================================================
-   TOPBAR & HEADER SIDEBAR (mobile) — bar gelap dengan garis putus-putus amber
+   TOPBAR — material putih tembus pandang (sama dengan .topbar frontend)
 ========================================================= */
 .fi-topbar,
 .fi-sidebar-header {
-    background-color: var(--bar-bg);
-    color: var(--bar-fg);
+    background-color: rgba(255, 255, 255, .72);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    color: var(--ink);
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
     box-shadow: none;
-    border-bottom: 3px solid transparent;
-    border-image: repeating-linear-gradient(90deg, var(--amber) 0 22px, transparent 22px 38px) 3;
 }
 
 .fi-topbar .fi-icon-btn,
-.fi-sidebar-header .fi-icon-btn {
-    color: var(--bar-muted);
-}
+.fi-sidebar-header .fi-icon-btn { color: var(--muted); }
 
 .fi-topbar .fi-icon-btn:hover,
 .fi-sidebar-header .fi-icon-btn:hover {
-    color: var(--bar-fg);
-    background-color: var(--bar-soft);
+    color: var(--ink);
+    background-color: var(--paper);
 }
 
-/* Pencarian global di topbar */
 .fi-topbar .fi-input-wrp {
-    background-color: var(--bar-soft);
+    background-color: var(--paper);
     border-color: transparent;
 }
 
-.fi-topbar input.fi-input {
-    color: var(--bar-fg);
-}
-
-.fi-topbar input.fi-input::placeholder {
-    color: var(--bar-muted);
-}
-
-.fi-topbar .fi-input-wrp .fi-icon {
-    color: var(--bar-muted);
-}
+.fi-topbar input.fi-input::placeholder { color: var(--muted); }
 
 /* =========================================================
-   SIDEBAR — terang (surface), item aktif bergaris amber di kiri
+   SIDEBAR — putih, item aktif terisi kuning lembut (seperti .topbar-link-active)
 ========================================================= */
 .fi-sidebar {
     background-color: var(--surface);
@@ -203,60 +193,44 @@
 
 @media (min-width: 64rem) {
     .fi-sidebar,
-    .fi-sidebar.fi-sidebar-open {
-        box-shadow: none;
-    }
+    .fi-sidebar.fi-sidebar-open { box-shadow: none; }
 }
 
 .fi-sidebar-group-label {
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: .75rem;
+    font-weight: 600;
     color: var(--muted);
 }
 
 .fi-sidebar-group-btn .fi-icon,
-.fi-sidebar-item-btn > .fi-icon {
-    color: var(--muted);
-}
+.fi-sidebar-item-btn > .fi-icon { color: var(--muted); }
 
 .fi-sidebar-item-btn {
-    border-radius: .375rem;
+    border-radius: .75rem;
+    transition: background-color .15s ease, transform .1s ease;
 }
 
-.fi-sidebar-item-label {
-    color: var(--ink);
+.fi-sidebar-item-btn:active { transform: scale(.98); }
+
+.fi-sidebar-item-label { color: var(--ink); font-weight: 500; }
+
+.fi-sidebar-item-btn:hover { background-color: var(--paper); }
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover {
+    background-color: var(--amber-soft);
+    box-shadow: none;
 }
 
-.fi-sidebar-item-btn:hover {
-    background-color: var(--paper);
-}
-
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
-    background-color: var(--paper);
-    box-shadow: inset 3px 0 0 var(--amber);
-}
-
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon {
-    color: var(--ink);
-}
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon { color: var(--amber-ink); }
 
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
     color: var(--ink);
     font-weight: 600;
 }
 
-/* Badge jumlah di menu: pil solid merah, seperti .count di prototipe */
-.fi-sidebar-item-badge-ctn .fi-badge {
-    background-color: var(--rust);
-    color: var(--on-rust);
-    min-width: 1.125rem;
-    padding: 1px 7px;
-}
-
 /* =========================================================
-   KARTU — surface + border --line + shadow tipis, seperti .card
+   KARTU — putih, border tipis, sudut 16px, bayangan lembut (= .card)
 ========================================================= */
 .fi-section:not(.fi-section-not-contained):not(.fi-aside),
 .fi-section:not(.fi-section-not-contained).fi-aside > .fi-section-content-ctn,
@@ -270,29 +244,50 @@
 .fi-fo-repeater-item,
 .fi-fo-builder-item,
 .fi-in-key-value,
-.fi-tabs:not(.fi-contained),
 .fi-no-notification:not(.fi-inline) {
     background-color: var(--surface);
     border: 1px solid var(--line);
-    border-radius: .5rem;
+    border-radius: 1rem;
     box-shadow: var(--shadow);
 }
 
+.fi-ta-ctn { overflow: hidden; }
+
+.fi-section-header { padding: 1.125rem 1.25rem; }
+.fi-section-content-ctn { padding: 1.25rem; }
+
+.fi-main { padding-block: 1.5rem 3rem; }
+.fi-header { margin-bottom: 1.25rem; }
+
+/* Kartu statistik: polos, angka besar semibold dengan tracking rapat */
+.fi-wi-stats-overview-stat-label {
+    font-size: .8125rem;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.fi-wi-stats-overview-stat-value {
+    font-size: 1.875rem;
+    font-weight: 600;
+    letter-spacing: -.025em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+}
+
+.fi-wi-stats-overview-stat-description { color: var(--muted); }
+
 /* =========================================================
-   TOMBOL — radius 6px, tebal 600, warna solid seperti .btn di prototipe
+   TOMBOL — pil, umpan balik tekan scale(.97) 100ms (= .btn frontend)
 ========================================================= */
 .fi-btn {
-    border-radius: .375rem;
+    border-radius: 9999px;
+    padding-inline: 1.125rem;
     font-weight: 600;
-    letter-spacing: .2px;
-    transition: transform .12s ease, opacity .12s ease;
+    transition: transform .1s ease-out, filter .15s ease, background-color .15s ease;
 }
 
-.fi-btn:not(.fi-disabled):not([disabled]):hover {
-    transform: translateY(-1px);
-}
+.fi-btn:not(.fi-disabled):not([disabled]):active { transform: scale(.97); }
 
-/* Warna dasar per jenis tombol */
 .fi-btn.fi-color-primary,
 .fi-btn.fi-color-warning {
     --btn: var(--amber);
@@ -301,8 +296,8 @@
 
 .fi-btn.fi-color-success,
 .fi-btn.fi-color-info {
-    --btn: var(--teal);
-    --on-btn: var(--on-teal);
+    --btn: var(--ok);
+    --on-btn: #fff;
 }
 
 .fi-btn.fi-color-danger {
@@ -310,59 +305,54 @@
     --on-btn: var(--on-rust);
 }
 
-/* Tombol berwarna: variabel --bg/--text milik Filament diarahkan ke warna palet */
 .fi-btn.fi-color:not(.fi-color-gray):not(.fi-outlined):not(label) {
     --bg: var(--btn, var(--color-600));
     --hover-bg: var(--btn, var(--color-600));
     --text: var(--on-btn, #fff);
     --hover-text: var(--on-btn, #fff);
     border: 1px solid var(--btn, transparent);
+    background-image: none;
 }
 
-.fi-btn.fi-color:not(.fi-color-gray):not(.fi-outlined):not(label):hover {
-    opacity: .9;
-}
+.fi-btn.fi-color:not(.fi-color-gray):not(.fi-outlined):not(label):hover { filter: brightness(.96); }
 
-/* Tombol netral: transparan dengan border --ink (.btn.secondary) */
+/* Tombol netral = .btn-outline frontend: putih, border tipis */
 .fi-btn:not(label):not(.fi-outlined):is(:not(.fi-color), .fi-color-gray) {
-    background-color: transparent;
+    background-color: var(--surface);
     color: var(--ink);
-    border: 1px solid var(--ink);
+    border: 1px solid var(--line);
     box-shadow: none;
 }
 
 .fi-btn:not(label):not(.fi-outlined):is(:not(.fi-color), .fi-color-gray):not(.fi-disabled):not([disabled]):hover {
-    background-color: var(--paper);
+    border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
 }
 
-.fi-btn:not(label):not(.fi-outlined):is(:not(.fi-color), .fi-color-gray) > .fi-icon {
-    color: var(--muted);
-}
+.fi-btn:not(label):not(.fi-outlined):is(:not(.fi-color), .fi-color-gray) > .fi-icon { color: var(--muted); }
 
 /* =========================================================
-   BADGE — pil, huruf 11.5px tebal, sama seperti .badge
+   BADGE — pil (= .badge frontend)
 ========================================================= */
 .fi-badge {
     border-radius: 9999px;
     box-shadow: none;
     font-size: 11.5px;
     font-weight: 600;
-    letter-spacing: .2px;
-    padding: 3px 9px;
-    background-color: var(--line);
-    color: var(--ink);
+    padding: 3px 10px;
+    background-color: var(--paper);
+    color: var(--muted);
 }
 
 .fi-badge.fi-color-primary,
 .fi-badge.fi-color-warning {
-    background-color: var(--amber);
-    color: var(--amber-ink);
+    background-color: var(--warn-bg);
+    color: var(--warn);
 }
 
 .fi-badge.fi-color-success,
 .fi-badge.fi-color-info {
-    background-color: var(--teal-bg);
-    color: var(--teal);
+    background-color: var(--ok-bg);
+    color: var(--ok);
 }
 
 .fi-badge.fi-color-danger {
@@ -371,313 +361,238 @@
 }
 
 .fi-badge.fi-color-gray {
-    background-color: var(--line);
-    color: var(--ink);
+    background-color: var(--paper);
+    color: var(--muted);
+    box-shadow: inset 0 0 0 1px var(--line);
 }
 
-/* Titik status hanya di tabel dan infolist, bukan di badge menu */
+/* Titik status di tabel dan infolist (= .badge-dot) */
 .fi-ta-cell .fi-badge::before,
 .fi-in-entry .fi-badge::before {
-    content: "●";
-    font-size: 8px;
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+}
+
+/* Hitungan di menu dan tab: kuning solid */
+.fi-sidebar-item-badge-ctn .fi-badge,
+.fi-sidebar-item-badge-ctn .fi-badge.fi-color,
+.fi-tabs-item .fi-badge.fi-color {
+    min-width: 1.25rem;
+    padding: 1px 7px;
+    background-color: var(--amber);
+    color: var(--amber-ink);
+    box-shadow: none;
 }
 
 /* =========================================================
-   TABEL
+   TABEL (= .data-table frontend)
 ========================================================= */
-.fi-ta-table > thead > tr {
-    background-color: transparent;
-}
+.fi-ta-header-ctn { padding: .75rem 1rem; }
+
+.fi-ta-table > thead > tr { background-color: var(--paper); }
 
 .fi-ta-header-cell {
-    padding-block: .625rem;
+    padding-block: .75rem;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .5px;
+    letter-spacing: .04em;
     color: var(--muted);
     border-bottom: 1px solid var(--line);
 }
 
-.fi-ta-header-cell .fi-ta-header-cell-sort-btn {
-    text-transform: inherit;
-}
+.fi-ta-header-cell .fi-ta-header-cell-sort-btn { text-transform: inherit; }
 
-.fi-ta-row.fi-clickable:hover {
-    background-color: var(--paper);
-}
+.fi-ta-cell { font-size: .84375rem; }
+.fi-ta-text:not(.fi-inline) { padding-block: .75rem; }
+
+.fi-ta-row { transition: background-color .14s ease; }
+.fi-ta-row.fi-clickable:hover { background-color: var(--paper); }
+
+.fi-ta-row.fi-row-overdue { background-color: var(--rust-bg); }
 
 /* =========================================================
-   FORM & INPUT — border --line, fokus --teal
+   FORM & INPUT (= .input frontend: fokus border ink + cincin kuning)
 ========================================================= */
 .fi-input-wrp {
+    min-height: 2.75rem;
     background-color: var(--surface);
     border: 1px solid var(--line);
-    border-radius: .375rem;
+    border-radius: .75rem;
     box-shadow: none;
+    transition: box-shadow .15s ease, border-color .15s ease;
 }
 
 .fi-input-wrp:not(.fi-disabled):not(:has(.fi-ac-action:focus)):focus-within {
-    border-color: var(--teal);
-    box-shadow: 0 0 0 1px var(--teal);
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px var(--amber-soft);
 }
 
-.fi-input-wrp.fi-invalid {
-    border-color: var(--rust);
-}
+.fi-input-wrp.fi-invalid { border-color: var(--rust); }
 
 .fi-input-wrp.fi-invalid:not(.fi-disabled):focus-within {
     border-color: var(--rust);
-    box-shadow: 0 0 0 1px var(--rust);
+    box-shadow: 0 0 0 3px var(--rust-bg);
 }
 
-.fi-input-wrp.fi-disabled {
-    background-color: var(--paper);
-}
+.fi-input-wrp.fi-disabled { background-color: var(--paper); }
 
 .fi-fo-field-wrp-error-message,
-.fi-fo-field .fi-fo-field-wrp-error-message {
-    color: var(--rust);
-}
+.fi-fo-field .fi-fo-field-wrp-error-message { color: var(--rust); }
 
 /* =========================================================
-   LAIN-LAIN
+   TAB — kontrol tersegmentasi (pil), aktif kuning lembut
 ========================================================= */
-.fi-dropdown-list-item:not(.fi-disabled):not([disabled]):hover,
-.fi-dropdown-list-item:not(.fi-disabled):not([disabled]):focus-visible {
-    background-color: var(--paper);
-}
-
-/* Foto KTP, SIM, dan bukti bayar */
-.fi-in-image:not(.fi-circular) img {
-    border: 1px solid var(--line);
-    border-radius: .5rem;
-}
-
-.fi-pagination-item.fi-active .fi-pagination-item-btn {
-    background-color: var(--amber);
-}
-
-.fi-pagination-item.fi-active .fi-pagination-item-label {
-    color: var(--amber-ink);
-}
-
-.fi-tabs-item.fi-active {
-    background-color: var(--paper);
-    box-shadow: inset 0 -3px 0 var(--amber);
-}
-
-.fi-tabs-item.fi-active .fi-tabs-item-label,
-.fi-tabs-item.fi-active > .fi-icon {
-    color: var(--ink);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .fi-btn { transition: none; }
-    .fi-btn:not(.fi-disabled):not([disabled]):hover { transform: none; }
-}
-
-/* =========================================================
-   PENYESUAIAN LANJUTAN (samakan dengan prototipe)
-========================================================= */
-
-/* Badge hitungan di sidebar dan tab: merah solid seperti .count prototipe.
-   Spesifisitas lebih tinggi supaya menimpa aturan .fi-color-primary */
-.fi-sidebar-item-badge-ctn .fi-badge.fi-color,
-.fi-tabs-item .fi-badge.fi-color {
-    background-color: var(--rust);
-    color: var(--on-rust);
-    padding: 1px 7px;
-    min-width: 1.125rem;
-}
-
-/* Tab status: rata kiri dengan garis bawah amber, seperti .custnav prototipe */
-.fi-tabs:not(.fi-contained) {
-    background: transparent;
-    border: 0;
-    border-bottom: 1px solid var(--line);
-    border-radius: 0;
-    box-shadow: none;
-    padding: 0;
-    margin-inline: 0;
-    width: 100%;
-}
-
-.fi-tabs:not(.fi-contained) .fi-tabs-item {
-    border-radius: 0;
-    padding: .75rem .875rem;
-}
-
-.fi-tabs:not(.fi-contained) .fi-tabs-item .fi-tabs-item-label {
-    font-family: var(--font-display);
-    letter-spacing: .3px;
-}
-
-.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active {
-    background: transparent;
-    box-shadow: inset 0 -3px 0 var(--amber);
-}
-
-/* Tabel lebih padat: padding sel 11px 12px seperti prototipe */
-.fi-ta-text:not(.fi-inline) {
-    padding-block: .6875rem;
-}
-
-.fi-ta-cell {
-    font-size: .84375rem;
-}
-
-/* Judul halaman: 26px seperti .page-title */
-.fi-header-heading {
-    font-size: 1.625rem;
-}
-
-/* Reminder overdue: baris merah muda seperti prototipe */
-.fi-ta-row.fi-row-overdue {
-    background-color: var(--rust-bg);
-}
-
-/* =========================================================
-   PENYEGARAN PANEL — Owner dan Operasional
-========================================================= */
-.fi-body {
-    background-image: radial-gradient(ellipse at 92% 0%, color-mix(in srgb, var(--amber) 9%, transparent), transparent 30rem);
-    background-attachment: fixed;
-}
-
-.fi-topbar,
-.fi-sidebar-header {
-    border: 0;
-    border-bottom: 1px solid var(--line);
-    border-image: none;
-    box-shadow: 0 4px 18px -16px rgba(25, 31, 45, .35);
-}
-
-.fi-topbar .fi-logo,
-.fi-sidebar-header .fi-logo { color: var(--bar-fg); }
-
-.fi-sidebar {
-    background: color-mix(in srgb, var(--surface) 94%, var(--paper));
-}
-
-.fi-sidebar-group-label { font-weight: 700; }
-
-.fi-sidebar-item-btn {
-    border: 1px solid transparent;
-    border-radius: .75rem;
-    transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
-}
-
-.fi-sidebar-item-btn:hover { transform: translateX(2px); }
-
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
-    border-color: color-mix(in srgb, var(--amber) 24%, var(--line));
-    background: linear-gradient(100deg, color-mix(in srgb, var(--amber) 17%, var(--surface)), var(--surface));
-    box-shadow: inset 3px 0 0 var(--amber);
-}
-
-.fi-main { padding-block: 1.5rem 3rem; }
-
-.fi-header { margin-bottom: 1.25rem; }
-
-.fi-header-heading {
-    font-size: clamp(1.65rem, 2.4vw, 2.15rem);
-    letter-spacing: -.025em;
-}
-
-.fi-header-subheading { max-width: 48rem; line-height: 1.65; }
-
-.fi-section:not(.fi-section-not-contained):not(.fi-aside),
-.fi-section:not(.fi-section-not-contained).fi-aside > .fi-section-content-ctn,
-.fi-ta-ctn,
-.fi-wi-stats-overview-stat,
-.fi-modal > .fi-modal-window-ctn > .fi-modal-window,
-.fi-dropdown-panel,
-.fi-global-search-results-ctn,
-.fi-fo-date-time-picker-panel,
-.fi-simple-main,
-.fi-fo-repeater-item,
-.fi-fo-builder-item,
-.fi-in-key-value {
-    border-radius: 1rem;
-    box-shadow: 0 10px 28px -22px rgba(28, 35, 50, .45), 0 2px 6px -4px rgba(28, 35, 50, .12);
-}
-
-.fi-section-header { padding: 1.15rem 1.25rem; }
-.fi-section-content-ctn { padding: 1.25rem; }
-
-.fi-wi-stats-overview-stat {
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(145deg, var(--surface) 56%, color-mix(in srgb, var(--amber) 10%, var(--surface)));
-}
-
-.fi-wi-stats-overview-stat::after {
-    position: absolute;
-    inset: 0 0 auto;
-    height: 3px;
-    background: linear-gradient(90deg, var(--amber), #f47b38, #ed5e6b);
-    content: "";
-}
-
-.fi-wi-stats-overview-stat-value { font-size: 2rem; }
-
-.fi-ta-ctn { overflow: hidden; }
-.fi-ta-header-ctn { padding: .75rem 1rem; }
-.fi-ta-header-cell { padding-block: .85rem; }
-.fi-ta-row { transition: background-color .14s ease; }
-.fi-ta-row.fi-clickable:hover { background-color: color-mix(in srgb, var(--amber) 7%, var(--surface)); }
-.fi-ta-cell { padding-block: .85rem; }
-
 .fi-tabs:not(.fi-contained) {
     display: flex;
     width: fit-content;
     max-width: 100%;
-    gap: .35rem;
+    gap: .25rem;
     overflow-x: auto;
-    margin-bottom: 1rem;
-    padding: .35rem;
+    margin: 0 0 1rem;
+    padding: .25rem;
     border: 1px solid var(--line);
-    border-radius: 999px;
+    border-radius: 9999px;
     background: var(--surface);
-    box-shadow: 0 4px 16px -14px rgba(28, 35, 50, .4);
+    box-shadow: none;
 }
 
 .fi-tabs:not(.fi-contained) .fi-tabs-item,
 .fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active {
     border: 0;
-    border-radius: 999px;
-    padding: .6rem .95rem;
+    border-radius: 9999px;
+    padding: .5rem .95rem;
     box-shadow: none;
+    transition: background-color .15s ease, transform .1s ease;
 }
 
-.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active {
-    background: linear-gradient(100deg, #ffd76b, #ffb246);
-}
+.fi-tabs:not(.fi-contained) .fi-tabs-item:active { transform: scale(.97); }
 
-.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active .fi-tabs-item-label { color: #392309; }
+.fi-tabs-item.fi-active,
+.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active { background: var(--amber-soft); }
+
+.fi-tabs-item.fi-active .fi-tabs-item-label,
+.fi-tabs-item.fi-active > .fi-icon { color: var(--ink); font-weight: 600; }
+
 .fi-tabs-item .fi-badge { margin-inline-start: .35rem; }
 
-.fi-input-wrp { min-height: 2.75rem; border-radius: .65rem; }
-.fi-btn { border-radius: .7rem; padding-inline: 1rem; }
-.fi-btn.fi-color-primary,
-.fi-btn.fi-color-warning {
-    background-image: linear-gradient(100deg, #ffc83d, #f5a623);
+/* =========================================================
+   LAIN-LAIN
+========================================================= */
+.fi-dropdown-list-item:not(.fi-disabled):not([disabled]):hover,
+.fi-dropdown-list-item:not(.fi-disabled):not([disabled]):focus-visible { background-color: var(--paper); }
+
+.fi-in-image:not(.fi-circular) img {
+    border: 1px solid var(--line);
+    border-radius: .75rem;
 }
 
+.fi-pagination-item.fi-active .fi-pagination-item-btn { background-color: var(--amber); }
+.fi-pagination-item.fi-active .fi-pagination-item-label { color: var(--amber-ink); }
+
 .fi-empty-state { padding-block: 3rem; }
-.fi-empty-state-icon { color: color-mix(in srgb, var(--amber) 75%, var(--muted)); }
+.fi-empty-state-icon { color: var(--amber); }
 
 @media (max-width: 48rem) {
     .fi-main { padding-inline: 1rem; }
     .fi-header { gap: .75rem; }
     .fi-section-header,
     .fi-section-content-ctn { padding: 1rem; }
-    .fi-tabs:not(.fi-contained) { width: 100%; border-radius: .9rem; }
+    .fi-tabs:not(.fi-contained) { width: 100%; border-radius: 1rem; }
 }
 
+/* =========================================================
+   AKSESIBILITAS — gerak, transparansi, kontras (= frontend)
+========================================================= */
 @media (prefers-reduced-motion: reduce) {
-    .fi-sidebar-item-btn,
-    .fi-ta-row { transition: none; }
-    .fi-sidebar-item-btn:hover { transform: none; }
+    .fi-btn, .fi-sidebar-item-btn, .fi-ta-row, .fi-tabs-item, .fi-input-wrp { transition: none; }
+    .fi-btn:active, .fi-sidebar-item-btn:active, .fi-tabs-item:active { transform: none; }
 }
+
+@media (prefers-reduced-transparency: reduce) {
+    .fi-topbar, .fi-sidebar-header {
+        background-color: var(--surface);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+@media (prefers-contrast: more) {
+    :root { --line: #8a877f; --muted: #4a4842; }
+    .fi-topbar, .fi-sidebar-header {
+        background-color: var(--surface);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        border-bottom-color: var(--ink);
+    }
+}
+
+/* =========================================================
+   DATA WAREHOUSE — Dashboard Analitik & OLAP Explorer
+========================================================= */
+.dw-muted { color: var(--muted); font-size: .875rem; }
+.dw-error { color: var(--rust); font-size: .875rem; }
+.dw-link {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--amber);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+}
+
+.dw-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: .75rem; transition: opacity .15s; }
+.dw-loading { opacity: .5; }
+.dw-table { width: 100%; border-collapse: collapse; font-size: .875rem; color: var(--ink); }
+.dw-table th, .dw-table td { padding: .625rem .875rem; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.dw-table thead th { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); background: var(--paper); }
+.dw-table tbody th { font-weight: 500; }
+.dw-table tbody tr:hover { background: var(--paper); }
+.dw-table tfoot th, .dw-table tfoot td { font-weight: 600; background: var(--cream); border-top: 1px solid var(--cream-line); border-bottom: 0; }
+.dw-num { text-align: right !important; font-variant-numeric: tabular-nums; }
+.dw-total { background: var(--cream); font-weight: 600; }
+.dw-chip { display: inline-block; padding: .125rem .5rem; border-radius: 9999px; font-size: .75rem; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); }
+.dw-chip-strong { background: var(--amber-soft); box-shadow: none; color: var(--amber-ink); font-weight: 600; }
+
+.dw-controls { display: grid; gap: .75rem 1rem; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.dw-field { display: flex; flex-direction: column; gap: .375rem; }
+.dw-field > span { font-size: .75rem; font-weight: 600; color: var(--muted); }
+.dw-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1rem; }
+.dw-drill {
+    color: var(--ink);
+    text-align: left;
+    text-decoration: underline;
+    text-decoration-color: var(--amber);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    transition: transform .1s ease-out;
+}
+.dw-drill:hover { text-decoration-color: var(--ink); }
+.dw-drill:active { transform: scale(.97); }
+/* OLAP ringkas: segmen data, 3 kontrol, chip filter */
+.dw-seg { display: inline-flex; gap: .25rem; padding: .25rem; margin-bottom: 1rem; border-radius: 9999px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); max-width: 100%; overflow-x: auto; }
+.dw-seg-item { padding: .4rem 1rem; border-radius: 9999px; font-size: .875rem; font-weight: 500; color: var(--muted); white-space: nowrap; transition: background-color .15s, color .15s, transform .1s ease-out; }
+.dw-seg-item:hover { color: var(--ink); }
+.dw-seg-item:active { transform: scale(.97); }
+.dw-seg-item.is-active { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08), inset 0 0 0 1px var(--line); }
+.dw-controls-3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.dw-inline { display: flex; align-items: center; gap: .5rem; }
+.dw-grow { flex: 1; min-width: 0; }
+.dw-filters { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1rem; min-height: 2rem; }
+.dw-filter-chip { display: inline-flex; align-items: center; gap: .375rem; padding: .25rem .25rem .25rem .75rem; border-radius: 9999px; font-size: .8125rem; font-weight: 500; color: var(--amber-ink); background: var(--amber-soft); }
+.dw-filter-chip button { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 9999px; font-size: 1rem; line-height: 1; color: var(--amber-ink); transition: background-color .15s, transform .1s ease-out; }
+.dw-filter-chip button:hover { background: rgba(0,0,0,.08); }
+.dw-filter-chip button:active { transform: scale(.9); }
+.dw-muted-sm { font-weight: 400; opacity: .75; }
+.dw-clear { font-size: .8125rem; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.dw-clear:hover { color: var(--ink); }
+.dw-th-sub { font-weight: 500; text-transform: none; letter-spacing: 0; }
+.dw-howto { margin: .75rem 0 0; padding-left: 1.125rem; list-style: disc; color: var(--muted); line-height: 1.6; }
+.dw-howto strong { color: var(--ink); font-weight: 600; }
+.dw-sql { margin-top: 1rem; font-size: .8125rem; }
+.dw-sql summary { cursor: pointer; color: var(--muted); }
+.dw-sql pre { margin-top: .5rem; padding: .875rem; border-radius: .75rem; background: var(--paper); border: 1px solid var(--line); white-space: pre-wrap; word-break: break-word; font-size: .75rem; }

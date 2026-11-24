@@ -24,3 +24,6 @@ Schedule::call(fn () => app(RentalExpirationService::class)->expireNoShows())
 // supaya muncul di halaman "Reminder Hari Ini" tanpa duplikat.
 Schedule::call(fn () => app(OverdueReminderService::class)->createMissing())
     ->everyFiveMinutes()->name('create-overdue-reminders');
+
+// ETL data warehouse: muat ulang dim_* dan fact_* dari database operasional setiap malam.
+Schedule::command('dw:etl')->dailyAt(config('dw.schedule_at', '01:00'))->name('dw-etl')->withoutOverlapping();

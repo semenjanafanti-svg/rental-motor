@@ -142,4 +142,34 @@ class AvailabilityServiceTest extends TestCase
             Carbon::parse('2026-09-20 06:00'),
         ));
     }
+
+    public function test_active_rental_only_blocks_until_its_scheduled_return(): void
+    {
+        $bike = $this->bike();
+        $this->rental($bike, '2026-09-18 08:00', '2026-09-21 08:00', 'active');
+        $service = app(AvailabilityService::class);
+
+        $dates = $this->dates($bike, '08:00');
+        $this->assertArrayNotHasKey('2026-09-20', $dates); // masih di tengah sewa aktif
+        $this->assertArrayHasKey('2026-09-21', $dates);    // tepat setelah jadwal kembali
+
+        $this->assertTrue($service->hasConflict($bike->id, Carbon::parse('2026-09-20 08:00'), Carbon::parse('2026-09-22 08:00')));
+        $this->assertFalse($service->hasConflict($bike->id, Carbon::parse('2026-09-21 08:00'), Carbon::parse('2026-09-23 08:00')));
+        $this->assertNotContains($bike->id, $service->busyBikeIds(Carbon::parse('2026-09-25 08:00'), Carbon::parse('2026-09-26 08:00')));
+        $this->assertSame(
+            [['start' => '2026-09-18 08:00', 'end' => '2026-09-21 08:00']],
+            $service->bookedRanges($bike->id, now()->startOfDay(), now()->startOfDay()->addDays(90)),
+        );
+    }
+
+    public function test_overdue_active_rental_blocks_every_date_until_returned(): void
+    {
+        $bike = $this->bike();
+        $this->rental($bike, '2026-09-17 08:00', '2026-09-18 08:00', 'active'); // seharusnya kembali kemarin
+        $service = app(AvailabilityService::class);
+
+        $this->assertSame([], $this->dates($bike, '08:00'));
+        $this->assertTrue($service->hasConflict($bike->id, Carbon::parse('2026-10-01 08:00'), Carbon::parse('2026-10-02 08:00')));
+        $this->assertContains($bike->id, $service->busyBikeIds(Carbon::parse('2026-10-01 08:00'), Carbon::parse('2026-10-02 08:00')));
+    }
 }

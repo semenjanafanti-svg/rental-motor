@@ -4,7 +4,7 @@
         <p class="page-sub">Kelola data akun, password, dan penghapusan akun.</p>
     </x-slot>
 
-    <div class="mx-auto max-w-3xl space-y-5">
+    <div class="max-w-3xl space-y-5">
         <div class="card p-4 sm:p-7">
             <div class="max-w-xl">
                 @include('profile.partials.update-profile-information-form')

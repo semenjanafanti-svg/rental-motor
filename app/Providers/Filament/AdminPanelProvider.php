@@ -3,12 +3,13 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Auth\Pages\ActiveLogin;
+use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\FilamentAuthenticate;
 use Filament\Enums\ThemeMode;
+use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -40,14 +41,14 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             // Logo + Mitra Jalan, sama dengan navbar customer.
             ->brandName(new HtmlString('<img src="'.e(asset('images/logo.png')).'" alt="" class="brand-logo"> Mitra Jalan'))
-            // Work Sans untuk isi. Oswald untuk judul dimuat lewat render hook di bawah.
-            ->font('Work Sans')
-            // Warna diambil langsung dari token prototipe, bukan preset bawaan Filament.
+            // Font sistem, sama dengan frontend (tidak mengunduh font apa pun).
+            ->font('system-ui', provider: LocalFontProvider::class)
+            // Palet putih kuning, sama dengan token di resources/css/app.css.
             ->colors([
-                'primary' => Color::hex('#f0b429'),
+                'primary' => Color::hex('#f5a623'),
                 'danger' => Color::hex('#c0392b'),
-                'success' => Color::hex('#2f6f5e'),
-                'warning' => Color::hex('#f0b429'),
+                'success' => Color::hex('#1f7a52'),
+                'warning' => Color::hex('#f5a623'),
             ])
             // CSS statis (bukan lewat Vite/Tailwind) agar tidak bentrok dengan Tailwind v3
             // yang dipakai frontend customer. ?v= memaksa browser memuat ulang saat file berubah.
@@ -55,9 +56,7 @@ class AdminPanelProvider extends PanelProvider
                 $css = public_path('css/filament-admin-theme.css');
                 $version = is_file($css) ? filemtime($css) : 0;
 
-                return '<link rel="preconnect" href="https://fonts.bunny.net">'
-                    .'<link rel="stylesheet" href="https://fonts.bunny.net/css?family=oswald:500,600,700&display=swap">'
-                    .'<link rel="stylesheet" href="'.e(asset('css/filament-admin-theme.css')).'?v='.$version.'">';
+                return '<link rel="stylesheet" href="'.e(asset('css/filament-admin-theme.css')).'?v='.$version.'">';
             })
             ->navigationGroups(['Operasional', 'Owner'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')

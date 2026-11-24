@@ -64,9 +64,13 @@ class BikeController extends Controller
 
     public function show(Request $request, Bike $bike, AvailabilityService $availability): View
     {
+        $activeRental = $availability->activeRental($bike->id);
+
         return view('bikes.show', [
             'bike' => $bike,
-            'isActivelyRented' => $availability->isActivelyRented($bike->id),
+            'isActivelyRented' => $activeRental !== null,
+            'activeUntil' => $activeRental?->end_time,
+            'isOverdue' => $activeRental !== null && $availability->isOverdue($activeRental),
             'minDays' => max(1, (int) config('rental.min_days')),
             'maxDays' => (int) config('rental.max_days'),
             'dpPercent' => config('rental.dp_percent'),

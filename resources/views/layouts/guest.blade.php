@@ -8,15 +8,18 @@
     @include('layouts.partials.assets')
 </head>
 <body>
-    <div class="topbar">
-        <a href="{{ route('home') }}" class="brand">
-            <img src="{{ asset('images/logo.png') }}" alt="Logo {{ config('rental.business_name') }}" width="40" height="40" class="brand-logo" style="display:block;width:40px;height:40px;max-width:40px;max-height:40px;object-fit:contain">
-            {{ config('rental.business_name') }}
-        </a>
-    </div>
+    <header class="site-header">
+        <div class="topbar">
+            <a href="{{ route('home') }}" class="brand">
+                <img src="{{ asset('images/logo.png') }}" alt="Logo {{ config('rental.business_name') }}" width="36" height="36" class="brand-logo">
+                {{ config('rental.business_name') }}
+            </a>
+            <a href="{{ route('bikes.index') }}" class="topbar-link ml-auto">Lihat katalog</a>
+        </div>
+    </header>
 
-    <main class="mx-auto w-full max-w-md px-4 py-10 motion-safe:animate-fade-up">
-        <div class="card p-6 sm:p-7">
+    <main class="mx-auto w-full max-w-md flex-1 px-4 py-10 motion-safe:animate-fade-up">
+        <div class="card p-6 sm:p-8">
             {{ $slot }}
         </div>
     </main>

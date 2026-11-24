@@ -26,57 +26,59 @@
             <input type="hidden" name="end_date" value="{{ $schedule['end_date'] }}">
 
             <h2 class="section-title mt-0">Ringkasan jadwal &amp; harga</h2>
-            <dl class="summary">
+            <dl class="summary-dark">
                 <div class="summary-row"><dt>Motor</dt><dd>{{ $bike->name }} ({{ $bike->license_plate }})</dd></div>
                 <div class="summary-row"><dt>Mulai</dt><dd>{{ $fmt($quote['start_at']) }}</dd></div>
                 <div class="summary-row"><dt>Kembali</dt><dd>{{ $fmt($quote['end_at']) }}</dd></div>
                 <div class="summary-row"><dt>Durasi</dt><dd>{{ $quote['days'] }} hari ({{ $quote['total_hours'] }} jam)</dd></div>
                 <div class="summary-row"><dt>Total sewa</dt><dd>{{ \App\Support\Format::rupiah($quote['total_price']) }}</dd></div>
-                <div class="summary-row summary-total"><dt>DP dibayar sekarang</dt><dd>{{ \App\Support\Format::rupiah($quote['dp_amount']) }}</dd></div>
+                <div class="summary-row summary-total"><dt class="!text-ink">DP dibayar sekarang</dt><dd>{{ \App\Support\Format::rupiah($quote['dp_amount']) }}</dd></div>
                 <div class="summary-row"><dt>Sisa dibayar di lokasi</dt><dd>{{ \App\Support\Format::rupiah($quote['balance_amount']) }}</dd></div>
             </dl>
 
             <div class="notice mt-4">
-                <b>Setelah menekan Buat Pesanan, DP harus dibayar dalam {{ $lockMinutes }} menit.</b>
+                <b>Setelah menekan Buat pesanan, DP harus dibayar dalam {{ $lockMinutes }} menit.</b>
                 <p class="hint mb-0">Jika lewat, pesanan hangus dan jadwal dilepas untuk penyewa lain. Harga dihitung ulang oleh server.</p>
             </div>
 
             <h2 class="section-title">Unggah dokumen</h2>
-
-            <div class="mb-4" x-data="{ file: null }">
-                <label for="ktp_photo" class="label">Foto KTP</label>
-                <div class="filepick" :class="{ 'filepick-filled': file }">
-                    <input type="file" id="ktp_photo" name="ktp_photo" accept="image/png,image/jpeg" required
-                           @change="file = $event.target.files[0] ? $event.target.files[0].name : null">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" class="mr-2 inline h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 5.7-5.7a3 3 0 0 1 4.2 4.2l-7.8 7.8a4.2 4.2 0 0 1-6-6l8.5-8.5"/></svg>
-                    <span x-text="file || 'Ketuk untuk memilih foto KTP (JPG/PNG)'">Ketuk untuk memilih foto KTP (JPG/PNG)</span>
+            <div class="card space-y-4 p-5">
+                <div x-data="{ file: null }">
+                    <label for="ktp_photo" class="label">Foto KTP</label>
+                    <div class="filepick" :class="{ 'filepick-filled': file }">
+                        <input type="file" id="ktp_photo" name="ktp_photo" accept="image/png,image/jpeg" required
+                               @change="file = $event.target.files[0] ? $event.target.files[0].name : null">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" class="mr-2 inline h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 5.7-5.7a3 3 0 0 1 4.2 4.2l-7.8 7.8a4.2 4.2 0 0 1-6-6l8.5-8.5"/></svg>
+                        <span x-text="file || 'Ketuk untuk memilih foto KTP (JPG/PNG)'">Ketuk untuk memilih foto KTP (JPG/PNG)</span>
+                    </div>
+                    @error('ktp_photo')<p class="field-error">{{ $message }}</p>@enderror
                 </div>
-                @error('ktp_photo')<p class="field-error">{{ $message }}</p>@enderror
-            </div>
 
-            <div class="mb-4" x-data="{ file: null }">
-                <label for="sim_photo" class="label">Foto SIM C</label>
-                <div class="filepick" :class="{ 'filepick-filled': file }">
-                    <input type="file" id="sim_photo" name="sim_photo" accept="image/png,image/jpeg" required
-                           @change="file = $event.target.files[0] ? $event.target.files[0].name : null">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" class="mr-2 inline h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 5.7-5.7a3 3 0 0 1 4.2 4.2l-7.8 7.8a4.2 4.2 0 0 1-6-6l8.5-8.5"/></svg>
-                    <span x-text="file || 'Ketuk untuk memilih foto SIM C (JPG/PNG)'">Ketuk untuk memilih foto SIM C (JPG/PNG)</span>
+                <div x-data="{ file: null }">
+                    <label for="sim_photo" class="label">Foto SIM C</label>
+                    <div class="filepick" :class="{ 'filepick-filled': file }">
+                        <input type="file" id="sim_photo" name="sim_photo" accept="image/png,image/jpeg" required
+                               @change="file = $event.target.files[0] ? $event.target.files[0].name : null">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" class="mr-2 inline h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 5.7-5.7a3 3 0 0 1 4.2 4.2l-7.8 7.8a4.2 4.2 0 0 1-6-6l8.5-8.5"/></svg>
+                        <span x-text="file || 'Ketuk untuk memilih foto SIM C (JPG/PNG)'">Ketuk untuk memilih foto SIM C (JPG/PNG)</span>
+                    </div>
+                    @error('sim_photo')<p class="field-error">{{ $message }}</p>@enderror
                 </div>
-                @error('sim_photo')<p class="field-error">{{ $message }}</p>@enderror
             </div>
 
             @foreach (['start_date', 'start_time', 'end_date'] as $field)
                 @error($field)<p class="field-error mb-2">{{ $message }}</p>@enderror
             @endforeach
 
-            <p class="hint mb-4">
+            <p class="hint mb-5 mt-3">
                 Maksimal 2 MB per file. Dokumen disimpan di server privat dan hanya dapat dilihat admin yang memverifikasi.
             </p>
 
-            <button type="submit" class="btn btn-amber btn-block">Buat Pesanan</button>
+            <button type="submit" class="btn btn-volt btn-block py-3 text-[15px]">Buat pesanan</button>
         </form>
 
-        <div class="mt-7">
+        <h2 class="section-title">Ketentuan sewa</h2>
+        <div class="card p-5">
             <x-rental-policy :bike="$bike" />
         </div>
     </div>

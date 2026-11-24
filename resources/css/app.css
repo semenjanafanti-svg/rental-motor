@@ -3,25 +3,46 @@
 @tailwind utilities;
 
 /* =========================================================
-   TOKEN (dari prototipe). Ubah warna cukup di sini.
+   TOKEN WARNA - "Putih Kuning" (sama persis dengan panel admin)
+   Dominan : putih (paper/surface) dan teks ink.
+   Support : krem kuning (night*) untuk kartu sorotan, hero, ringkasan.
+   Aksen   : kuning amber (volt*) untuk CTA, chip aktif, titik status.
+   Nama variabel lama (night, volt) dipertahankan supaya kelas Tailwind
+   di view tetap jalan. Ubah warna cukup di sini DAN di
+   public/css/filament-admin-theme.css.
 ========================================================= */
 @layer base {
     :root {
         color-scheme: light;
-        --ink: #1c1d1a;
-        --paper: #fffefa;
+
+        /* dominan */
+        --paper: #f7f7f4;
         --surface: #ffffff;
-        --line: #e8e3d8;
-        --muted: #666258;
-        --amber: #f4a900;
-        --amber-ink: #5c3d05;   /* teks di atas isian amber */
-        --sun-soft: #f6e2ae;    /* latar lembut kategori manual */
-        --sun-text: #5c3d05;
-        --teal: #2f6f5e;
-        --teal-bg: #e2efe9;
+        --line: #e8e6df;
+        --muted: #6e6b63;
+        --ink: #1d1d1f;
+
+        /* support: krem kuning */
+        --night: #fff6db;
+        --night-2: #ffecb5;
+        --night-line: #f2dc9a;
+        --night-muted: #6b5a2e;
+
+        /* aksen: kuning amber */
+        --volt: #f5a623;
+        --volt-ink: #3b2600;
+        --volt-soft: #fff1cf;
+
+        /* status */
+        --ok: #1f7a52;
+        --ok-bg: #e4f4eb;
+        --warn: #7a5200;
+        --warn-bg: #fff1cf;
         --rust: #c0392b;
         --rust-bg: #f8e6e3;
-        --shadow: 0 1px 2px rgba(28, 29, 26, .05), 0 10px 24px -18px rgba(28, 29, 26, .35);
+
+        --shadow: 0 1px 2px rgba(29, 29, 31, .04), 0 12px 28px -22px rgba(29, 29, 31, .3);
+        --ease-out: cubic-bezier(.2, .8, .2, 1);
     }
 
     html {
@@ -29,19 +50,26 @@
     }
 
     body {
-        @apply min-h-screen bg-paper text-ink;
+        @apply flex min-h-screen flex-col bg-paper text-ink;
         font-size: 15px;
-        line-height: 1.5;
+        line-height: 1.55;
+        letter-spacing: -.005em;
     }
 
+    /* Tracking menyesuaikan ukuran: judul besar dirapatkan, isi dibiarkan. */
     h1, h2, h3, h4 {
-        @apply font-display tracking-wide;
+        @apply font-display font-semibold;
+        letter-spacing: -.022em;
+        line-height: 1.12;
     }
+    h3, h4 { letter-spacing: -.012em; line-height: 1.3; }
 
     :focus-visible {
-        outline: 2px solid var(--teal);
+        outline: 2px solid var(--ink);
         outline-offset: 2px;
     }
+
+    ::selection { background: var(--volt); color: var(--volt-ink); }
 
     ::-webkit-scrollbar { height: 8px; width: 8px; }
     ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
@@ -52,117 +80,149 @@
 ========================================================= */
 @layer components {
     /* ---- rangka halaman ---- */
+    .site-header { @apply sticky top-0 z-40 px-3 pt-3 sm:px-6; }
+    /* Material tembus pandang: konten terlihat samar di bawah navbar. */
     .topbar {
-        @apply sticky top-0 z-40 flex min-h-[4.5rem] items-center justify-between gap-2 border-b border-line bg-white/95 px-4 text-ink shadow-sm backdrop-blur sm:min-h-20 sm:px-8;
+        @apply mx-auto flex min-h-[3.75rem] w-full max-w-6xl items-center justify-between gap-2 rounded-2xl border border-line px-3 text-ink sm:px-5;
+        background: rgba(255, 255, 255, .72);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        backdrop-filter: saturate(180%) blur(20px);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, .6) inset, 0 8px 24px -18px rgba(29, 29, 31, .35);
     }
     .brand {
-        @apply flex items-center gap-3 whitespace-nowrap py-3 font-display text-xl font-bold tracking-wide sm:text-2xl;
+        @apply flex items-center gap-2.5 whitespace-nowrap py-2.5 font-display text-lg font-semibold sm:text-xl;
+        letter-spacing: -.02em;
     }
     .brand-logo {
-        @apply h-10 w-10 shrink-0 rounded-lg object-contain sm:h-11 sm:w-11;
-    }
-    .brand-plate {
-        @apply rounded-xl bg-gradient-to-br from-[#ffc928] to-[#f39812] px-3 py-2 font-display text-sm font-bold tracking-widest text-sun-ink shadow-sm;
+        @apply h-9 w-9 shrink-0 rounded-lg bg-white object-contain p-0.5;
     }
     .topbar-link {
-        @apply inline-block max-w-[10rem] truncate whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold text-muted transition-colors hover:bg-amber-50 hover:text-ink sm:px-4 sm:text-base;
+        @apply inline-block max-w-[10rem] truncate whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-muted transition-colors duration-150 hover:bg-paper hover:text-ink sm:px-4;
     }
+    .topbar-link-active { @apply bg-volt-soft font-semibold text-ink hover:bg-volt-soft; }
 
     .page {
-        @apply mx-auto w-full max-w-6xl px-4 pb-16 pt-7 sm:px-8;
+        @apply mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-8 sm:px-6;
     }
 
-    .page-title { @apply text-[26px] font-semibold leading-tight; }
-    .page-sub { @apply mb-5 mt-1 text-sm text-muted; }
-    .section-title { @apply mb-3 mt-7 text-[17px] font-semibold; }
+    .site-footer { @apply mt-auto border-t border-line bg-surface text-muted; }
 
-    .breadcrumb { @apply mb-4 flex flex-wrap items-center gap-1.5 text-[12.5px] text-muted; }
-    .link { @apply font-semibold text-moss hover:underline; }
+    .eyebrow { @apply text-xs font-semibold uppercase tracking-[0.16em] text-muted; }
+    .page-title { @apply text-[28px] font-semibold leading-tight sm:text-[34px]; }
+    .page-sub { @apply mb-6 mt-1 text-sm text-muted sm:text-[15px]; }
+    .section-title { @apply mb-3 mt-8 text-lg font-semibold; }
+
+    .breadcrumb { @apply mb-5 flex flex-wrap items-center gap-1.5 text-[13px] text-muted; }
+    .link { @apply font-semibold text-ink underline decoration-volt decoration-2 underline-offset-4 hover:decoration-ink; }
 
     /* ---- kartu ---- */
     .card {
-        @apply overflow-hidden rounded-lg border border-line bg-surface;
+        @apply overflow-hidden rounded-2xl border border-line bg-surface;
         box-shadow: var(--shadow);
     }
-
-    .bike-card {
-        @apply block overflow-hidden rounded-lg border border-line bg-surface transition duration-150 hover:-translate-y-0.5 hover:border-ink motion-reduce:transition-none motion-reduce:hover:translate-y-0;
-        box-shadow: var(--shadow);
-    }
+    /* kartu sorotan krem kuning (dulu kartu gelap) */
+    .card-dark { @apply overflow-hidden rounded-2xl border border-night-line bg-night text-ink; }
 
     .bike-thumb { @apply flex h-full w-full items-center justify-center; }
-    .bike-thumb-matic { @apply bg-moss-bg text-moss; }
-    .bike-thumb-manual { @apply bg-sun-soft text-sun-text; }
-    .bike-thumb-sport { @apply bg-rust-bg text-rust; }
+    .bike-thumb-matic,
+    .bike-thumb-manual,
+    .bike-thumb-sport { @apply bg-paper text-muted; }
+
+    /* chip filter (pill) */
+    .chip {
+        @apply inline-flex shrink-0 items-center gap-2 rounded-full border border-line bg-surface px-5 py-2.5 text-sm font-medium text-muted transition duration-100 hover:border-muted hover:text-ink active:scale-[.97] motion-reduce:transition-none;
+    }
+    .chip-active { @apply border-volt bg-volt-soft font-semibold text-ink hover:border-volt hover:text-ink; }
+    .chip-active::before { content: ""; @apply h-2 w-2 rounded-full bg-volt; }
+
+    /* tombol panah bulat (aksen) */
+    .arrow-btn {
+        @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-volt text-volt-ink transition-transform duration-300 group-hover:-rotate-45 motion-reduce:transition-none;
+        transition-timing-function: var(--ease-out);
+    }
+
+    /* spesifikasi motor (ubin) */
+    .spec { @apply flex flex-col items-center gap-1 rounded-2xl border border-line bg-surface px-3 py-3.5 text-center; }
+    .spec-icon { @apply flex h-9 w-9 items-center justify-center rounded-full bg-paper text-ink; }
+    .spec-label { @apply text-[11px] text-muted; }
+    .spec-value { @apply text-sm font-semibold; }
 
     /* ---- badge ---- */
     .badge {
-        @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-wide;
+        @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-semibold;
     }
-    .badge-dot::before { content: "●"; font-size: 8px; }
-    .badge-amber { @apply bg-sun text-sun-ink; }
-    .badge-teal { @apply bg-moss-bg text-moss; }
+    .badge-dot::before { content: ""; @apply h-1.5 w-1.5 rounded-full bg-current; }
+    .badge-amber { @apply bg-warn-bg text-warn; }
+    .badge-teal { @apply bg-ok-bg text-ok; }
     .badge-rust { @apply bg-rust-bg text-rust; }
-    .badge-neutral { @apply bg-line text-ink; }
+    .badge-neutral { @apply bg-paper text-muted ring-1 ring-inset ring-line; }
 
     /* ---- tombol ---- */
     .btn {
-        @apply inline-flex items-center justify-center rounded-md border border-ink bg-ink px-[18px] py-2.5 text-sm font-semibold tracking-wide text-paper transition duration-150 hover:-translate-y-px hover:opacity-90 active:translate-y-0 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none;
+        @apply inline-flex items-center justify-center gap-2 rounded-full border border-volt bg-volt px-5 py-2.5 text-sm font-semibold text-volt-ink transition duration-100 hover:brightness-[.96] active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 motion-reduce:transition-none;
     }
-    .btn-outline { @apply bg-transparent text-ink; }
-    .btn-amber { @apply border-sun bg-sun text-sun-ink; }
-    .btn-teal { @apply border-moss bg-moss text-surface; }
+    .btn-outline { @apply border-line bg-surface text-ink hover:border-muted hover:bg-surface hover:brightness-100; }
+    .btn-amber,
+    .btn-volt { @apply border-volt bg-volt text-volt-ink; }
+    .btn-teal { @apply border-ok bg-ok text-white; }
     .btn-rust { @apply border-rust bg-rust text-white; }
-    .btn-rust-outline { @apply border-rust bg-transparent text-rust; }
-    .btn-sm { @apply rounded px-3 py-1.5 text-[12.5px]; }
+    .btn-rust-outline { @apply border-rust bg-transparent text-rust hover:bg-rust-bg hover:brightness-100; }
+    .btn-sm { @apply px-4 py-2 text-[13px]; }
     .btn-block { @apply w-full; }
 
     /* ---- form ---- */
     .label {
-        @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+        @apply mb-1.5 block text-xs font-semibold text-muted;
     }
     .input {
-        @apply block w-full rounded-md border border-line bg-surface py-2.5 pl-3 pr-3 text-sm text-ink placeholder:text-muted;
+        @apply block w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink transition-shadow duration-150 placeholder:text-muted;
     }
     .select { @apply pr-9; }
     .input:focus {
         outline: none;
-        border-color: var(--teal);
-        box-shadow: 0 0 0 1px var(--teal);
+        border-color: var(--ink);
+        box-shadow: 0 0 0 3px var(--volt-soft);
     }
-    .check { @apply rounded border-line bg-surface text-moss; }
+    .input:disabled { @apply cursor-not-allowed bg-paper; }
+    .check { @apply rounded border-line bg-surface text-volt focus:ring-volt; }
     .hint { @apply mt-1 text-xs text-muted; }
     .field-error { @apply mt-1.5 text-sm text-rust; }
 
     .filepick {
-        @apply relative rounded-md border-[1.5px] border-dashed border-line bg-surface p-4 text-center text-sm text-muted transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-moss;
+        @apply relative rounded-xl border-[1.5px] border-dashed border-line bg-surface p-4 text-center text-sm text-muted transition-colors hover:border-ink focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink;
     }
     .filepick input[type='file'] {
         @apply absolute inset-0 h-full w-full cursor-pointer opacity-0;
     }
-    .filepick-filled { @apply border-solid border-moss bg-moss-bg text-moss; }
+    .filepick-filled { @apply border-solid border-ok bg-ok-bg text-ok; }
 
     /* ---- ringkasan harga ---- */
-    .summary { @apply rounded-lg border border-line bg-surface p-4 sm:p-5; }
+    .summary { @apply rounded-2xl border border-line bg-surface p-4 sm:p-5; }
     .summary-row { @apply flex justify-between gap-3 py-1.5 text-sm; }
     .summary-row dt { @apply text-muted; }
-    .summary-row dd { @apply text-right; }
-    .summary-total { @apply mt-1.5 border-t border-line pt-3 text-base font-bold; }
+    .summary-row dd { @apply text-right font-medium; }
+    .summary-total { @apply mt-1.5 border-t border-line pt-3 text-base font-semibold; }
+
+    /* varian gelap (kartu ringkasan / "tiket") */
+    .summary-dark { @apply rounded-2xl border border-night-line bg-night p-5 text-ink sm:p-6; }
+    .summary-dark .summary-row dt { @apply text-night-muted; }
+    .summary-dark .summary-total { @apply border-night-line; }
+    .summary-dark .summary-total dd { @apply text-ink; }
 
     /* ---- pemberitahuan ---- */
     .notice {
-        @apply rounded-lg border border-l-4 border-line border-l-sun bg-surface px-4 py-3.5 text-[13.5px];
+        @apply rounded-xl border border-line border-l-4 border-l-warn bg-surface px-4 py-3.5 text-[13.5px];
     }
-    .notice-teal { @apply border-l-moss; }
+    .notice-teal { @apply border-l-ok; }
     .notice-rust { @apply border-l-rust; }
 
     /* ---- tabel & daftar ---- */
-    .tablewrap { @apply overflow-x-auto rounded-lg border border-line bg-surface; }
+    .tablewrap { @apply overflow-x-auto rounded-2xl border border-line bg-surface; }
     .data-table { @apply w-full border-collapse text-[13.5px]; }
     .data-table th {
-        @apply border-b border-line px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted;
+        @apply border-b border-line bg-paper px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-muted;
     }
-    .data-table td { @apply border-b border-line px-3 py-3 align-middle; }
+    .data-table td { @apply border-b border-line px-4 py-3 align-middle; }
     .data-table tr:last-child td { @apply border-b-0; }
 
     .list-row {
@@ -170,18 +230,20 @@
     }
     .empty { @apply px-5 py-10 text-center text-muted; }
 
-    .qris-box { @apply rounded-[10px] border border-line bg-surface p-5 text-center; }
-    .qris-box img { @apply mx-auto rounded-lg bg-white p-3; }
+    .qris-box { @apply rounded-2xl border border-line bg-surface p-5 text-center; }
+    .qris-box img { @apply mx-auto rounded-xl bg-white p-3; }
 }
 
 /* =========================================================
-   KOMPATIBILITAS: partial Breeze (profil) masih memakai
-   text-gray-*. Di dalam .breeze-compat warnanya ikut token.
+   AKSESIBILITAS - gerak, transparansi, kontras
 ========================================================= */
-.breeze-compat .text-gray-900,
-.breeze-compat .text-gray-800 { color: var(--ink); }
-.breeze-compat .text-gray-700,
-.breeze-compat .text-gray-600,
-.breeze-compat .text-gray-500 { color: var(--muted); }
-.breeze-compat .border-gray-200,
-.breeze-compat .border-gray-300 { border-color: var(--line); }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+    .topbar { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+    :root { --line: #8a877f; --muted: #4a4842; --night-muted: #4a3d1c; }
+    .topbar { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; border-color: var(--ink); }
+}

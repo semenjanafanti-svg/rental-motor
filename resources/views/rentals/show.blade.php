@@ -26,12 +26,12 @@
             <b class="text-ink">{{ $rental->booking_code }}</b>
         </nav>
 
-        <header class="mb-6 overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-white via-white to-amber-50 shadow-[0_12px_35px_-28px_rgba(28,29,26,.45)]">
+        <header class="card-dark mb-6 rounded-[1.75rem]">
             <div class="flex flex-col justify-between gap-5 p-5 sm:flex-row sm:items-center sm:p-7">
                 <div class="min-w-0">
-                    <p class="text-xs font-bold uppercase tracking-[.16em] text-teal">Rincian perjalanan</p>
+                    <p class="text-xs font-semibold uppercase tracking-[.16em] text-night-muted">Rincian perjalanan</p>
                     <h1 class="page-title mt-1">{{ $rental->bike->name }}</h1>
-                    <p class="mt-1 text-sm text-muted">Kode pesanan <span class="font-semibold text-ink">{{ $rental->booking_code }}</span></p>
+                    <p class="mt-1 text-sm text-night-muted">Kode pesanan <span class="font-semibold text-ink">{{ $rental->booking_code }}</span></p>
                     <div class="mt-4 flex flex-wrap items-center gap-2">
                         <x-status-badge :status="$rental->status" />
                         @if ($rental->payment_status !== 'unpaid')
@@ -42,10 +42,10 @@
                         @endif
                     </div>
                 </div>
-                <div class="rounded-2xl border border-amber-200/80 bg-white/80 px-5 py-4 sm:min-w-52 sm:text-right">
-                    <p class="text-[11px] font-bold uppercase tracking-wide text-muted">Total sewa</p>
-                    <p class="mt-1 font-display text-2xl font-bold text-ink">{{ $rp($rental->total_price) }}</p>
-                    <p class="mt-1 text-xs text-muted">{{ $rental->total_hours }} jam · {{ $rental->bike->license_plate }}</p>
+                <div class="rounded-2xl bg-night-2 px-5 py-4 sm:min-w-52 sm:text-right">
+                    <p class="text-xs text-night-muted">Total sewa</p>
+                    <p class="mt-1 text-2xl font-semibold text-ink">{{ $rp($rental->total_price) }}</p>
+                    <p class="mt-1 text-xs text-night-muted">{{ $rental->total_hours }} jam · {{ $rental->bike->license_plate }}</p>
                 </div>
             </div>
         </header>
@@ -60,7 +60,7 @@
                     @endif
                     Bayar DP dan kirim bukti sebelum <b>{{ $rental->expires_at->locale('id')->translatedFormat('H:i') }} WIB</b>.
                     Sisa waktu
-                    <strong id="countdown" class="font-display text-xl tracking-wide"
+                    <strong id="countdown" class="text-xl tabular-nums"
                             data-expires="{{ $rental->expires_at->getTimestamp() * 1000 }}">--:--</strong>.
                     Jika lewat, pesanan hangus.
                 </div>
@@ -84,7 +84,7 @@
                         </div>
                         @error('proof_photo')<p class="field-error">{{ $message }}</p>@enderror
                     </div>
-                    <button type="submit" class="btn btn-amber btn-block">Kirim Bukti Pembayaran</button>
+                    <button type="submit" class="btn btn-volt btn-block py-3 text-[15px]">Kirim bukti pembayaran</button>
                 </form>
             @else
                 <div class="notice notice-rust mb-5">
@@ -126,7 +126,7 @@
                     Motor dikembalikan {{ $fmt($return->actual_return_time) }}.
                 @endif
             </x-status-panel>
-            <a href="{{ route('rentals.receipt', $rental) }}" class="btn mt-4">Unduh Nota PDF</a>
+            <a href="{{ route('rentals.receipt', $rental) }}" class="btn mt-4">Unduh nota PDF</a>
         @endif
 
         @if ($rental->status === 'cancelled')
@@ -163,7 +163,7 @@
             <form method="POST" action="{{ route('rentals.cancel', $rental) }}" class="mt-5"
                   onsubmit="return confirm('Batalkan pesanan ini?')">
                 @csrf
-                <button type="submit" class="btn btn-rust-outline">Batalkan Pesanan</button>
+                <button type="submit" class="btn btn-rust-outline">Batalkan pesanan</button>
                 <p class="hint">Bisa dibatalkan sampai H-{{ $cancelDays }}. DP yang sudah dibayar dikembalikan penuh.</p>
             </form>
         @elseif (($rental->status === 'pending_payment' && $payable) || in_array($rental->status, ['pending_verification', 'approved'], true))
@@ -173,9 +173,9 @@
         {{-- ================= Rincian ================= --}}
 
         <div class="mt-7 grid gap-5 lg:grid-cols-2">
-            <section class="rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-6">
+            <section class="card p-5 sm:p-6">
                 <h2 class="section-title mt-0">Detail sewa</h2>
-                <dl class="summary">
+                <dl>
                     <div class="summary-row"><dt>Motor</dt><dd>{{ $rental->bike->name }} ({{ $rental->bike->license_plate }})</dd></div>
                     <div class="summary-row"><dt>Mulai</dt><dd>{{ $fmt($rental->start_time) }} WIB</dd></div>
                     <div class="summary-row"><dt>Batas kembali</dt><dd>{{ $fmt($rental->end_time) }} WIB</dd></div>
@@ -185,18 +185,18 @@
                 </dl>
             </section>
 
-            <section class="rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-6">
+            <section class="card p-5 sm:p-6">
                 <h2 class="section-title mt-0">Pembayaran</h2>
-                <dl class="summary">
+                <dl>
                     <div class="summary-row"><dt>Total harga</dt><dd>{{ $rp($rental->total_price) }}</dd></div>
                     <div class="summary-row"><dt>DP</dt><dd>{{ $rp($rental->dp_amount) }}</dd></div>
                     <div class="summary-row summary-total">
                         <dt>Sisa pelunasan</dt>
-                        <dd>{{ $rental->payment_status === 'fully_paid' ? 'Lunas' : $rp($rental->balance_amount) }}</dd>
+                        <dd>{{ $rental->payment_status === 'fully_paid' ? 'Lunas' : (in_array($rental->status, ['cancelled', 'expired', 'no_show'], true) ? '-' : $rp($rental->balance_amount)) }}</dd>
                     </div>
                     @if ($return)
                         <div class="mt-3 border-t border-line pt-3">
-                            <p class="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">Rincian saat pengembalian</p>
+                            <p class="mb-1.5 text-xs font-semibold text-muted">Rincian saat pengembalian</p>
                             <div class="summary-row"><dt>Denda keterlambatan</dt><dd>{{ $rp($return->late_fee) }}</dd></div>
                             <div class="summary-row"><dt>Denda kerusakan</dt><dd>{{ $rp($return->damage_fee) }}</dd></div>
                             <div class="summary-row"><dt>Denda bensin</dt><dd>{{ $rp($return->fuel_fee) }}</dd></div>
@@ -210,7 +210,8 @@
             </section>
         </div>
 
-        @if ($rental->verification_status && ($rental->status === 'pending_verification' || $rental->verification_status !== 'pending'))            <div class="card mt-5 flex flex-wrap items-center gap-3 p-4">
+        @if ($rental->verification_status && ($rental->status === 'pending_verification' || $rental->verification_status !== 'pending'))
+            <div class="card mt-5 flex flex-wrap items-center gap-3 p-4">
                 <h2 class="text-base font-semibold">Verifikasi dokumen</h2>
                 <x-status-badge :status="$rental->verification_status" type="verification" />
                 @if ($rental->verification_status === 'rejected' && $rental->verification_rejection_reason)
@@ -219,7 +220,7 @@
             </div>
         @endif
 
-        <h2 class="section-title"> Riwayat Pembayaran</h2>
+        <h2 class="section-title">Riwayat pembayaran</h2>
         <div class="tablewrap">
             <table class="data-table">
                 <thead>

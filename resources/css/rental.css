@@ -7,7 +7,7 @@
 .flatpickr-calendar {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 14px;
     box-shadow: var(--shadow);
     color: var(--ink);
     font-family: inherit;
@@ -60,7 +60,7 @@
 }
 .flatpickr-months .flatpickr-prev-month:hover svg,
 .flatpickr-months .flatpickr-next-month:hover svg {
-    fill: var(--teal);
+    fill: var(--ink);
 }
 span.flatpickr-weekday {
     background: transparent;
@@ -70,7 +70,7 @@ span.flatpickr-weekday {
 
 /* Hari */
 .flatpickr-day {
-    border-radius: 6px;
+    border-radius: 999px;
     color: var(--ink);
 }
 .flatpickr-day:hover,
@@ -115,9 +115,9 @@ span.flatpickr-weekday {
 .flatpickr-day.selected:hover,
 .flatpickr-day.startRange:hover,
 .flatpickr-day.endRange:hover {
-    background: var(--ink);
-    border-color: var(--ink);
-    color: var(--paper);
+    background: var(--volt);
+    border-color: var(--volt);
+    color: var(--volt-ink);
     opacity: 1;
 }
 

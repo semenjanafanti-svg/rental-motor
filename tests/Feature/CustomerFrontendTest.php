@@ -133,8 +133,8 @@ class CustomerFrontendTest extends TestCase
 
     public function test_catalog_uses_uploaded_photo_and_falls_back_to_the_bike_icon_when_missing(): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('bikes/vario.jpg', 'photo');
+        Storage::fake(Bike::IMAGE_DISK);
+        Storage::disk(Bike::IMAGE_DISK)->put('bikes/vario.jpg', 'photo');
 
         $this->bike(['name' => 'Dengan Foto', 'license_plate' => 'L 4 A', 'photo' => 'bikes/vario.jpg']);
         $this->bike(['name' => 'Foto Hilang', 'license_plate' => 'L 5 A', 'photo' => 'bikes/tidak-ada.jpg']);
@@ -142,10 +142,10 @@ class CustomerFrontendTest extends TestCase
 
         $this->get('/motor')
             ->assertOk()
-            ->assertSee('/storage/bikes/vario.jpg')
+            ->assertSee(Storage::disk(Bike::IMAGE_DISK)->url('bikes/vario.jpg'))
             ->assertSee('Foto Hilang')
             ->assertSee('Tanpa Foto')
-            ->assertDontSee('/storage/bikes/tidak-ada.jpg');
+            ->assertDontSee('bikes/tidak-ada.jpg');
     }
 
     public function test_guest_is_redirected_to_login_for_checkout(): void

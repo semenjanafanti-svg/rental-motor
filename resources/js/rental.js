@@ -8,6 +8,7 @@ flatpickr.localize(Indonesian);
 // API rental memakai waktu Asia/Jakarta. Offset eksplisit mencegah tanggal bergeser di browser zona lain.
 const toDate = (value) => new Date(`${value.replace(' ', 'T')}+07:00`);
 const rupiah = (n) => 'Rp' + new Intl.NumberFormat('id-ID').format(n);
+const formatDateTime = (date) => date.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' });
 
 /* ---------------------------------------------------------------
  * Halaman detail motor: kalender ketersediaan
@@ -22,14 +23,9 @@ function initAvailabilityCalendar() {
     const dayCoverage = (day) => {
         const dayStart = Date.UTC(day.getFullYear(), day.getMonth(), day.getDate()) - (7 * 60 * 60 * 1000);
         const dayEnd = dayStart + (24 * 60 * 60 * 1000);
-        const intervals = booked
-            .map((range) => [Math.max(range.start.getTime(), dayStart), Math.min(range.end.getTime(), dayEnd)])
-            .filter(([start, end]) => start < end)
-            .sort((first, second) => first[0] - second[0]);
+        const overlaps = booked.some((range) => range.start.getTime() < dayEnd && range.end.getTime() > dayStart);
 
-        if (intervals.length === 0) return null;
-
-        return 'booked';
+        return overlaps ? 'booked' : null;
     };
 
     const calendar = flatpickr(input, {

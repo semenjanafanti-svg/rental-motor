@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Skema Mondrian (Pentaho / Saiku) untuk data warehouse dw_mitra_jalan.
+  Fact constellation: 3 kubus berbagi dimensi yang sama (conformed dimension).
+
+  Dimensi role-playing:
+    - Waktu  dipakai sebagai "Waktu Booking", "Waktu Mulai", "Waktu Kembali", "Waktu Bayar", "Waktu Kembali Aktual"
+    - Staf   dipakai sebagai "Staf Serah Terima", "Staf Penerima", "Staf Pemeriksa"
+  Kunci staf 0 = "Tanpa petugas" (transaksi tanpa petugas, misalnya pesanan batal).
+
+  Tabel & kolom identik dengan database/dw/ddl_dw_mitra_jalan.sql dan dimuat oleh
+  App\Services\DataWarehouse\EtlService (php artisan dw:etl).
+-->
+<Schema name="MitraJalan">
+
+  <!-- ================= DIMENSI BERSAMA ================= -->
+
+  <Dimension name="Waktu" type="TimeDimension">
+    <Hierarchy name="Kalender" hasAll="true" allMemberName="Semua waktu" primaryKey="waktu_key">
+      <Table name="dim_waktu"/>
+      <Level name="Tahun" column="tahun" type="Numeric" uniqueMembers="true" levelType="TimeYears"/>
+      <Level name="Kuartal" column="kuartal" type="String" uniqueMembers="false" levelType="TimeQuarters"/>
+      <Level name="Bulan" column="bulan" nameColumn="nama_bulan" type="Numeric" uniqueMembers="false" levelType="TimeMonths"/>
+      <Level name="Tanggal" column="tanggal" type="Date" uniqueMembers="true" levelType="TimeDays"/>
+    </Hierarchy>
+    <Hierarchy name="Hari" hasAll="true" allMemberName="Semua hari" primaryKey="waktu_key">
+      <Table name="dim_waktu"/>
+      <Level name="Jenis hari" column="is_akhir_pekan" type="Boolean" uniqueMembers="true">
+        <NameExpression>
+          <SQL dialect="generic">CASE WHEN is_akhir_pekan = 1 THEN 'Akhir pekan' ELSE 'Hari kerja' END</SQL>
+        </NameExpression>
+      </Level>
+      <Level name="Nama hari" column="hari_ke" nameColumn="nama_hari" type="Numeric" uniqueMembers="true"/>
+    </Hierarchy>
+    <Hierarchy name="Libur" hasAll="true" allMemberName="Semua hari" primaryKey="waktu_key">
+      <Table name="dim_waktu"/>
+      <Level name="Hari libur" column="is_hari_libur" type="Boolean" uniqueMembers="true">
+        <NameExpression>
+          <SQL dialect="generic">CASE WHEN is_hari_libur = 1 THEN 'Libur nasional' ELSE 'Bukan libur' END</SQL>
+        </NameExpression>
+      </Level>
+    </Hierarchy>
+  </Dimension>
+
+  <!-- SCD Type 2: satu motor bisa punya beberapa versi (tarif/kategori/status berubah) -->
+  <Dimension name="Motor">
+    <Hierarchy name="Kategori" hasAll="true" allMemberName="Semua motor" primaryKey="motor_key">
+      <Table name="dim_motor"/>
+      <Level name="Kategori" column="kategori" type="String" uniqueMembers="true"/>
+      <Level name="Merk" column="merk" type="String" uniqueMembers="false"/>
+      <Level name="Motor" column="bike_id" nameColumn="nama_motor" type="Numeric" uniqueMembers="true">
+        <Property name="Plat nomor" column="plat_nomor" type="String"/>
+        <Property name="Tarif harian" column="tarif_harian" type="Numeric"/>
+      </Level>
+    </Hierarchy>
+    <Hierarchy name="Kelas CC" hasAll="true" allMemberName="Semua kelas" primaryKey="motor_key">
+      <Table name="dim_motor"/>
+      <Level name="Kelas CC" column="kelas_cc" type="String" uniqueMembers="true"/>
+    </Hierarchy>
+  </Dimension>
+
+  <Dimension name="Pelanggan">
+    <Hierarchy hasAll="true" allMemberName="Semua pelanggan" primaryKey="pelanggan_key">
+      <Table name="dim_pelanggan"/>
+      <Level name="Segmen" column="segmen" type="String" uniqueMembers="true"/>
+      <Level name="Pelanggan" column="user_id" nameColumn="nama" type="Numeric" uniqueMembers="true">
+        <Property name="Tanggal daftar" column="tanggal_daftar" type="Date"/>
+        <Property name="Jumlah sewa berhasil" column="jumlah_sewa_berhasil" type="Numeric"/>
+      </Level>
+    </Hierarchy>
+  </Dimension>
+
+  <Dimension name="Staf">
+    <Hierarchy hasAll="true" allMemberName="Semua staf" primaryKey="staf_key">
+      <Table name="dim_staf"/>
+      <Level name="Peran" column="role" type="String" uniqueMembers="true"/>
+      <Level name="Staf" column="staf_key" nameColumn="nama" type="Numeric" uniqueMembers="true"/>
+    </Hierarchy>
+  </Dimension>
+
+  <Dimension name="Status Rental">
+    <Hierarchy hasAll="true" allMemberName="Semua status" primaryKey="status_key">
+      <Table name="dim_status_rental"/>
+      <Level name="Kelompok" column="kelompok_status" type="String" uniqueMembers="true"/>
+      <Level name="Status" column="status" nameColumn="label_status" type="String" uniqueMembers="true"/>
+    </Hierarchy>
+  </Dimension>
+
+  <!-- Junk dimension: tipe x metode x status pembayaran (3 x 2 x 5 = 30 baris) -->
+  <Dimension name="Jenis Pembayaran">
+    <Hierarchy name="Tipe" hasAll="true" allMemberName="Semua tipe" primaryKey="jenis_key">
+      <Table name="dim_jenis_pembayaran"/>
+      <Level name="Tipe" column="tipe" nameColumn="label_tipe" type="String" uniqueMembers="true"/>
+    </Hierarchy>
+    <Hierarchy name="Metode" hasAll="true" allMemberName="Semua metode" primaryKey="jenis_key">
+      <Table name="dim_jenis_pembayaran"/>
+      <Level name="Metode" column="metode" nameColumn="label_metode" type="String" uniqueMembers="true"/>
+      <Level name="Kanal" column="kanal" type="String" uniqueMembers="false"/>
+    </Hierarchy>
+    <Hierarchy name="Status" hasAll="true" allMemberName="Semua status" primaryKey="jenis_key">
+      <Table name="dim_jenis_pembayaran"/>
+      <Level name="Status" column="status_pembayaran" nameColumn="label_status" type="String" uniqueMembers="true"/>
+    </Hierarchy>
+  </Dimension>
+
+  <!-- ================= KUBUS 1: PENYEWAAN ================= -->
+  <!-- Grain: satu baris = satu pesanan rental (semua status, termasuk batal) -->
+  <Cube name="Penyewaan" defaultMeasure="Jumlah Sewa">
+    <Table name="fact_penyewaan"/>
+    <DimensionUsage name="Waktu Booking" source="Waktu" foreignKey="waktu_booking_key"/>
+    <DimensionUsage name="Waktu Mulai" source="Waktu" foreignKey="waktu_mulai_key"/>
+    <DimensionUsage name="Waktu Kembali" source="Waktu" foreignKey="waktu_kembali_key"/>
+    <DimensionUsage name="Motor" source="Motor" foreignKey="motor_key"/>
+    <DimensionUsage name="Pelanggan" source="Pelanggan" foreignKey="pelanggan_key"/>
+    <DimensionUsage name="Status Rental" source="Status Rental" foreignKey="status_key"/>
+    <DimensionUsage name="Staf Serah Terima" source="Staf" foreignKey="staf_serah_terima_key"/>
+    <Dimension name="Jam Mulai">
+      <Hierarchy hasAll="true" allMemberName="Semua jam">
+        <Level name="Jam" column="jam_mulai" type="Numeric" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Measure name="Jumlah Sewa" column="jumlah_sewa" aggregator="sum" formatString="#,##0"/>
+    <Measure name="Durasi (hari)" column="durasi_hari" aggregator="sum" formatString="#,##0"/>
+    <Measure name="Rata-rata Durasi" column="durasi_hari" aggregator="avg" formatString="#,##0.0"/>
+    <Measure name="Total Jam" column="total_jam" aggregator="sum" formatString="#,##0"/>
+    <Measure name="Total Harga" column="total_harga" aggregator="sum" formatString="Rp #,##0"/>
+    <Measure name="Nominal DP" column="nominal_dp" aggregator="sum" formatString="Rp #,##0"/>
+    <Measure name="Sisa Pelunasan" column="sisa_pelunasan" aggregator="sum" formatString="Rp #,##0"/>
+    <CalculatedMember name="Rata-rata Nilai Sewa" dimension="Measures"
+                      formula="IIf([Measures].[Jumlah Sewa] = 0, NULL, [Measures].[Total Harga] / [Measures].[Jumlah Sewa])">
+      <CalculatedMemberProperty name="FORMAT_STRING" value="Rp #,##0"/>
+    </CalculatedMember>
+  </Cube>
+
+  <!-- ================= KUBUS 2: PEMBAYARAN ================= -->
+  <!-- Grain: satu baris = satu transaksi pembayaran (DP, pelunasan, atau denda) -->
+  <Cube name="Pembayaran" defaultMeasure="Pendapatan Bersih">
+    <Table name="fact_pembayaran"/>
+    <DimensionUsage name="Waktu Bayar" source="Waktu" foreignKey="waktu_bayar_key"/>
+    <DimensionUsage name="Motor" source="Motor" foreignKey="motor_key"/>
+    <DimensionUsage name="Pelanggan" source="Pelanggan" foreignKey="pelanggan_key"/>
+    <DimensionUsage name="Jenis Pembayaran" source="Jenis Pembayaran" foreignKey="jenis_key"/>
+    <DimensionUsage name="Staf Penerima" source="Staf" foreignKey="staf_penerima_key"/>
+
+    <Measure name="Jumlah Transaksi" column="jumlah_transaksi" aggregator="sum" formatString="#,##0"/>
+    <Measure name="Nominal Bayar" column="nominal_bayar" aggregator="sum" formatString="Rp #,##0"/>
+    <Measure name="Nominal Refund" column="nominal_refund" aggregator="sum" formatString="Rp #,##0"/>
+    <Measure name="Pendapatan Bersih" column="pendapatan_bersih" aggregator="sum" formatString="Rp #,##0"/>
+  </Cube>
+
+  <!-- ================= KUBUS 3: PENGEMBALIAN ================= -->
+  <!-- Grain: satu baris = satu pengembalian motor (hanya rental yang sudah selesai) -->
+  <Cube name="Pengembalian" defaultMeasure="Total Denda">
+    <Table name="fact_pengembalian"/>
+    <DimensionUsage name="Waktu Kembali Aktual" source="Waktu" foreignKey="waktu_kembali_aktual_key"/>
+    <DimensionUsage name="Motor" source="Motor" foreignKey="motor_key"/>
+    <DimensionUsage name="Pelanggan" source="Pelanggan" foreignKey="pelanggan_key"/>
+    <DimensionUsage name="Staf Pemeriksa" source="Staf" foreignKey="staf_pemeriksa_key"/>
+
+    <Measure name="Jumlah Pengembalian" column="jumlah_pengembalian" aggregator="sum" formatString="#,##0"/>
+    <Measure name="Jumlah Terlambat" column="is_terlambat" aggregator="sum" formatString="#,##0"/>
+    <Measure name="Jumlah Rusak" column="is_rusak" aggregator="sum" formatString="#,##0"/>
+    <Measure name="Jam Terlambat" column="jam_terlambat" aggregator="sum" formatString="#,##0"/>
+    <Measure name="Denda Telat" column="denda_telat" aggregator="sum" formatString="Rp #,##0"/>
+    <Measure name="Denda Kerusakan" column="denda_kerusakan" aggregator="sum" formatString="Rp #,##0"/>
+    <Measure name="Denda Bensin" column="denda_bensin" aggregator="sum" formatString="Rp #,##0"/>
+    <Measure name="Total Denda" column="total_denda" aggregator="sum" formatString="Rp #,##0"/>
+    <CalculatedMember name="Rasio Terlambat" dimension="Measures"
+                      formula="IIf([Measures].[Jumlah Pengembalian] = 0, NULL, [Measures].[Jumlah Terlambat] / [Measures].[Jumlah Pengembalian])">
+      <CalculatedMemberProperty name="FORMAT_STRING" value="0.0%"/>
+    </CalculatedMember>
+  </Cube>
+
+  <!-- Kubus virtual: membandingkan sewa dan pendapatan per motor/waktu di satu tampilan -->
+  <VirtualCube name="Kinerja Motor">
+    <VirtualCubeDimension cubeName="Penyewaan" name="Motor"/>
+    <VirtualCubeDimension cubeName="Penyewaan" name="Pelanggan"/>
+    <VirtualCubeMeasure cubeName="Penyewaan" name="[Measures].[Jumlah Sewa]"/>
+    <VirtualCubeMeasure cubeName="Penyewaan" name="[Measures].[Total Harga]"/>
+    <VirtualCubeMeasure cubeName="Pembayaran" name="[Measures].[Pendapatan Bersih]"/>
+    <VirtualCubeMeasure cubeName="Pengembalian" name="[Measures].[Total Denda]"/>
+  </VirtualCube>
+
+</Schema>

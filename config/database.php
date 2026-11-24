@@ -64,6 +64,25 @@ return [
             ]) : [],
         ],
 
+        // Data warehouse (OLAP) Mitra Jalan: database terpisah dari database operasional.
+        // Diisi oleh `php artisan dw:etl`. Di tes memakai SQLite in-memory (lihat phpunit.xml).
+        'dw' => [
+            'driver' => env('DW_DRIVER', 'mysql'),
+            'host' => env('DW_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DW_PORT', env('DB_PORT', '3306')),
+            'database' => env('DW_DATABASE', 'dw_mitra_jalan'),
+            'username' => env('DW_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('DW_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'foreign_key_constraints' => true,
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

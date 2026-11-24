@@ -27,11 +27,7 @@ class AvailabilityService
         }
 
         return $this->blockingQuery($bikeId)
-            ->where(fn (Builder $query) => $query
-                ->where('status', 'active')
-                ->orWhere(fn (Builder $query) => $query
-                    ->where('start_time', '<', $end)
-                    ->where('end_time', '>', $start)))
+            ->where(fn (Builder $query) => $this->overlapping($query, $start, $end))
             ->exists();
     }
 
@@ -44,18 +40,13 @@ class AvailabilityService
     public function bookedRanges(int $bikeId, CarbonInterface $from, CarbonInterface $to): array
     {
         $blockingRanges = $this->blockingQuery($bikeId)
-            ->where(fn (Builder $query) => $query
-                ->where('status', 'active')
-                ->orWhere(fn (Builder $query) => $query
-                    ->where('start_time', '<', $to)
-                    ->where('end_time', '>', $from)))
+            ->where(fn (Builder $query) => $this->overlapping($query, $from, $to))
             ->orderBy('start_time')
             ->get(['start_time', 'end_time', 'status'])
-            ->map(fn (Rental $rental) => [
-                'start' => ($rental->status === 'active' ? $from : $rental->start_time)->format('Y-m-d H:i'),
-                // Rental aktif tetap mengunci unit hingga statusnya berubah saat pengembalian.
-                'end' => ($rental->status === 'active' ? $to : $rental->end_time)->format('Y-m-d H:i'),
-            ]);
+            ->map(fn (Rental $rental) => $this->isOverdue($rental)
+                // Lewat jadwal kembali tapi unit belum kembali: kunci seluruh kalender sampai pengembalian dicatat.
+                ? ['start' => $from->format('Y-m-d H:i'), 'end' => $to->format('Y-m-d H:i')]
+                : ['start' => $rental->start_time->format('Y-m-d H:i'), 'end' => $rental->end_time->format('Y-m-d H:i')]);
 
         $returnedTodayRanges = Rental::query()
             ->where('bike_id', $bikeId)
@@ -88,9 +79,9 @@ class AvailabilityService
      */
     public function availableStartDates(int $bikeId, string $time, CarbonInterface $from, int $windowDays = 90): array
     {
-        // Status active berarti motor sudah diserahkan dan belum dikembalikan.
-        // Abaikan end_time terjadwal sampai rental benar-benar ditutup.
-        if ($this->blockingQuery($bikeId)->where('status', 'active')->exists()) {
+        // Sewa aktif yang sudah lewat jadwal kembali tapi unitnya belum kembali:
+        // belum ada tanggal yang aman ditawarkan sampai pengembalian dicatat.
+        if ($this->overdueQuery($bikeId)->exists()) {
             return [];
         }
 
@@ -178,11 +169,7 @@ class AvailabilityService
                 ->where(fn (Builder $query) => $query
                     ->whereIn('status', self::BLOCKING_STATUSES)
                     ->where($this->activeBlockingDeadlineQuery(...))
-                    ->where(fn (Builder $query) => $query
-                        ->where('status', 'active')
-                        ->orWhere(fn (Builder $query) => $query
-                            ->where('start_time', '<', $to)
-                            ->where('end_time', '>', $from))))
+                    ->where(fn (Builder $query) => $this->overlapping($query, $from, $to)))
                 ->orWhere(fn (Builder $query) => $query
                     ->where('status', 'completed')
                     ->whereHas('rentalReturn', fn (Builder $query) => $query
@@ -201,6 +188,40 @@ class AvailabilityService
     public function isActivelyRented(int $bikeId): bool
     {
         return $this->blockingQuery($bikeId)->where('status', 'active')->exists();
+    }
+
+    /** Sewa aktif saat ini (unit sedang di tangan penyewa), atau null. */
+    public function activeRental(int $bikeId): ?Rental
+    {
+        return $this->blockingQuery($bikeId)->where('status', 'active')->first(['id', 'start_time', 'end_time', 'status']);
+    }
+
+    /** Unit masih di tangan penyewa padahal jadwal kembalinya sudah lewat. */
+    public function isOverdue(Rental $rental): bool
+    {
+        return $rental->status === 'active' && $rental->end_time->lessThanOrEqualTo(now());
+    }
+
+    /**
+     * Sewa bentrok dengan [from, to): overlap biasa, atau sewa aktif yang sudah lewat
+     * jadwal kembali (unit belum kembali, jadi tetap mengunci sampai pengembalian dicatat).
+     * Sewa aktif yang belum lewat jadwal hanya mengunci sampai end_time-nya.
+     */
+    private function overlapping(Builder $query, CarbonInterface $from, CarbonInterface $to): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->where('start_time', '<', $to)
+            ->where('end_time', '>', $from))
+            ->orWhere(fn (Builder $query) => $query
+                ->where('status', 'active')
+                ->where('end_time', '<=', now()));
+    }
+
+    private function overdueQuery(int $bikeId): Builder
+    {
+        return $this->blockingQuery($bikeId)
+            ->where('status', 'active')
+            ->where('end_time', '<=', now());
     }
 
     private function blockingQuery(int $bikeId): Builder

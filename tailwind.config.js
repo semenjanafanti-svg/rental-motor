@@ -13,24 +13,33 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"Work Sans"', ...defaultTheme.fontFamily.sans],
-                display: ['Oswald', '"Arial Narrow"', ...defaultTheme.fontFamily.sans],
+                // Font sistem (SF Pro di Apple, Segoe UI di Windows): sama dengan panel admin.
+                sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', ...defaultTheme.fontFamily.sans],
+                display: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', ...defaultTheme.fontFamily.sans],
             },
 
-            // Semua warna membaca CSS variable di resources/css/app.css,
-            // jadi mode terang/gelap berganti otomatis tanpa awalan dark:
+            // Semua warna membaca CSS variable di resources/css/app.css (palet putih kuning).
             colors: {
-                ink: 'var(--ink)',
+                // 60% dominan
                 paper: 'var(--paper)',
                 surface: 'var(--surface)',
                 line: 'var(--line)',
                 muted: 'var(--muted)',
-                sun: 'var(--amber)',
-                'sun-ink': 'var(--amber-ink)',
-                'sun-soft': 'var(--sun-soft)',
-                'sun-text': 'var(--sun-text)',
-                moss: 'var(--teal)',
-                'moss-bg': 'var(--teal-bg)',
+                // 30% support
+                ink: 'var(--ink)',
+                night: 'var(--night)',
+                'night-2': 'var(--night-2)',
+                'night-line': 'var(--night-line)',
+                'night-muted': 'var(--night-muted)',
+                // 10% aksen
+                volt: 'var(--volt)',
+                'volt-ink': 'var(--volt-ink)',
+                'volt-soft': 'var(--volt-soft)',
+                // status
+                ok: 'var(--ok)',
+                'ok-bg': 'var(--ok-bg)',
+                warn: 'var(--warn)',
+                'warn-bg': 'var(--warn-bg)',
                 rust: 'var(--rust)',
                 'rust-bg': 'var(--rust-bg)',
             },
